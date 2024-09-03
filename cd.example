@@ -1,0 +1,59 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+      - completed
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: SSH Deploy Frontend
+        uses: appleboy/ssh-action@master
+        with:
+          host: ec2-52-200-128-96.compute-1.amazonaws.com
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # docker stop ai-assistance-fe-container || true
+            # docker rm ai-assistance-fe-container || true
+            docker pull jarghalokendra/ai-assistance-fe:latest
+            docker run -d --name ai-assistance-fe-container -p 3000:3000 jarghalokendra/ai-assistance-fe:latest
+
+  # deploy-backend:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v2
+
+  #     - name: SSH Deploy Backend
+  #       uses: appleboy/ssh-action@master
+  #       with:
+  #         host: ${{ secrets.SSH_HOST }}
+  #         username: ${{ secrets.SSH_USER }}
+  #         key: ${{ secrets.SSH_PRIVATE_KEY }}
+  #         port: 22
+  #         script: |
+  #           set -x  # Enable debugging output
+  #           sudo docker stop ai-assistance-be-container || true
+  #           sudo docker rm ai-assistance-be-container || true
+  #           sudo docker pull jarghalokendra/ai-assistance-be:latest
+  #           sudo docker run -d --name ai-assistance-be-container -p 5000:5000 \
+  #             -e APP_URL=${{ secrets.BE_APP_URL }} \
+  #             -e DB_URL=${{ secrets.DB_URL }} \
+  #             -e PORT=${{ secrets.DB_PORT }} \
+  #             -e JWT_SECRET=${{ secrets.JWT_SECRET }} \
+  #             -e REFRESH_SECRET=${{ secrets.REFRESH_SECRET }} \
+  #             -e NEXT_PUBLIC_APP_URL=${{ secrets.NEXT_PUBLIC_APP_URL }} \
+  #             -e NEXT_PUBLIC_OPEN_API_FOR_CHAT=${{ secrets.NEXT_PUBLIC_OPEN_API_FOR_CHAT }} \
+  #             -e NEXT_PUBLIC_OPEN_API_KEY_FOR_CHAT=${{ secrets.NEXT_PUBLIC_OPEN_API_KEY_FOR_CHAT }} \
+  #             -e NEXT_PUBLIC_APP_VERSION=${{ secrets.NEXT_PUBLIC_APP_VERSION }} \
+  #             -e MAIL_API_EMAIL=${{ secrets.MAIL_API_EMAIL }} \
+  #             -e MAIL_API_PASSWORD=${{ secrets.MAIL_API_PASSWORD }} \
+  #             jarghalokendra/ai-assistance-be:latest

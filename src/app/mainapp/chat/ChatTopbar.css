@@ -1,0 +1,14 @@
+.avatar {
+    position: relative;
+}
+
+.online-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    height: 12px;
+    width: 12px;
+    border-radius: 50%;
+    background-color: #00ff00;
+    border: 2px solid white;
+}
