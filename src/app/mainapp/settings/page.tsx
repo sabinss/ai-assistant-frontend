@@ -205,19 +205,6 @@ export default function Page() {
           </label>
         </div>
 
-        <div className="prompt mt-4">
-          <h3 className="text-sm">Mock data</h3>
-          <Textarea
-            rows={10}
-            placeholder="mock data..."
-            value={mockData}
-            onChange={(e) => setMockData(e.target.value)}
-          />
-          {errors.prompt && (
-            <span className="text-red-500">Prompt cannot be empty</span>
-          )}
-        </div>
-
         <div className="buttons mt-3 w-full md:flex md:justify-end">
           <Button
             className="block w-full bg-[#174894] md:inline md:w-auto"
