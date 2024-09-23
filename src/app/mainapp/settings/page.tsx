@@ -15,7 +15,7 @@ import { MOCK_DATA } from "@/constants"
 export default function Page() {
   const sources = ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]
   const { access_token } = useAuth() // Call useAuth here
-  const [organizationData, setOrganizationData] = useState(null)
+  const [organizationData, setOrganizationData] = useState<any>(null)
   const [selectedModel, setSelectedModel] = useState("")
   const [temperature, setTemperature] = useState(0)
   const [apiKey, setApiKey] = useState("")
@@ -26,7 +26,6 @@ export default function Page() {
   // const [mockData, setMockData] = useState("")
   const { workflowFlag, mockData, setWorkFlowFlag, setMockData } =
     useChatConfig()
-  console.log("workflowFlag", workflowFlag, MOCK_DATA)
   const [errors, setErrors] = useState({
     apiKey: false,
     prompt: false,
@@ -204,6 +203,88 @@ export default function Page() {
             Workflow Engine
           </label>
         </div>
+        {workflowFlag && (
+          <div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Primary Assistant</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={organizationData.primary_assistant_prompt}
+                onChange={(e) => {}}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Investigation</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={organizationData.investigation_prompt}
+                onChange={(e) => {}}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Recommendation</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={organizationData.recommendation_prompt}
+                onChange={(e) => {}}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Upsell</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={organizationData.upsell_prompt}
+                onChange={(e) => {}}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Survey</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={organizationData.survey_prompt}
+                onChange={(e) => {}}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Log</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={organizationData.log_prompt}
+                onChange={(e) => {}}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="buttons mt-3 w-full md:flex md:justify-end">
           <Button
