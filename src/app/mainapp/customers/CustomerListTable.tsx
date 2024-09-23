@@ -1,0 +1,118 @@
+"use client"
+import React, { Suspense, useState } from "react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { CUSTOMER_LIST } from "@/app/constants"
+import Chip from "@/components/ui/customerlist-ui/chip"
+import Score from "@/components/ui/customerlist-ui/Score"
+
+const tableHeader = [
+  { name: "Hilth", sortable: false },
+  { name: "Customer", sortable: false },
+  { name: "ARR (USD)", sortable: false },
+  { name: "CSM Score", sortable: false },
+  { name: "Last Seen", sortable: true, sortKey: "last_seen" },
+  { name: "Last Touch", sortable: true, sortKey: "status" },
+  { name: "Dashboards", sortable: true, sortKey: "createdAt" },
+  { name: "Analytics", sortable: false },
+  { name: "Reporting", sortable: false },
+]
+
+const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
+const MemoizedTableRow = React.memo(({ item, index }: any) => {
+  const color = circleColors[Math.floor(Math.random() * circleColors.length)]
+  return (
+    <TableRow
+      key={item._id}
+      className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} hover:bg-gray-100`}
+    >
+      <TableCell className="max-w-20 break-words py-3">
+        <Chip
+          value={item.health}
+          otherClasses="bg-green-500 text-white font-bold"
+        />
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        {item.customerName}
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        <Score score={item.score} otherClasses="" color={color} />
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        {item.lastSeen}
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        {item.lastTouch}
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        <Chip
+          value={item.dashboards}
+          otherClasses="bg-green-500 text-white font-bold"
+        />
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        <Chip
+          value={item.analytics}
+          otherClasses="bg-yellow-500 text-white font-bold"
+        />
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        <Chip
+          value={item.reporting}
+          otherClasses="bg-yellow-500 text-white font-bold"
+        />
+      </TableCell>
+    </TableRow>
+  )
+})
+export default function CustomerListTable() {
+  const [customerList, setCustomerList] = useState(CUSTOMER_LIST)
+  const handleSort = (item: any) => {}
+  return (
+    <div className="relative w-full rounded-md bg-white p-4 text-[#333333]">
+      {/* table filter */}
+      {/* table */}
+      <Table className="mt-2">
+        <TableHeader>
+          <TableRow className="bg-[#174894]">
+            {tableHeader.map((item: any, index: number) => {
+              return (
+                <TableHead
+                  key={index}
+                  className={`text-white ${item.sortable && "cursor-pointer"}`}
+                  onClick={() => item.sortable && handleSort(item.sortKey!)}
+                >
+                  <div className="flex flex-row items-center">
+                    <p>{item.name}</p>
+                  </div>
+                </TableHead>
+              )
+            })}
+          </TableRow>
+        </TableHeader>
+        <Suspense fallback={<div>Loading...</div>}>
+          <TableBody>
+            {customerList?.length === 0 ? (
+              <tr>
+                <td colSpan={tableHeader?.length} className="py-3 text-center">
+                  No Customer list found
+                </td>
+              </tr>
+            ) : (
+              CUSTOMER_LIST?.map((item, index) => (
+                <MemoizedTableRow key={item?.id} item={item} index={index} />
+              ))
+            )}
+          </TableBody>
+        </Suspense>
+      </Table>
+    </div>
+  )
+}
