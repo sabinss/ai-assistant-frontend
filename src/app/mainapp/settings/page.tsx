@@ -22,6 +22,17 @@ export default function Page() {
   const [prompt, setPrompt] = useState("")
   const [greeting, setGreeting] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
+  const [additionalPrompt, setAdditionalPrompt] = useState({
+    primary_assistant_prompt: "",
+    investigation_prompt: "",
+    solution_prompt: "",
+    recommendation_prompt: "",
+    upsell_prompt: "",
+    survey_prompt: "",
+    log_prompt: "",
+  })
+
   // const [workflowFlag, setWorkFlow] = useState(false)
   // const [mockData, setMockData] = useState("")
   const { workflowFlag, mockData, setWorkFlowFlag, setMockData } =
@@ -42,6 +53,15 @@ export default function Page() {
         const orgData = res?.data?.org
         console.log("orgData", orgData)
         setOrganizationData(orgData)
+        setAdditionalPrompt({
+          primary_assistant_prompt: orgData.primary_assistant_prompt,
+          investigation_prompt: orgData.investigation_prompt,
+          solution_prompt: orgData.solution_prompt,
+          recommendation_prompt: orgData.recommendation_prompt,
+          upsell_prompt: orgData.upsell_prompt,
+          survey_prompt: orgData.survey_prompt,
+          log_prompt: orgData.log_prompt,
+        })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setWorkFlowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -62,6 +82,12 @@ export default function Page() {
     getOrgDetails()
   }, [access_token])
 
+  const handleChangeAdditionalPrompt = (field: any) => (event: any) => {
+    setAdditionalPrompt((prev) => ({
+      ...prev,
+      [field]: event.target.value, // Update the specific field with the new value
+    }))
+  }
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
@@ -99,8 +125,8 @@ export default function Page() {
         greeting,
         workflowFlag,
         mockData,
+        additionalPrompt,
       }
-
       await http.patch("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
@@ -200,32 +226,47 @@ export default function Page() {
             htmlFor="workflow-engine"
             className="text-sm font-medium text-gray-900"
           >
-            Workflow Engine
+            Use support workflow
           </label>
         </div>
         {workflowFlag && (
           <div>
             <div className="prompt mt-4">
-              <h3 className="text-sm">Primary Assistant</h3>
+              <h3 className="text-sm">Primary Agent Prompt</h3>
               <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
-                value={organizationData.primary_assistant_prompt}
-                onChange={(e) => {}}
+                value={additionalPrompt?.primary_assistant_prompt}
+                onChange={handleChangeAdditionalPrompt(
+                  "primary_assistant_prompt"
+                )}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
               )}
             </div>
             <div className="prompt mt-4">
-              <h3 className="text-sm">Investigation</h3>
+              <h3 className="text-sm">Investigation Prompt</h3>
               <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
-                value={organizationData.investigation_prompt}
-                onChange={(e) => {}}
+                value={additionalPrompt.investigation_prompt}
+                onChange={handleChangeAdditionalPrompt("investigation_prompt")}
+              />
+              {errors.prompt && (
+                <span className="text-red-500">Prompt cannot be empty</span>
+              )}
+            </div>
+            <div className="prompt mt-4">
+              <h3 className="text-sm">Solution Prompt</h3>
+              <Textarea
+                className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
+                rows={10}
+                placeholder="Type your prompt here..."
+                value={additionalPrompt.solution_prompt}
+                onChange={handleChangeAdditionalPrompt("solution_prompt")}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -237,47 +278,47 @@ export default function Page() {
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
-                value={organizationData.recommendation_prompt}
-                onChange={(e) => {}}
+                value={additionalPrompt.recommendation_prompt}
+                onChange={handleChangeAdditionalPrompt("recommendation_prompt")}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
               )}
             </div>
             <div className="prompt mt-4">
-              <h3 className="text-sm">Upsell</h3>
+              <h3 className="text-sm">Upsell Prompt</h3>
               <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
-                value={organizationData.upsell_prompt}
-                onChange={(e) => {}}
+                value={additionalPrompt.upsell_prompt}
+                onChange={handleChangeAdditionalPrompt("upsell_prompt")}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
               )}
             </div>
             <div className="prompt mt-4">
-              <h3 className="text-sm">Survey</h3>
+              <h3 className="text-sm">Survey Prompt</h3>
               <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
-                value={organizationData.survey_prompt}
-                onChange={(e) => {}}
+                value={additionalPrompt.survey_prompt}
+                onChange={handleChangeAdditionalPrompt("survey_prompt")}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
               )}
             </div>
             <div className="prompt mt-4">
-              <h3 className="text-sm">Log</h3>
+              <h3 className="text-sm">Log Prompt</h3>
               <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
-                value={organizationData.log_prompt}
-                onChange={(e) => {}}
+                value={additionalPrompt.log_prompt}
+                onChange={handleChangeAdditionalPrompt("log_prompt")}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
