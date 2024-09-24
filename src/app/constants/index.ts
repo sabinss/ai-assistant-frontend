@@ -1,15 +1,15 @@
 const CUSTOMER_LIST = [
   {
     id: 1,
-    health: 10.0,
     customerName: "Esewa Payment",
+    health: 10.0,
     arr: "102.23k",
     score: 3,
     lastSeen: "2 days ago",
     lastTouch: "Email 5 days ago",
-    dashboards: 1.0,
-    analytics: 3,
-    reporting: 1.0,
+    stage: "Select Stage",
+    // analytics: 3,
+    // reporting: 1.0,
   },
   {
     id: 2,
@@ -19,9 +19,9 @@ const CUSTOMER_LIST = [
     score: 5,
     lastSeen: "2 days ago",
     lastTouch: "Email 3 days ago",
-    dashboards: 1.0,
-    analytics: 3,
-    reporting: 1.0,
+    stage: "Adopted",
+    // analytics: 3,
+    // reporting: 1.0,
   },
   {
     id: 3,
@@ -31,9 +31,9 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 1.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Onboarding",
+    // analytics: 2,
+    // reporting: 2.0,
   },
   {
     id: 4,
@@ -43,9 +43,9 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 1.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Renewed",
+    // analytics: 2,
+    // reporting: 2.0,
   },
   {
     id: 5,
@@ -55,9 +55,9 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 3.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Adopted",
+    // analytics: 2,
+    // reporting: 2.0,
   },
   {
     id: 6,
@@ -67,9 +67,9 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 1.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Onboarding",
+    // analytics: 2,
+    // reporting: 2.0,
   },
   {
     id: 7,
@@ -79,9 +79,9 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 2.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Onboarding",
+    // analytics: 2,
+    // reporting: 2.0,
   },
   {
     id: 8,
@@ -91,9 +91,9 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 1.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Adopted",
+    // analytics: 2,
+    // reporting: 2.0,
   },
   {
     id: 9,
@@ -103,10 +103,18 @@ const CUSTOMER_LIST = [
     score: 4,
     lastSeen: "1 days ago",
     lastTouch: "Email 2 days ago",
-    dashboards: 1.0,
-    analytics: 2,
-    reporting: 2.0,
+    stage: "Onboarding",
+    // analytics: 2,
+    // reporting: 2.0,
   },
 ]
 
-export { CUSTOMER_LIST }
+const CUSTOMER_LIST_STAGES = [
+  "Onboarding",
+  "Adopted",
+  "Renewed",
+  "Adopted",
+  "Select Stage",
+]
+
+export { CUSTOMER_LIST, CUSTOMER_LIST_STAGES }

@@ -8,30 +8,47 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { CUSTOMER_LIST } from "@/app/constants"
+import { CUSTOMER_LIST, CUSTOMER_LIST_STAGES } from "@/app/constants"
 import Chip from "@/components/ui/customerlist-ui/chip"
 import Score from "@/components/ui/customerlist-ui/Score"
+import Dropdown from "../commoncompnents/DropDown"
+import { useRouter } from "next/navigation"
 
 const tableHeader = [
-  { name: "Hilth", sortable: false },
-  { name: "Customer", sortable: false },
-  { name: "ARR (USD)", sortable: false },
+  { name: "Name", sortable: false },
+  { name: "Health Score", sortable: false },
   { name: "CSM Score", sortable: false },
+  { name: "ARR (k)", sortable: false },
   { name: "Last Seen", sortable: true, sortKey: "last_seen" },
-  { name: "Last Touch", sortable: true, sortKey: "status" },
-  { name: "Dashboards", sortable: true, sortKey: "createdAt" },
-  { name: "Analytics", sortable: false },
-  { name: "Reporting", sortable: false },
+  { name: "Last Comm", sortable: true, sortKey: "status" },
+  { name: "Stage", sortable: true, sortKey: "createdAt" },
+  // { name: "Analytics", sortable: false },
+  // { name: "Reporting", sortable: false },
 ]
 
 const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
 const MemoizedTableRow = React.memo(({ item, index }: any) => {
+  const router = useRouter()
+  const [selectStage, setStage] = useState("")
+
   const color = circleColors[Math.floor(Math.random() * circleColors.length)]
   return (
     <TableRow
+      onClick={() => {
+        console.log("clicked")
+
+        // router.push({
+        //   pathname: "/mainapp/customers/details",
+        //   query: { id: 1 }, // Example query parameter
+        // })
+        router.push("/mainapp/customers/details", { scroll: false })
+      }}
       key={item._id}
       className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} hover:bg-gray-100`}
     >
+      <TableCell className="max-w-20 break-words py-3">
+        {item.customerName}
+      </TableCell>
       <TableCell className="max-w-20 break-words py-3">
         <Chip
           value={item.health}
@@ -39,34 +56,21 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
         />
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        {item.customerName}
-      </TableCell>
-      <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
-      <TableCell className="max-w-20 break-words py-3">
         <Score score={item.score} otherClasses="" color={color} />
       </TableCell>
+      <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
+
       <TableCell className="max-w-20 break-words py-3">
         {item.lastSeen}
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
         {item.lastTouch}
       </TableCell>
-      <TableCell className="max-w-20 break-words py-3">
-        <Chip
-          value={item.dashboards}
-          otherClasses="bg-green-500 text-white font-bold"
-        />
-      </TableCell>
-      <TableCell className="max-w-20 break-words py-3">
-        <Chip
-          value={item.analytics}
-          otherClasses="bg-yellow-500 text-white font-bold"
-        />
-      </TableCell>
-      <TableCell className="max-w-20 break-words py-3">
-        <Chip
-          value={item.reporting}
-          otherClasses="bg-yellow-500 text-white font-bold"
+      <TableCell className="max-w-21 break-words py-3">
+        <Dropdown
+          options={CUSTOMER_LIST_STAGES}
+          value={item.stage}
+          onChange={(value) => setStage(value)}
         />
       </TableCell>
     </TableRow>
@@ -86,7 +90,7 @@ export default function CustomerListTable() {
               return (
                 <TableHead
                   key={index}
-                  className={`text-white ${item.sortable && "cursor-pointer"}`}
+                  className={`${item.name != "Stage" ? "w-5" : "w-10"} text-white ${item.sortable && "cursor-pointer"}`}
                   onClick={() => item.sortable && handleSort(item.sortKey!)}
                 >
                   <div className="flex flex-row items-center">
