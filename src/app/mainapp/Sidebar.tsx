@@ -134,7 +134,6 @@ function Navbar() {
   } else if (divRef.current) {
     divRef.current.classList.remove("translate-x-[-100%]")
   }
-
   return (
     <div
       ref={divRef}
