@@ -8,7 +8,7 @@ const Chip = ({
   otherClasses: string
 }) => {
   return (
-    <div className={`${otherClasses} flex w-14 justify-center rounded-lg p-2`}>
+    <div className={`${otherClasses} flex w-14 justify-center p-2`}>
       {value}
     </div>
   )

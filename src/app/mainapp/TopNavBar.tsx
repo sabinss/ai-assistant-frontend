@@ -1,17 +1,19 @@
-import NotificationButton from "../../components/custom/NotificationButton";
-import AccountButton from "../../components/custom/AccountButton";
-import useAuth from "@/store/user";
-import { Search, AlignJustify, X } from "lucide-react";
-import useNavBarStore from "@/store/store";
-import Image from "next/image";
+import NotificationButton from "../../components/custom/NotificationButton"
+import AccountButton from "../../components/custom/AccountButton"
+import useAuth from "@/store/user"
+import { Search, AlignJustify, X } from "lucide-react"
+import useNavBarStore from "@/store/store"
+import Image from "next/image"
 import logo from "@/assets/images/logo_final.svg"
+import { GiHamburgerMenu } from "react-icons/gi"
+
 export default function TopNavBar() {
-  const { isCollapsed, setOpen, setCollapse } = useNavBarStore();
-  const { is_logged_in } = useAuth();
+  const { isCollapsed, setOpen, setCollapse } = useNavBarStore()
+  const { is_logged_in } = useAuth()
 
   return (
-    <div className="nav fixed top-0 z-10 flex w-full box-border h-16 items-center justify-between gap-10 text-white border-b bg-[#174894] bg-fixed px-5 py-3 shadow-md">
-      <div className="flex items-center">
+    <div className="nav fixed top-0 z-10 box-border flex h-16 w-full items-center justify-between gap-10 border-b bg-[#174894] bg-fixed px-5 py-3 text-white shadow-md">
+      <div className="flex items-center ">
         {is_logged_in && (
           <div className="md:hidden">
             {isCollapsed ? (
@@ -20,30 +22,22 @@ export default function TopNavBar() {
                 onClick={setOpen}
               />
             ) : (
-              <X
-                className="mr-2 inline cursor-pointer"
-                onClick={setCollapse}
-              />
+              <X className="mr-2 inline cursor-pointer" onClick={setCollapse} />
             )}
           </div>
         )}
         <p className="ml-2 text-xl font-bold sm:text-2xl">
           <span className="font-extrabold">
-            <Image
-              src={logo}
-              alt="logo"
-              height={200}
-              width={150}
-            />
+            <Image src={logo} alt="logo" height={200} width={150} />
           </span>
         </p>
+        <div className="ml-40 flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
+          <GiHamburgerMenu size={20} color="black" />
+        </div>
       </div>
 
-
-
-
       {is_logged_in && (
-        <div className="md:flex hidden  justify-between gap-10">
+        <div className="hidden justify-between  gap-10 md:flex">
           {/* <div className="flex w-full items-center rounded-lg border-none bg-gray-200 px-3 py-2">
             <input
               type="text"
@@ -59,5 +53,5 @@ export default function TopNavBar() {
         </div>
       )}
     </div>
-  );
+  )
 }
