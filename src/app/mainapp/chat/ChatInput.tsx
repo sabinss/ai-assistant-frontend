@@ -15,13 +15,13 @@ interface ChildProps {
 
 const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
   const { botName } = useNavBarStore()
-  const { workflowFlag, setWorkFlowFlag } = useChatConfig()
+  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } =
+    useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { access_token, user_data, chatSession } = useAuth() // Call useAuth here
   const { isMessageLoading, updateMessageLoading } = useFormStore()
   const { publicChat, publicChatHeaders } = usePublicChat()
-  console.log("workflowFlag--", workflowFlag)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -32,7 +32,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
-        console.log("orgData", orgData)
         setWorkFlowFlag(orgData?.workflow_engine_enabled)
       } catch (e) {
         console.log(e)
@@ -56,6 +55,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
 
   const sendMessagetoBackend = async (query: string) => {
     try {
+      console.log("send message 1", sessionId)
       let res: any
       updateMessageLoading(true)
       appendMessage({ sender: "user", message, time: getClockTime(), id: "" }) // Add the message to the chat
@@ -74,6 +74,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
           { headers: publicChatHeaders }
         )
       } else {
+        console.log("send message 2")
+
         res = await http.post(
           "/conversation/add",
           {
@@ -82,10 +84,14 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
             // answer,
             chatSession,
             workflowFlag,
+            sessionId,
           },
           { headers: { Authorization: `Bearer ${access_token}` } }
         )
-        console.log("conversation", res)
+        console.log("conversation response", res)
+        if (res?.data?.session_id) {
+          setSessionId(res?.data?.session_id)
+        }
       }
 
       // let answer = res_.results.answer
@@ -111,6 +117,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    console.log("onchange")
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault() // Prevent default behavior of adding new line
       sendMessage()
