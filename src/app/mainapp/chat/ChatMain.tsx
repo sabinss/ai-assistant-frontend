@@ -106,7 +106,6 @@ const ChatMain: React.FC = () => {
 
   const appendMessage = (message: MessageObject) => {
     setMessages((prevMessages) => [...prevMessages, message])
-    console.log("appendMessage", messages)
   }
 
   return (
