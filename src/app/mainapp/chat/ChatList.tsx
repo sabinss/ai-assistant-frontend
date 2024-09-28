@@ -23,7 +23,6 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
     message: greeting,
     id: "greeting",
   }
-  console.log("greeting_message", greeting_message)
   return (
     <div
       ref={chatListRef}
