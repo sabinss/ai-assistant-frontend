@@ -15,7 +15,7 @@ export default function NavItem({
   path,
 }: NavItemProps) {
   //to collapse sidebar when menu is clicked
-  const { setCollapse } = useNavBarStore()
+  const { setCollapse, showSideBar } = useNavBarStore()
   const collapseIfMobile = () => {
     if (window.innerWidth < 640) {
       setCollapse()
@@ -32,11 +32,13 @@ export default function NavItem({
           <span className="mr-4">
             <Icon size={20} color={isActive ? "white" : "#535353"} />
           </span>
-          <span
-            className={`text-sm ${isActive ? "text-white" : "text-[#535353]"}`}
-          >
-            {name}
-          </span>
+          {showSideBar && (
+            <span
+              className={`text-sm ${isActive ? "text-white" : "text-[#535353]"}`}
+            >
+              {name}
+            </span>
+          )}
         </div>
       </div>
     </Link>

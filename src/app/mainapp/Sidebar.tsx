@@ -10,6 +10,7 @@ import {
   Info,
   LogOut,
   MessageCircleMore,
+  UserRound,
 } from "lucide-react"
 import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
@@ -33,7 +34,7 @@ function getNavLinks(rolePermission) {
     {
       name: "Customers",
       path: "/mainapp/customers",
-      icon: MessageCircleMore,
+      icon: UserRound,
     },
     {
       name: "Feedbacks",
@@ -101,7 +102,7 @@ function getNavLinks(rolePermission) {
 }
 
 function Navbar() {
-  const { setCollapse, setOpen, isCollapsed } = useNavBarStore()
+  const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
   const { user_data, rolePermission } = useAuth()
 
   useEffect(() => {
@@ -126,8 +127,6 @@ function Navbar() {
   const divRef = useRef<HTMLDivElement>(null)
   const path = usePathname()
   const navLinks = getNavLinks([...rolePermission, "customers"])
-  console.log("navLinks", navLinks)
-  console.log("rolePermission", rolePermission)
 
   if (isCollapsed && divRef.current) {
     divRef.current.classList.add("translate-x-[-100%]")
@@ -137,7 +136,7 @@ function Navbar() {
   return (
     <div
       ref={divRef}
-      className="absolute z-50 box-border h-screen w-[300px] overflow-y-scroll border-r  bg-white shadow-lg transition-all  duration-150 md:relative "
+      className={`absolute z-50 box-border h-screen ${showSideBar ? "w-[300px]" : "w-[100px]"} overflow-y-scroll border-r  bg-white shadow-lg transition-all  duration-150 md:relative `}
     >
       <div className=" mx-5 mb-16 flex flex-col gap-1 py-4 pt-2">
         {navLinks.main.map((nav, index) => (
@@ -170,7 +169,9 @@ function Navbar() {
           name={`Logout`}
         />
 
-        <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
+        {showSideBar && (
+          <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
+        )}
       </div>
     </div>
   )
