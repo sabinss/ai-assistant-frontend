@@ -13,6 +13,7 @@ import Chip from "@/components/ui/customerlist-ui/chip"
 import Score from "@/components/ui/customerlist-ui/Score"
 import Dropdown from "../commoncompnents/DropDown"
 import { useRouter } from "next/navigation"
+import useNavBarStore from "@/store/store"
 
 const tableHeader = [
   { name: "Name", sortable: false },
@@ -30,17 +31,13 @@ const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
 const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const router = useRouter()
   const [selectStage, setStage] = useState("")
+  const { handleSideBar } = useNavBarStore()
 
   const color = circleColors[Math.floor(Math.random() * circleColors.length)]
   return (
     <TableRow
       onClick={() => {
-        console.log("clicked")
-
-        // router.push({
-        //   pathname: "/mainapp/customers/details",
-        //   query: { id: 1 }, // Example query parameter
-        // })
+        handleSideBar(true)
         router.push("/mainapp/customers/details", { scroll: false })
       }}
       key={item._id}

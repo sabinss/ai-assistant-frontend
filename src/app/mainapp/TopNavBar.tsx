@@ -6,9 +6,11 @@ import useNavBarStore from "@/store/store"
 import Image from "next/image"
 import logo from "@/assets/images/logo_final.svg"
 import { GiHamburgerMenu } from "react-icons/gi"
+import { MdKeyboardArrowLeft } from "react-icons/md"
 
 export default function TopNavBar() {
-  const { isCollapsed, setOpen, setCollapse } = useNavBarStore()
+  const { isCollapsed, setOpen, setCollapse, showSideBar, handleSideBar } =
+    useNavBarStore()
   const { is_logged_in } = useAuth()
 
   return (
@@ -31,8 +33,17 @@ export default function TopNavBar() {
             <Image src={logo} alt="logo" height={200} width={150} />
           </span>
         </p>
-        <div className="ml-40 flex h-8 w-8 items-center justify-center rounded-full bg-white p-1">
-          <GiHamburgerMenu size={20} color="black" />
+        <div
+          className="ml-40 flex h-8 w-8 items-center justify-center rounded-full bg-white p-1"
+          onClick={() => {
+            handleSideBar(!showSideBar)
+          }}
+        >
+          {showSideBar ? (
+            <GiHamburgerMenu size={20} color="black" />
+          ) : (
+            <MdKeyboardArrowLeft size={30} color="black" />
+          )}
         </div>
       </div>
 
