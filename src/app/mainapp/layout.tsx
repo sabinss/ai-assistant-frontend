@@ -15,23 +15,27 @@ export default function MainAppLayout({
   const router = useRouter()
   useEffect(() => {
     setMounted(true)
-
   }, [_hasHydrated])
-  return _hasHydrated && mounted && (
-    <>
-      <Suspense fallback={
-        <div className="flex justify-center items-center h-[400px]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
-        </div>
-      }>
-        <TopNavBar />
-        <div className="flex flex-row mt-[64px] p-1 relative">
-          <Sidebar />
-          <div className="w-full h-screen overflow-y-scroll text-sm bg-slate-100 p-2 pb-10">
-            {children}
+  return (
+    _hasHydrated &&
+    mounted && (
+      <>
+        <Suspense
+          fallback={
+            <div className="flex h-[400px] items-center justify-center">
+              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-gray-900"></div>
+            </div>
+          }
+        >
+          <TopNavBar />
+          <div className="relative mt-[64px] flex flex-row p-1">
+            <Sidebar />
+            <div className="h-screen w-full overflow-y-scroll bg-slate-100 p-2 pb-10 text-sm">
+              {children}
+            </div>
           </div>
-        </div>
-      </Suspense >
-    </>
+        </Suspense>
+      </>
+    )
   )
 }
