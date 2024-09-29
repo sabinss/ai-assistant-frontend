@@ -11,6 +11,7 @@ import "react-toastify/dist/ReactToastify.css"
 import useAuth from "@/store/user"
 import useChatConfig from "@/store/useChatSetting"
 import { MOCK_DATA } from "@/constants"
+import { parseMarkup } from "@/utility"
 
 export default function Page() {
   const sources = ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]
@@ -23,7 +24,7 @@ export default function Page() {
   const [greeting, setGreeting] = useState("")
   const [isLoading, setIsLoading] = useState(false)
 
-  const [additionalPrompt, setAdditionalPrompt] = useState({
+  const [additionalPrompt, setAdditionalPrompt] = useState<any>({
     primary_assistant_prompt: "",
     investigation_prompt: "",
     solution_prompt: "",
@@ -54,13 +55,15 @@ export default function Page() {
         console.log("orgData", orgData)
         setOrganizationData(orgData)
         setAdditionalPrompt({
-          primary_assistant_prompt: orgData.primary_assistant_prompt,
-          investigation_prompt: orgData.investigation_prompt,
-          solution_prompt: orgData.solution_prompt,
-          recommendation_prompt: orgData.recommendation_prompt,
-          upsell_prompt: orgData.upsell_prompt,
-          survey_prompt: orgData.survey_prompt,
-          log_prompt: orgData.log_prompt,
+          primary_assistant_prompt: parseMarkup(
+            orgData.primary_assistant_prompt
+          ),
+          investigation_prompt: parseMarkup(orgData.investigation_prompt),
+          solution_prompt: parseMarkup(orgData.solution_prompt),
+          recommendation_prompt: parseMarkup(orgData.recommendation_prompt),
+          upsell_prompt: parseMarkup(orgData.upsell_prompt),
+          survey_prompt: parseMarkup(orgData.survey_prompt),
+          log_prompt: parseMarkup(orgData.log_prompt),
         })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setWorkFlowFlag(orgData?.workflow_engine_enabled)
