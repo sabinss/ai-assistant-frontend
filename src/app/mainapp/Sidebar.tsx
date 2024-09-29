@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   LayoutDashboard,
@@ -10,13 +10,14 @@ import {
   Info,
   LogOut,
   MessageCircleMore,
-} from "lucide-react";
-import useAuth from "@/store/user";
-import useNavBarStore from "@/store/store";
-import NavItem from "@/components/ui/navitem";
-import { usePathname } from "next/navigation";
-import QuickLinks from "@/components/ui/quick-links";
-import { useEffect, useRef } from "react";
+  UserRound,
+} from "lucide-react"
+import useAuth from "@/store/user"
+import useNavBarStore from "@/store/store"
+import NavItem from "@/components/ui/navitem"
+import { usePathname } from "next/navigation"
+import QuickLinks from "@/components/ui/quick-links"
+import { useEffect, useRef } from "react"
 
 function getNavLinks(rolePermission) {
   const mainLinks = [
@@ -31,6 +32,11 @@ function getNavLinks(rolePermission) {
       icon: MessageCircleMore,
     },
     {
+      name: "Customers",
+      path: "/mainapp/customers",
+      icon: UserRound,
+    },
+    {
       name: "Feedbacks",
       path: "/mainapp/feedbacks",
       icon: MessageSquareMore,
@@ -40,7 +46,7 @@ function getNavLinks(rolePermission) {
       path: "/mainapp/source",
       icon: FolderClockIcon,
     },
-  ];
+  ]
 
   const otherLinks = [
     {
@@ -63,7 +69,7 @@ function getNavLinks(rolePermission) {
       path: "/mainapp/help",
       icon: Info,
     },
-  ];
+  ]
 
   const quickLinks = [
     {
@@ -78,63 +84,61 @@ function getNavLinks(rolePermission) {
       name: "Terms of Use",
       path: "/mainapp/terms-of-use",
     },
-  ];
+  ]
 
   const filteredMainLinks = mainLinks.filter((link) => {
-    return rolePermission.includes(link.path.split("/mainapp/")[1]);
-  });
+    return rolePermission.includes(link.path.split("/mainapp/")[1])
+  })
 
   const filteredOtherLinks = otherLinks.filter((link) => {
-    return rolePermission.includes(link.path.split("/mainapp/")[1]);
-
-  });
+    return rolePermission.includes(link.path.split("/mainapp/")[1])
+  })
 
   return {
     main: filteredMainLinks,
     others: filteredOtherLinks,
     quickLinks,
-  };
+  }
 }
 
 function Navbar() {
-  const { setCollapse, setOpen, isCollapsed } = useNavBarStore();
-  const { user_data, rolePermission } = useAuth();
+  const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
+  const { user_data, rolePermission } = useAuth()
 
   useEffect(() => {
-    console.log({ rolePermission });
+    console.log({ rolePermission })
 
     const handleResize = () => {
       if (window.innerWidth <= 640) {
-        setCollapse();
+        setCollapse()
       } else {
-        setOpen();
+        setOpen()
       }
-    };
+    }
 
-    window.addEventListener("resize", handleResize);
-    handleResize();
+    window.addEventListener("resize", handleResize)
+    handleResize()
 
     return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+      window.removeEventListener("resize", handleResize)
+    }
+  }, [])
 
-  const divRef = useRef<HTMLDivElement>(null);
-  const path = usePathname();
-  const navLinks = getNavLinks(rolePermission);
+  const divRef = useRef<HTMLDivElement>(null)
+  const path = usePathname()
+  const navLinks = getNavLinks([...rolePermission, "customers"])
 
   if (isCollapsed && divRef.current) {
-    divRef.current.classList.add("translate-x-[-100%]");
+    divRef.current.classList.add("translate-x-[-100%]")
   } else if (divRef.current) {
-    divRef.current.classList.remove("translate-x-[-100%]");
+    divRef.current.classList.remove("translate-x-[-100%]")
   }
-
   return (
     <div
       ref={divRef}
-      className="box-border transition-all h-screen overflow-y-scroll duration-150 absolute md:relative  border-r z-50 bg-white  shadow-lg w-[300px] "
+      className={`absolute z-50 box-border h-screen ${showSideBar ? "w-[300px]" : "w-[100px]"} overflow-y-scroll border-r  bg-white shadow-lg transition-all  duration-150 md:relative `}
     >
-      <div className=" flex pt-2 flex-col gap-1 mx-5 py-4 mb-16">
+      <div className=" mx-5 mb-16 flex flex-col gap-1 py-4 pt-2">
         {navLinks.main.map((nav, index) => (
           <NavItem
             key={index}
@@ -145,7 +149,7 @@ function Navbar() {
           />
         ))}
 
-        <p className="text-[#333333] py-3 font-[16px]"> Others</p>
+        <p className="py-3 font-[16px] text-[#333333]"> Others</p>
 
         {navLinks.others.map((nav, index) => (
           <NavItem
@@ -165,10 +169,12 @@ function Navbar() {
           name={`Logout`}
         />
 
-        <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
+        {showSideBar && (
+          <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
+        )}
       </div>
     </div>
-  );
+  )
 }
 
-export default Navbar;
+export default Navbar
