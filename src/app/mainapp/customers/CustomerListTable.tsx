@@ -36,9 +36,9 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const color = circleColors[Math.floor(Math.random() * circleColors.length)]
   return (
     <TableRow
-      onClick={async () => {
-        await router.push("/mainapp/customers/details", { scroll: false })
-        handleSideBar(true)
+      onClick={() => {
+        router.push("/mainapp/customers/details", { scroll: false })
+        // handleSideBar(true)
       }}
       key={item._id}
       className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} cursor-pointer hover:bg-gray-100`}
