@@ -37,10 +37,10 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
   return (
     <TableRow
       onClick={() => {
-        router.push("/mainapp/customers/details", { scroll: false })
+        router.push("/mainapp/customers/details")
         // handleSideBar(true)
       }}
-      key={item._id}
+      key={item.id}
       className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} cursor-pointer hover:bg-gray-100`}
     >
       <TableCell className="max-w-20 break-words py-3">
