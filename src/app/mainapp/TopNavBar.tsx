@@ -12,7 +12,7 @@ export default function TopNavBar() {
   const { isCollapsed, setOpen, setCollapse, showSideBar, handleSideBar } =
     useNavBarStore()
   const { is_logged_in } = useAuth()
-
+  console.log("is_logged_in", is_logged_in)
   return (
     <div className="nav fixed top-0 z-10 box-border flex h-16 w-full items-center justify-between gap-10 border-b bg-[#174894] bg-fixed px-5 py-3 text-white shadow-md">
       <div className="flex items-center ">
@@ -33,18 +33,20 @@ export default function TopNavBar() {
             <Image src={logo} alt="logo" height={200} width={150} />
           </span>
         </p>
-        <div
-          className="ml-40 flex h-8 w-8 items-center justify-center rounded-full bg-white p-1"
-          onClick={() => {
-            handleSideBar(!showSideBar)
-          }}
-        >
-          {showSideBar ? (
-            <GiHamburgerMenu size={20} color="black" />
-          ) : (
-            <MdKeyboardArrowLeft size={30} color="black" />
-          )}
-        </div>
+        {is_logged_in && (
+          <div
+            className="ml-40 flex h-8 w-8 items-center justify-center rounded-full bg-white p-1"
+            onClick={() => {
+              handleSideBar(!showSideBar)
+            }}
+          >
+            {showSideBar ? (
+              <GiHamburgerMenu size={20} color="black" />
+            ) : (
+              <MdKeyboardArrowLeft size={30} color="black" />
+            )}
+          </div>
+        )}
       </div>
 
       {is_logged_in && (
