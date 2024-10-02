@@ -4,7 +4,6 @@ import { RxCross2 } from "react-icons/rx"
 import Chip from "@/components/ui/customerlist-ui/chip"
 import { MdOutlineModeEdit } from "react-icons/md"
 import { LuArrowRightSquare } from "react-icons/lu"
-import useNavBarStore from "@/store/store"
 import { useEffect, useState } from "react"
 import { VscGraphLine } from "react-icons/vsc"
 import { AiOutlineAccountBook } from "react-icons/ai"
@@ -26,6 +25,9 @@ import useOrgCustomer from "@/store/organization_customer"
 import useAuth from "@/store/user"
 import useFetchOrgCustomers from "@/hooks/useFetchOrgCustomers"
 import ChatConversation from "./DetailTabs/ChatConversation"
+import LoginDetail from "./DetailTabs/LoginDetail"
+import { LOGIN_DETAIL_MOCK_DATA } from "@/constants"
+import CsmActivities from "./DetailTabs/CsmActivities"
 
 ChartJS.register(
   LinearScale,
@@ -117,7 +119,7 @@ const TabList = ({ showDetail, handleChange }: any) => {
     "Overview",
     "Chat conversation",
     "User sentiment",
-    "CHat Support Surveys",
+    "Chat Support Surveys",
     "CSM activities",
     "Support tickets",
     "Login Details",
@@ -271,7 +273,6 @@ const DetailInformation = ({ handleShowDetail, customerInfo }: any) => {
           <RxCross2 size={25} color="gray" />
         </div>
       </div>
-      {/* <CustomerInfo /> */}
       <CustomerDetails customerInfo={customerInfo} />
     </div>
   )
@@ -286,22 +287,21 @@ const ActivityChart = () => {
         label: "Login Activities",
         data: [30, 45, 20, 35, 50, 40], // Sample data
         borderColor: "rgb(252, 205, 42)",
-        backgroundColor: "rgb(252, 205, 42)",
-        fill: true,
+        fill: false,
       },
       {
         label: "Feature 1",
         data: [15, 30, 45, 20, 15, 25], // Sample data
         borderColor: "rgb(52, 121, 40)",
         backgroundColor: "rgb(52, 121, 40)",
-        fill: true,
+        fill: false,
       },
       {
         label: "Feature 2",
         data: [0, 15, 30, 45, 60, 30], // Sample data
         borderColor: "rgb(33, 51, 99)",
         backgroundColor: "rgb(33, 51, 99)",
-        fill: true,
+        fill: false,
       },
     ],
   }
@@ -316,11 +316,6 @@ const ActivityChart = () => {
         },
       },
     },
-    // plugins: {
-    //   legend: {
-    //     position: "right",
-    //   },
-    // },
   }
 
   return (
@@ -332,7 +327,7 @@ const ActivityChart = () => {
 
 export default function CustomerDetailPage() {
   const param = useSearchParams()
-  const { orgCustomers } = useOrgCustomer()
+  const { orgCustomers, setOrgCustomers } = useOrgCustomer()
 
   const customerName = param.get("name")
   const { user_data, access_token } = useAuth()
@@ -342,13 +337,14 @@ export default function CustomerDetailPage() {
 
   const [activeTab, setActiveTab] = useState("Overview")
 
+  const [loginDetailRecords, setLoginDetailRecord] = useState<any>([])
+
   const {
     orgCustomers: refetchRecord,
     loading,
     error,
     refetch,
   } = useFetchOrgCustomers(user_data?.organization, access_token)
-
   useEffect(() => {
     const customer = orgCustomers.customers.find(
       (x: any) => x.name === customerName
@@ -365,7 +361,16 @@ export default function CustomerDetailPage() {
       (x: any) => x.name === customerName
     )
     setCustomerInfo(customer)
+    // setOrgCustomers(refetchRecord)
   }, [refetchRecord?.customers?.length > 0])
+
+  useEffect(() => {
+    const customerLoginDetails = LOGIN_DETAIL_MOCK_DATA.filter(
+      (x: any) => x.hotel === customerName && x.action == "Login"
+    )
+    console.log("customerLoginDetails", customerLoginDetails)
+    setLoginDetailRecord(customerLoginDetails)
+  }, [activeTab === "Login Details"])
 
   const handleShowDetail = () => {
     setShowDetail(!showDetail)
@@ -384,6 +389,10 @@ export default function CustomerDetailPage() {
     SelectedTabView = OverViewDisplay
   } else if (activeTab === "Chat conversation") {
     SelectedTabView = <ChatConversation />
+  } else if (activeTab == "Login Details") {
+    SelectedTabView = <LoginDetail loginDetail={loginDetailRecords} />
+  } else if (activeTab === "CSM activities") {
+    SelectedTabView = <CsmActivities />
   }
 
   if (showDetail) {
