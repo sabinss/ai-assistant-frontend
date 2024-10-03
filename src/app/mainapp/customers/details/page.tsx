@@ -29,6 +29,7 @@ import LoginDetail from "./DetailTabs/LoginDetail"
 import { LOGIN_DETAIL_MOCK_DATA } from "@/constants"
 import CsmActivities from "./DetailTabs/CsmActivities"
 import ChatSupportSurvey from "./DetailTabs/ChatSupportSurvey"
+import SupportTIckets from "./DetailTabs/SupportTickets"
 
 ChartJS.register(
   LinearScale,
@@ -397,6 +398,8 @@ export default function CustomerDetailPage() {
     SelectedTabView = <CsmActivities />
   } else if (activeTab === "Chat Support Surveys") {
     SelectedTabView = <ChatSupportSurvey />
+  } else if (activeTab === "Support tickets") {
+    SelectedTabView = <SupportTIckets />
   }
 
   if (showDetail) {

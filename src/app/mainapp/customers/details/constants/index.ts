@@ -75,4 +75,127 @@ const CUSTOMER_SURVEY = [
   },
 ]
 
-export { CUSTOMER_SURVEY }
+const SUPPORT_TICKETS = [
+  {
+    id: 1,
+    opportunity: "AI-Powered Automation Enhancement",
+    product: "Face recognition checking",
+    feature: "Email",
+    stage: "Appt Scheduled",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/04/31",
+    owner: "jim@test.com",
+    notes:
+      "Leverage AI efficiency and accuracy to automate and optimize repetitive processes, improving efficiency.",
+  },
+  {
+    id: 2,
+    opportunity: "Predictive Model Tuning",
+    product: "Behr Premium Plus Ultra 1-Gallon Interior Paint",
+    feature: "Auto notify",
+    stage: "Qualifying",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/05/21",
+    owner: "jim@test.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving efficiency and accuracy.",
+  },
+  {
+    id: 3,
+    opportunity: "Machine Learning Algorithm Optimization",
+    product: "AI Chat bot for guest support",
+    feature: "Email",
+    stage: "Appt Scheduled",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/06/21",
+    owner: "sarah@test.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving efficiency.",
+  },
+  {
+    id: 4,
+    opportunity: "Natural Language Processing Module",
+    product: "Ryobi 18V ONE+ Cordless Drill/Driver Kit",
+    feature: "Phone",
+    stage: "Appt Scheduled",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/04/22",
+    owner: "sarah@test.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving efficiency and accuracy.",
+  },
+  {
+    id: 5,
+    opportunity: "Data Preprocessing Pipeline",
+    product: "Ryobi 18V ONE+ Cordless Drill/Driver Kit",
+    feature: "Phone",
+    stage: "Contract Sent",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/04/23",
+    owner: "bhattachas@hotmail.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving efficiency.",
+  },
+  {
+    id: 6,
+    opportunity: "AI Model Deployment on Cloud",
+    product: "Ryobi 18V ONE+ Cordless Drill/Driver Kit",
+    feature: "Phone",
+    stage: "Appt Scheduled",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/07/21",
+    owner: "bhattachas@hotmail.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving accuracy.",
+  },
+  {
+    id: 7,
+    opportunity: "Training Data Augmentation",
+    product: "Ryobi 18V ONE+ Cordless Drill/Driver Kit",
+    feature: "Auto notify",
+    stage: "Contract Sent",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/08/21",
+    owner: "jim@test.com",
+    notes:
+      "Leverage AI to automate and improving efficiency by optimizing repetitive processes.",
+  },
+  {
+    id: 8,
+    opportunity: "AI Model Performance Benchmarking",
+    product: "Behr Premium Plus Ultra 1-Gallon Interior Paint",
+    feature: "Auto notify",
+    stage: "Qualifying",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/10/21",
+    owner: "jim@test.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving efficiency.",
+  },
+  {
+    id: 9,
+    opportunity: "Reinforcement Learning Simulation",
+    product: "Behr Premium Plus Ultra 1-Gallon Interior Paint",
+    feature: "Email",
+    stage: "Appt Scheduled",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/04/21",
+    owner: "jim@test.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving efficiency.",
+  },
+  {
+    id: 10,
+    opportunity: "AI Ethics & Bias Testing",
+    product: "Behr Premium Plus Ultra 1-Gallon Interior Paint",
+    feature: "Email",
+    stage: "Qualifying",
+    recorded_date: "2024/04/21",
+    closed_date: "2024/04/21",
+    owner: "jim@test.com",
+    notes:
+      "Leverage AI to automate and optimize repetitive processes, improving accuracy and reducing bias.",
+  },
+]
+
+export { CUSTOMER_SURVEY, SUPPORT_TICKETS }
