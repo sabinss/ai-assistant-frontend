@@ -28,6 +28,9 @@ import ChatConversation from "./DetailTabs/ChatConversation"
 import LoginDetail from "./DetailTabs/LoginDetail"
 import { LOGIN_DETAIL_MOCK_DATA } from "@/constants"
 import CsmActivities from "./DetailTabs/CsmActivities"
+import ChatSupportSurvey from "./DetailTabs/ChatSupportSurvey"
+import SupportTIckets from "./DetailTabs/SupportTickets"
+import UpsellOpportunities from "./DetailTabs/UpsellOpportunities"
 
 ChartJS.register(
   LinearScale,
@@ -124,7 +127,7 @@ const TabList = ({ showDetail, handleChange }: any) => {
     "Support tickets",
     "Login Details",
     "Feature Usage",
-    "Upsell Oppurtunities",
+    "Upsell Opportunities",
   ]
 
   return (
@@ -262,6 +265,7 @@ const CutomerNameInfo = ({ handleShowDetail, customerInfo }: any) => {
     </div>
   )
 }
+
 const DetailInformation = ({ handleShowDetail, customerInfo }: any) => {
   return (
     <div className="col-span-4 border-r-4 border-transparent p-2 shadow-[2px_4px_4px_rgba(0,0,0,0.2)]">
@@ -393,6 +397,12 @@ export default function CustomerDetailPage() {
     SelectedTabView = <LoginDetail loginDetail={loginDetailRecords} />
   } else if (activeTab === "CSM activities") {
     SelectedTabView = <CsmActivities />
+  } else if (activeTab === "Chat Support Surveys") {
+    SelectedTabView = <ChatSupportSurvey />
+  } else if (activeTab === "Support tickets") {
+    SelectedTabView = <SupportTIckets />
+  } else if (activeTab === "Upsell Opportunities") {
+    SelectedTabView = <UpsellOpportunities />
   }
 
   if (showDetail) {
