@@ -9,10 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { CUSTOMER_LIST, CUSTOMER_LIST_STAGES } from "@/app/constants"
 import { CUSTOMER_SURVEY } from "../constants/index"
-import Chip from "@/components/ui/customerlist-ui/chip"
-import Score from "@/components/ui/customerlist-ui/Score"
 import Dropdown from "../../../commoncompnents/DropDown"
 import { useRouter } from "next/navigation"
 import useNavBarStore from "@/store/store"
@@ -41,7 +38,7 @@ const RatingCard = ({ score, color }: { score: number; color: string }) => {
     <div className="mb-4 flex flex-col gap-2">
       {/* Score Rectangle */}
       <div
-        className={`flex h-10 w-20 items-center justify-center ${color} self-start rounded text-xl font-bold text-white`}
+        className={`flex h-8 w-16 items-center justify-center ${color} self-start rounded text-lg font-bold text-white`}
       >
         {score} / 10
       </div>
@@ -64,7 +61,16 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const [selectStage, setStage] = useState("")
   const { handleSideBar } = useNavBarStore()
 
-  const color = circleColors[Math.floor(Math.random() * circleColors.length)]
+  // const color = circleColors[Math.floor(Math.random() * circleColors.length)]
+  let color = ""
+  if (item.rating <= 3) {
+    color = "bg-red-500"
+  } else if (item.rating < 7) {
+    color = "bg-yellow-500"
+  } else {
+    color = "bg-green-500"
+  }
+
   return (
     <TableRow
       onClick={() => {
