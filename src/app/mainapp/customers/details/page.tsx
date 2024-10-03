@@ -30,6 +30,7 @@ import { LOGIN_DETAIL_MOCK_DATA } from "@/constants"
 import CsmActivities from "./DetailTabs/CsmActivities"
 import ChatSupportSurvey from "./DetailTabs/ChatSupportSurvey"
 import SupportTIckets from "./DetailTabs/SupportTickets"
+import UpsellOpportunities from "./DetailTabs/UpsellOpportunities"
 
 ChartJS.register(
   LinearScale,
@@ -126,7 +127,7 @@ const TabList = ({ showDetail, handleChange }: any) => {
     "Support tickets",
     "Login Details",
     "Feature Usage",
-    "Upsell Oppurtunities",
+    "Upsell Opportunities",
   ]
 
   return (
@@ -400,6 +401,8 @@ export default function CustomerDetailPage() {
     SelectedTabView = <ChatSupportSurvey />
   } else if (activeTab === "Support tickets") {
     SelectedTabView = <SupportTIckets />
+  } else if (activeTab === "Upsell Opportunities") {
+    SelectedTabView = <UpsellOpportunities />
   }
 
   if (showDetail) {

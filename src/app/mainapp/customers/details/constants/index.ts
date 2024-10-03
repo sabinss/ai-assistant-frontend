@@ -75,7 +75,7 @@ const CUSTOMER_SURVEY = [
   },
 ]
 
-const SUPPORT_TICKETS = [
+const UPSELL_OPPORTUNITIES = [
   {
     id: 1,
     opportunity: "AI-Powered Automation Enhancement",
@@ -198,4 +198,97 @@ const SUPPORT_TICKETS = [
   },
 ]
 
-export { CUSTOMER_SURVEY, SUPPORT_TICKETS }
+const SUPPORT_TICKETS = [
+  {
+    ticket_no: 1,
+    title: "AI-Powered Automation Enhancement",
+    reported_by: "Jhon doe",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon doe",
+    status: "Pending",
+  },
+  {
+    ticket_no: 2,
+    title: "Predictive Model Tuning",
+    reported_by: "Jhon felix",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "Resolved",
+  },
+  {
+    ticket_no: 3,
+    title: "Machine Learning Algorithm Optimization",
+    reported_by: "Jhon felix",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "Pending",
+  },
+  {
+    ticket_no: 4,
+    title: "Natural Language Processing Module",
+    reported_by: "Stuart reamer",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "In progress",
+  },
+  {
+    ticket_no: 5,
+    title: "Data Preprocessing Pipeline",
+    reported_by: "Jhon felix",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "In progress",
+  },
+  {
+    ticket_no: 6,
+    title: "AI Model Deployment on Cloud",
+    reported_by: "Alison root",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "Not assigned",
+  },
+  {
+    ticket_no: 7,
+    title: "Training Data Augmentation",
+    reported_by: "Alison root",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Stuart reamer",
+    status: "Resolved",
+  },
+  {
+    ticket_no: 8,
+    title: "AI Model Performance Benchmarking",
+    reported_by: "Alison root",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "Resolved",
+  },
+  {
+    ticket_no: 9,
+    title: "AI Ethics & Bias Testing",
+    reported_by: "Andrew cape",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Alison root",
+    status: "In progress",
+  },
+  {
+    ticket_no: 10,
+    title: "Reinforcement Learning Simulation",
+    reported_by: "Stuart reamer",
+    reported_date: "2024/01/12",
+    last_updated: "2 days ago",
+    updated_by: "Jhon felix",
+    status: "Not assigned",
+  },
+]
+
+export { CUSTOMER_SURVEY, UPSELL_OPPORTUNITIES, SUPPORT_TICKETS }
