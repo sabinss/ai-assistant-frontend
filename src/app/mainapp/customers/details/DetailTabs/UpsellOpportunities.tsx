@@ -1,3 +1,4 @@
+"use client"
 import React, { Suspense, useState } from "react"
 import {
   Table,
@@ -7,31 +8,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { SUPPORT_TICKETS } from "../constants/index"
+import { UPSELL_OPPORTUNITIES } from "../constants/index"
 import { useRouter } from "next/navigation"
 
 const tableHeader = [
-  { name: "Ticket No", sortable: false },
-  { name: "Title", sortable: false },
-  { name: "Reported By", sortable: false },
-  { name: "Reported Date", sortable: false },
-  { name: "Last Updated", sortable: false },
-  { name: "Updated By", sortable: false },
-  { name: "Status", sortable: false },
+  { name: "Opportunity", sortable: false },
+  { name: "Product", sortable: false },
+  { name: "Feature", sortable: false },
+  { name: "Note", sortable: false },
+  { name: "Stage", sortable: false },
+  { name: "Recorded Date", sortable: false },
+  { name: "Closed Date", sortable: false },
+  { name: "Owner", sortable: false },
 ]
 
-interface SupportTicket {
-  ticket_no: number
-  title: string
-  reported_by: string
-  reported_date: string
-  last_updated: string
-  updated_by: string
-  status: string
+interface UpsellOpportunity {
+  id: number
+  opportunity: string
+  product: string
+  feature: string
+  notes: string
+  stage: string
+  recorded_date: string
+  closed_date: string
+  owner: string
 }
 
 const MemoizedTableRow = React.memo(
-  ({ item, index }: { item: SupportTicket; index: number }) => {
+  ({ item, index }: { item: UpsellOpportunity; index: number }) => {
     const router = useRouter()
 
     return (
@@ -40,37 +44,37 @@ const MemoizedTableRow = React.memo(
           router.push("/mainapp/customers/details")
           // handleSideBar(true)
         }}
-        key={item.ticket_no}
+        key={item.id}
         className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} w-full cursor-pointer hover:bg-gray-100`}
       >
-        <TableCell className="w-2 break-words py-3">
-          {item.ticket_no}
+        <TableCell className="max-w-20 break-words py-3">
+          {item.opportunity}
         </TableCell>
         <TableCell className="max-w-20 break-words py-3">
-          {item.title}
+          {item.product}
         </TableCell>
+        <TableCell className="w-10 break-words py-3">{item.feature}</TableCell>
+        <TableCell className="w-36 break-words py-3">{item.notes}</TableCell>
         <TableCell className="max-w-20 break-words py-3">
-          {item.reported_by}
-        </TableCell>
-        <TableCell className="w-10 break-words py-3">
-          {item.reported_date}
-        </TableCell>
-        <TableCell className="w-36 break-words py-3">
-          {item.last_updated}
-        </TableCell>
-        <TableCell className="max-w-20 break-words py-3">
-          {item.updated_by}
+          {item.stage}
         </TableCell>
         <TableCell className="max-w-10 break-words py-3">
-          {item.status}
+          {item.closed_date}
+        </TableCell>
+        <TableCell className="max-w-10 break-words py-3">
+          {item.recorded_date}
+        </TableCell>
+        <TableCell className="max-w-24 break-words py-3">
+          {item.owner}
         </TableCell>
       </TableRow>
     )
   }
 )
 
-const SupportTickets = () => {
-  const [SupportTickets, setSupportTickets] = useState(SUPPORT_TICKETS)
+const UpsellOpportunities = () => {
+  const [UpsellOpportunities, setUpsellOpportunities] =
+    useState(UPSELL_OPPORTUNITIES)
   return (
     <div className="w-full">
       <Table className="mt-2 w-full">
@@ -92,19 +96,15 @@ const SupportTickets = () => {
         </TableHeader>
         <Suspense fallback={<div>Loading...</div>}>
           <TableBody className="w-full">
-            {SupportTickets?.length === 0 ? (
+            {UpsellOpportunities?.length === 0 ? (
               <tr>
                 <td colSpan={tableHeader?.length} className="py-3 text-center">
                   No Customer list found
                 </td>
               </tr>
             ) : (
-              SupportTickets?.map((item, index) => (
-                <MemoizedTableRow
-                  key={item?.ticket_no}
-                  item={item}
-                  index={index}
-                />
+              UpsellOpportunities?.map((item, index) => (
+                <MemoizedTableRow key={item?.id} item={item} index={index} />
               ))
             )}
           </TableBody>
@@ -114,4 +114,4 @@ const SupportTickets = () => {
   )
 }
 
-export default SupportTickets
+export default UpsellOpportunities
