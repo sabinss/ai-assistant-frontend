@@ -425,6 +425,13 @@ export default function CustomerDetailPage() {
               }}
             />
             {SelectedTabView}
+            <TabList
+              showDetail={showDetail}
+              handleChange={(tabName: string) => {
+                setActiveTab(tabName)
+              }}
+            />
+            {SelectedTabView}
           </div>
         </div>
       </div>
