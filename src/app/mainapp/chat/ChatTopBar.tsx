@@ -7,15 +7,33 @@ export const TopbarIcons = [{ icon: Info }]
 import { GrAdd } from "react-icons/gr"
 import useAuth from "@/store/user"
 import http from "@/config/http"
+import { IoIosArrowDropdown } from "react-icons/io"
+import { useState } from "react"
 
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
+
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "react-day-picker"
 
 export default function ChatTopbar() {
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
   const { setSessionId } = useChatConfig()
-  console.log({ publicChat })
+
+  const [selectedOption, setSelectedOption] = useState("Product Knowledge")
+
+  const handleSelect = (option: string) => {
+    setSelectedOption(option)
+  }
+
   const { access_token, setChatSession } = useAuth()
   const changeSession = async () => {
     setSessionId(null)
@@ -38,7 +56,7 @@ export default function ChatTopbar() {
   return (
     <div className="flex  w-full flex-col rounded-md bg-muted p-3 ">
       <div className="flex items-center justify-between">
-        <div className="title">
+        <div className="title flex">
           <Image
             src={botImage}
             className="mr-3 inline rounded-full"
@@ -46,7 +64,34 @@ export default function ChatTopbar() {
             height={30}
             width={30}
           />
-          <h2 className="inline text-xl font-bold">Chat with {botName}</h2>
+          {/* <h2 className="inline text-xl font-bold">Chat with ss{botName}</h2> */}
+          <span className="inline text-xl font-bold">Chat about</span>
+          <div className="ml-3 flex ">
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xl font-bold">{selectedOption}</span>{" "}
+                  {/* Display the currently selected option */}
+                  <IoIosArrowDropdown size={25} />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuSeparator />
+                {/* Selecting Product Knowledge */}
+                <DropdownMenuItem
+                  onClick={() => handleSelect("Product Knowledge")}
+                >
+                  Product Knowledge
+                </DropdownMenuItem>
+                {/* Selecting Customer Information */}
+                <DropdownMenuItem
+                  onClick={() => handleSelect("Customer Information")}
+                >
+                  Customer Information
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
         <div
           className=" flex cursor-pointer gap-2  rounded-md border p-2 hover:text-black"
