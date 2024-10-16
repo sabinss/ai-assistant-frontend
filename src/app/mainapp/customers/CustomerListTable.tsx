@@ -8,12 +8,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { CUSTOMER_LIST, CUSTOMER_LIST_STAGES } from "@/app/constants"
+import { CUSTOMER_LIST_STAGES } from "@/app/constants"
 import Chip from "@/components/ui/customerlist-ui/chip"
 import Score from "@/components/ui/customerlist-ui/Score"
 import Dropdown from "../commoncompnents/DropDown"
 import { useRouter } from "next/navigation"
 import useNavBarStore from "@/store/store"
+import useOrgCustomer from "@/store/organization_customer"
+import { timeAgo } from "@/utility"
 
 const tableHeader = [
   { name: "Name", sortable: false },
@@ -28,6 +30,7 @@ const tableHeader = [
 ]
 
 const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
+
 const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const router = useRouter()
   const [selectStage, setStage] = useState("")
@@ -37,36 +40,34 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
   return (
     <TableRow
       onClick={() => {
-        router.push("/mainapp/customers/details")
+        router.push(`/mainapp/customers/details?name=${item.name}`)
         // handleSideBar(true)
       }}
-      key={item.id}
+      key={item._id}
       className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} cursor-pointer hover:bg-gray-100`}
     >
-      <TableCell className="max-w-20 break-words py-3">
-        {item.customerName}
-      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">{item.name}</TableCell>
       <TableCell className="max-w-20 break-words py-3">
         <Chip
-          value={item.health}
+          value={item.health_score}
           otherClasses="bg-green-500 text-white font-bold"
         />
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        <Score score={item.score} otherClasses="" color={color} />
+        <Score score={item.health_score} otherClasses="" color={color} />
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
 
       <TableCell className="max-w-20 break-words py-3">
-        {item.lastSeen}
+        {timeAgo(item.createdAt)}
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        {item.lastTouch}
+        {timeAgo(item.updatedAt)}
       </TableCell>
       <TableCell className="max-w-21 break-words py-3">
         <Dropdown
           options={CUSTOMER_LIST_STAGES}
-          value={item.stage}
+          value={item?.stage ?? "Adopted"}
           onChange={(value) => setStage(value)}
         />
       </TableCell>
@@ -74,10 +75,11 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
   )
 })
 export default function CustomerListTable() {
-  const [customerList, setCustomerList] = useState(CUSTOMER_LIST)
+  const { orgCustomers } = useOrgCustomer()
   const handleSort = (item: any) => {}
+
   return (
-    <div className="relative w-full rounded-md bg-white p-4 text-[#333333]">
+    <div className="relative mb-10 w-full overflow-y-auto rounded-md bg-white p-4 text-[#333333]">
       {/* table filter */}
       {/* table */}
       <Table className="mt-2">
@@ -100,15 +102,15 @@ export default function CustomerListTable() {
         </TableHeader>
         <Suspense fallback={<div>Loading...</div>}>
           <TableBody>
-            {customerList?.length === 0 ? (
+            {orgCustomers?.customers.length === 0 ? (
               <tr>
                 <td colSpan={tableHeader?.length} className="py-3 text-center">
                   No Customer list found
                 </td>
               </tr>
             ) : (
-              CUSTOMER_LIST?.map((item, index) => (
-                <MemoizedTableRow key={item?.id} item={item} index={index} />
+              orgCustomers?.customers?.map((item: any, index) => (
+                <MemoizedTableRow key={item?._id} item={item} index={index} />
               ))
             )}
           </TableBody>
