@@ -349,6 +349,7 @@ export default function CustomerDetailPage() {
     error,
     refetch,
   } = useFetchOrgCustomers(user_data?.organization, access_token)
+
   useEffect(() => {
     const customer = orgCustomers.customers.find(
       (x: any) => x.name === customerName
@@ -392,7 +393,8 @@ export default function CustomerDetailPage() {
   if (activeTab === "Overview") {
     SelectedTabView = OverViewDisplay
   } else if (activeTab === "Chat conversation") {
-    SelectedTabView = <ChatConversation />
+    console.log("customerInfo", customerInfo)
+    SelectedTabView = <ChatConversation customerInfo={customerInfo} />
   } else if (activeTab == "Login Details") {
     SelectedTabView = <LoginDetail loginDetail={loginDetailRecords} />
   } else if (activeTab === "CSM activities") {
@@ -416,6 +418,13 @@ export default function CustomerDetailPage() {
             }}
           />
           <div className={`col-span-8 mx-4 mt-1 `}>
+            <TabList
+              showDetail={showDetail}
+              handleChange={(tabName: string) => {
+                setActiveTab(tabName)
+              }}
+            />
+            {SelectedTabView}
             <TabList
               showDetail={showDetail}
               handleChange={(tabName: string) => {
