@@ -12,6 +12,7 @@ import { useState } from "react"
 
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
+import useApiType from "@/store/apiType"
 
 import {
   DropdownMenu,
@@ -27,11 +28,15 @@ export default function ChatTopbar() {
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
   const { setSessionId } = useChatConfig()
-
-  const [selectedOption, setSelectedOption] = useState("Product Knowledge")
-
+  const { apiType, setApiType } = useApiType()
+  const [selectedOption, setSelectedOption] = useState(apiType)
   const handleSelect = (option: string) => {
     setSelectedOption(option)
+    setApiType(option)
+
+    if (selectedOption !== option) {
+      changeSession()
+    }
   }
 
   const { access_token, setChatSession } = useAuth()
@@ -66,7 +71,7 @@ export default function ChatTopbar() {
           />
           {/* <h2 className="inline text-xl font-bold">Chat with ss{botName}</h2> */}
           <span className="inline text-xl font-bold">Chat about</span>
-          <div className="ml-3 flex ">
+          <div className="ml-1.5 flex pb-1">
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <div className="flex items-center space-x-2">
