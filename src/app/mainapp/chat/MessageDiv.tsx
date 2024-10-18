@@ -114,7 +114,7 @@ export const MessageDiv = ({ msg }: any) => {
   return (
     <div className="content m-2 flex gap-1 text-sm">
       {msg.sender !== "user" ? (
-        <div className="group w-full">
+        <div className="group relative w-full pb-6">
           <div className="timeandname  mb-2 flex items-center justify-start gap-2 text-[#838383] ">
             <Image
               src={bot}
@@ -132,9 +132,9 @@ export const MessageDiv = ({ msg }: any) => {
             animate={{ opacity: 1 }}
             dangerouslySetInnerHTML={{ __html: convertToHTMLList(msg.message) }}
           ></motion.div>
-          <div className="likebuttons py-1">
+          <div className="likebuttons absolute  left-2 py-1 pl-2">
             {msg.id !== "greeting" && msg.id !== "loading" && (
-              <span className=" hidden gap-1 transition-all duration-100 group-hover:flex ">
+              <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
                 {feedback === null && (
                   <>
                     <div
