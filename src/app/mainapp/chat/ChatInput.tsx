@@ -9,6 +9,7 @@ import useNavBarStore from "@/store/store"
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
 import { MOCK_DATA } from "@/constants"
+import useApiType from "@/store/apiType"
 interface ChildProps {
   appendMessage: (newMessage: any) => void
 }
@@ -22,6 +23,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
   const { access_token, user_data, chatSession } = useAuth() // Call useAuth here
   const { isMessageLoading, updateMessageLoading } = useFormStore()
   const { publicChat, publicChatHeaders } = usePublicChat()
+  const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -74,8 +76,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
           { headers: publicChatHeaders }
         )
       } else {
-        console.log("send message 2")
-
         res = await http.post(
           "/conversation/add",
           {
@@ -85,6 +85,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
             chatSession,
             workflowFlag,
             sessionId,
+            apiType,
           },
           { headers: { Authorization: `Bearer ${access_token}` } }
         )
