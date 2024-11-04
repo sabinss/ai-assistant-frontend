@@ -11,7 +11,9 @@ import "react-toastify/dist/ReactToastify.css"
 import useAuth from "@/store/user"
 import useChatConfig from "@/store/useChatSetting"
 import { MOCK_DATA } from "@/constants"
-import { parseMarkup } from "@/utility"
+import { convertMarkupToHtml, parseMarkup, removeHtmlTags } from "@/utility"
+import { marked } from "marked"
+import MarkdownParserComponent from "@/components/shared/MarkdownParserComponent"
 
 export default function Page() {
   const sources = ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]
@@ -55,15 +57,13 @@ export default function Page() {
         console.log("orgData", orgData)
         setOrganizationData(orgData)
         setAdditionalPrompt({
-          primary_assistant_prompt: parseMarkup(
-            orgData.primary_assistant_prompt
-          ),
-          investigation_prompt: parseMarkup(orgData.investigation_prompt),
-          solution_prompt: parseMarkup(orgData.solution_prompt),
-          recommendation_prompt: parseMarkup(orgData.recommendation_prompt),
-          upsell_prompt: parseMarkup(orgData.upsell_prompt),
-          survey_prompt: parseMarkup(orgData.survey_prompt),
-          log_prompt: parseMarkup(orgData.log_prompt),
+          primary_assistant_prompt: marked(orgData.primary_assistant_prompt),
+          investigation_prompt: marked(orgData.investigation_prompt),
+          solution_prompt: marked(orgData.solution_prompt),
+          recommendation_prompt: marked(orgData.recommendation_prompt),
+          upsell_prompt: marked(orgData.upsell_prompt),
+          survey_prompt: marked(orgData.survey_prompt),
+          log_prompt: marked(orgData.log_prompt),
         })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setWorkFlowFlag(orgData?.workflow_engine_enabled)
@@ -74,7 +74,8 @@ export default function Page() {
             : 0
         )
         setApiKey(orgData?.api || "")
-        setPrompt(orgData?.prompt || "")
+        const html: any = marked(orgData?.prompt) // Convert Markdown to HTML
+        setPrompt(html || "")
         setGreeting(orgData?.greeting || "")
       } catch (e) {
         console.log(e)
@@ -89,6 +90,13 @@ export default function Page() {
     setAdditionalPrompt((prev) => ({
       ...prev,
       [field]: event.target.value, // Update the specific field with the new value
+    }))
+  }
+
+  const handleEditorChange = (field, value) => {
+    setAdditionalPrompt((prev) => ({
+      ...prev,
+      [field]: value, // Update the specific field with the new value
     }))
   }
   const handleSubmit = async () => {
@@ -130,6 +138,7 @@ export default function Page() {
         mockData,
         additionalPrompt,
       }
+      console.log("data", data)
       await http.patch("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
@@ -203,12 +212,20 @@ export default function Page() {
 
         <div className="prompt mt-4">
           <h3 className="text-sm">Enter your prompt</h3>
-          <Textarea
+          {/* <Textarea
             className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
             rows={10}
             placeholder="Type your prompt here..."
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
+          /> */}
+          {/* <ReactQuill value={prompt} /> */}
+          <MarkdownParserComponent
+            value={prompt}
+            handleOnChange={(value) => {
+              console.log("111", value)
+              setPrompt(value)
+            }}
           />
           {errors.prompt && (
             <span className="text-red-500">Prompt cannot be empty</span>
@@ -236,7 +253,7 @@ export default function Page() {
           <div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Primary Agent Prompt</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
@@ -244,6 +261,12 @@ export default function Page() {
                 onChange={handleChangeAdditionalPrompt(
                   "primary_assistant_prompt"
                 )}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt?.primary_assistant_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("primary_assistant_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -251,12 +274,18 @@ export default function Page() {
             </div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Investigation Prompt</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
                 value={additionalPrompt.investigation_prompt}
                 onChange={handleChangeAdditionalPrompt("investigation_prompt")}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt.investigation_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("investigation_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -264,12 +293,18 @@ export default function Page() {
             </div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Solution Prompt</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
                 value={additionalPrompt.solution_prompt}
                 onChange={handleChangeAdditionalPrompt("solution_prompt")}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt.solution_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("solution_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -277,12 +312,18 @@ export default function Page() {
             </div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Recommendation</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
                 value={additionalPrompt.recommendation_prompt}
                 onChange={handleChangeAdditionalPrompt("recommendation_prompt")}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt.recommendation_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("recommendation_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -290,12 +331,18 @@ export default function Page() {
             </div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Upsell Prompt</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
                 value={additionalPrompt.upsell_prompt}
                 onChange={handleChangeAdditionalPrompt("upsell_prompt")}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt.upsell_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("upsell_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -303,12 +350,18 @@ export default function Page() {
             </div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Survey Prompt</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
                 value={additionalPrompt.survey_prompt}
                 onChange={handleChangeAdditionalPrompt("survey_prompt")}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt.survey_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("survey_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -316,12 +369,18 @@ export default function Page() {
             </div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Log Prompt</h3>
-              <Textarea
+              {/* <Textarea
                 className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
                 rows={10}
                 placeholder="Type your prompt here..."
                 value={additionalPrompt.log_prompt}
                 onChange={handleChangeAdditionalPrompt("log_prompt")}
+              /> */}
+              <MarkdownParserComponent
+                value={additionalPrompt.log_prompt}
+                handleOnChange={(value) => {
+                  handleEditorChange("log_prompt", value)
+                }}
               />
               {errors.prompt && (
                 <span className="text-red-500">Prompt cannot be empty</span>
@@ -342,3 +401,4 @@ export default function Page() {
     </div>
   )
 }
+// enter your prompt
