@@ -133,7 +133,9 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyPress}
         // disabled={isMessageLoading}
-        placeholder={isMessageLoading ? "......" : "Type your message here..."}
+        placeholder={
+          isMessageLoading ? "Analyzing......" : "Type your message here..."
+        }
         className="flex min-h-9 w-full resize-none overflow-hidden border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
       />
       <div className="m-2 flex w-20 items-center justify-center">
