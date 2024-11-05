@@ -38,11 +38,19 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1 }}
         >
-          <MessageDiv
+          {/* <MessageDiv
             msg={{
               sender: botName,
               message:
                 "Thanks for waiting! If it were a human, you might be waiting for ages just for them to type this. Lucky for you, I'm quicker than a turbo-charged turtle. Just a sec!",
+              time: "",
+              id: "loading",
+            }}
+          /> */}
+          <MessageDiv
+            msg={{
+              sender: botName,
+              message: "Analyzing...",
               time: "",
               id: "loading",
             }}
