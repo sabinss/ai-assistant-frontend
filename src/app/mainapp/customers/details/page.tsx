@@ -4,11 +4,11 @@ import { RxCross2 } from "react-icons/rx"
 import Chip from "@/components/ui/customerlist-ui/chip"
 import { MdOutlineModeEdit } from "react-icons/md"
 import { LuArrowRightSquare } from "react-icons/lu"
-import useNavBarStore from "@/store/store"
 import { useEffect, useState } from "react"
 import { VscGraphLine } from "react-icons/vsc"
 import { AiOutlineAccountBook } from "react-icons/ai"
 import { FaArrowUpRightFromSquare } from "react-icons/fa6"
+import { useSearchParams } from "next/navigation"
 
 import { Line } from "react-chartjs-2"
 import {
@@ -21,6 +21,16 @@ import {
   Title,
 } from "chart.js"
 import { TbDevicesSearch } from "react-icons/tb"
+import useOrgCustomer from "@/store/organization_customer"
+import useAuth from "@/store/user"
+import useFetchOrgCustomers from "@/hooks/useFetchOrgCustomers"
+import ChatConversation from "./DetailTabs/ChatConversation"
+import LoginDetail from "./DetailTabs/LoginDetail"
+import { LOGIN_DETAIL_MOCK_DATA } from "@/constants"
+import CsmActivities from "./DetailTabs/CsmActivities"
+import ChatSupportSurvey from "./DetailTabs/ChatSupportSurvey"
+import SupportTIckets from "./DetailTabs/SupportTickets"
+import UpsellOpportunities from "./DetailTabs/UpsellOpportunities"
 
 ChartJS.register(
   LinearScale,
@@ -74,7 +84,7 @@ const Row = ({ data }: any) => {
   )
 }
 
-const CustomerDetails = () => {
+const CustomerDetails = ({ customerInfo }: any) => {
   return (
     <div className="mt-10">
       <div className="flex justify-between">
@@ -86,29 +96,38 @@ const CustomerDetails = () => {
           <span className="ml-1  text-lg font-bold text-primaryblue">Edit</span>
         </div>
       </div>
-      <Row data={{ key: "Name", value: "John doe" }} />
+      <Row data={{ key: "Name", value: customerInfo.name }} />
       <Row data={{ key: "Contact", value: "John Felix" }} />
-      <Row data={{ key: "Email", value: "john@esewa.com" }} />
-      <Row data={{ key: "ARR", value: "34000" }} />
-      <Row data={{ key: "Renewal date", value: "12/03/2024" }} />
-      <Row data={{ key: "No. of License purchase", value: "1000" }} />
-      <Row data={{ key: "No. of License used", value: "800" }} />
-      <Row data={{ key: "CSM agents", value: "12,3133,22" }} />
+      <Row data={{ key: "Email", value: customerInfo.email }} />
+      <Row data={{ key: "ARR", value: customerInfo.arr }} />
+      <Row data={{ key: "Renewal date", value: customerInfo.updatedAt }} />
+      <Row
+        data={{
+          key: "No. of License purchase",
+          value: customerInfo.licenses_purchased,
+        }}
+      />
+      <Row
+        data={{ key: "No. of License used", value: customerInfo.licenses_used }}
+      />
+      <Row data={{ key: "CSM agents", value: customerInfo.csm_agent }} />
     </div>
   )
 }
 
-const TabList = ({ showDetail }: any) => {
+const TabList = ({ showDetail, handleChange }: any) => {
+  const [activeTab, setActiveTab] = useState("Overview")
+
   const tabList = [
     "Overview",
     "Chat conversation",
     "User sentiment",
-    "CHat Support Surveys",
+    "Chat Support Surveys",
     "CSM activities",
     "Support tickets",
     "Login Details",
     "Feature Usage",
-    "Upsell Oppurtunities",
+    "Upsell Opportunities",
   ]
 
   return (
@@ -116,9 +135,13 @@ const TabList = ({ showDetail }: any) => {
       {tabList.map((tab, index) => {
         return (
           <div
+            onClick={() => {
+              setActiveTab(tab)
+              handleChange(tab)
+            }}
             key={index} // Always include a key prop when rendering lists
             className={`items-cente2 mx-1 mb-2 flex cursor-pointer justify-center rounded-md p-2 ${
-              index === 0 ? "bg-primaryblue" : "bg-gray-400"
+              tab === activeTab ? "bg-primaryblue" : "bg-gray-400"
             }`}
           >
             <span className="font-bold text-white"> {tab}</span>
@@ -129,31 +152,43 @@ const TabList = ({ showDetail }: any) => {
   )
 }
 
-const Metrics = ({ showDetail }: { showDetail?: boolean }) => {
+const Metrics = ({
+  showDetail,
+  customerInfo,
+}: {
+  showDetail?: boolean
+  customerInfo: any
+}) => {
   const metricsRecords = [
     {
       name: "Login count",
       icon: <LuArrowRightSquare color="white" size={30} />,
+      count: customerInfo?.login_count,
     },
     {
       name: "Main feature usage count",
       icon: <TbDevicesSearch color="white" size={30} />,
+      count: customerInfo?.main_feature_usage_count,
     },
     {
       name: "Ticket count",
       icon: <AiOutlineAccountBook color="white" size={30} />,
+      count: customerInfo?.total_ticket_count,
     },
     {
       name: "Open Ticket count",
       icon: <FaArrowUpRightFromSquare color="white" size={30} />,
+      count: customerInfo?.open_ticket_count,
     },
     {
       name: "Close Ticket count",
       icon: <LuArrowRightSquare color="white" size={30} />,
+      count: customerInfo?.closed_ticket_count,
     },
     {
       name: "Escalated Ticket",
       icon: <VscGraphLine color="white" size={30} />,
+      count: customerInfo?.escalated_ticket,
     },
   ]
   return (
@@ -168,7 +203,7 @@ const Metrics = ({ showDetail }: { showDetail?: boolean }) => {
               <span className="mb-3  mb-4 font-bold text-gray-400">
                 {record.name}
               </span>
-              <span>12</span>
+              <span>{record.count}</span>
             </div>
             <div className="flex items-center justify-center rounded-md bg-primaryblue p-2 py-2">
               {record.icon}
@@ -210,11 +245,13 @@ const FilterButton = () => {
   )
 }
 
-const CutomerNameInfo = ({ handleShowDetail }: any) => {
+const CutomerNameInfo = ({ handleShowDetail, customerInfo }: any) => {
   return (
     <div>
       <div>
-        <span className="text-xl font-bold text-primaryblue">Home depot</span>
+        <span className="text-xl font-bold text-primaryblue">
+          {customerInfo?.name}
+        </span>
         <Score score={4} otherClasses="" color={"bg-green-500"} />
       </div>
       <span
@@ -228,7 +265,8 @@ const CutomerNameInfo = ({ handleShowDetail }: any) => {
     </div>
   )
 }
-const DetailInformation = ({ handleShowDetail }: any) => {
+
+const DetailInformation = ({ handleShowDetail, customerInfo }: any) => {
   return (
     <div className="col-span-4 border-r-4 border-transparent p-2 shadow-[2px_4px_4px_rgba(0,0,0,0.2)]">
       <div className="flex items-center justify-end">
@@ -239,8 +277,7 @@ const DetailInformation = ({ handleShowDetail }: any) => {
           <RxCross2 size={25} color="gray" />
         </div>
       </div>
-      {/* <CustomerInfo /> */}
-      <CustomerDetails />
+      <CustomerDetails customerInfo={customerInfo} />
     </div>
   )
 }
@@ -254,22 +291,21 @@ const ActivityChart = () => {
         label: "Login Activities",
         data: [30, 45, 20, 35, 50, 40], // Sample data
         borderColor: "rgb(252, 205, 42)",
-        backgroundColor: "rgb(252, 205, 42)",
-        fill: true,
+        fill: false,
       },
       {
         label: "Feature 1",
         data: [15, 30, 45, 20, 15, 25], // Sample data
         borderColor: "rgb(52, 121, 40)",
         backgroundColor: "rgb(52, 121, 40)",
-        fill: true,
+        fill: false,
       },
       {
         label: "Feature 2",
         data: [0, 15, 30, 45, 60, 30], // Sample data
         borderColor: "rgb(33, 51, 99)",
         backgroundColor: "rgb(33, 51, 99)",
-        fill: true,
+        fill: false,
       },
     ],
   }
@@ -284,11 +320,6 @@ const ActivityChart = () => {
         },
       },
     },
-    // plugins: {
-    //   legend: {
-    //     position: "right",
-    //   },
-    // },
   }
 
   return (
@@ -298,11 +329,82 @@ const ActivityChart = () => {
   )
 }
 
-const CustomerDetailPage = () => {
+export default function CustomerDetailPage() {
+  const param = useSearchParams()
+  const { orgCustomers, setOrgCustomers } = useOrgCustomer()
+
+  const customerName = param.get("name")
+  const { user_data, access_token } = useAuth()
+
+  const [customerInfo, setCustomerInfo] = useState<any>(null)
   const [showDetail, setShowDetail] = useState(false)
+
+  const [activeTab, setActiveTab] = useState("Overview")
+
+  const [loginDetailRecords, setLoginDetailRecord] = useState<any>([])
+
+  const {
+    orgCustomers: refetchRecord,
+    loading,
+    error,
+    refetch,
+  } = useFetchOrgCustomers(user_data?.organization, access_token)
+
+  useEffect(() => {
+    const customer = orgCustomers.customers.find(
+      (x: any) => x.name === customerName
+    )
+    setCustomerInfo(customer)
+  }, [customerName])
+
+  useEffect(() => {
+    refetch()
+  }, [orgCustomers?.customers.length == 0])
+
+  useEffect(() => {
+    const customer = refetchRecord?.customers?.find(
+      (x: any) => x.name === customerName
+    )
+    setCustomerInfo(customer)
+    // setOrgCustomers(refetchRecord)
+  }, [refetchRecord?.customers?.length > 0])
+
+  useEffect(() => {
+    const customerLoginDetails = LOGIN_DETAIL_MOCK_DATA.filter(
+      (x: any) => x.hotel === customerName && x.action == "Login"
+    )
+    console.log("customerLoginDetails", customerLoginDetails)
+    setLoginDetailRecord(customerLoginDetails)
+  }, [activeTab === "Login Details"])
 
   const handleShowDetail = () => {
     setShowDetail(!showDetail)
+  }
+
+  const OverViewDisplay = (
+    <>
+      <Metrics showDetail={showDetail} customerInfo={customerInfo} />
+      <FilterButton />
+      <ActivityChart />
+    </>
+  )
+
+  let SelectedTabView = null
+  if (activeTab === "Overview") {
+    SelectedTabView = OverViewDisplay
+  } else if (activeTab === "Chat conversation") {
+    console.log("customerInfo", customerInfo)
+    SelectedTabView = <ChatConversation customerInfo={customerInfo} />
+  } else if (activeTab == "Login Details") {
+    SelectedTabView = <LoginDetail loginDetail={loginDetailRecords} />
+  } else if (activeTab === "CSM activities") {
+    SelectedTabView = <CsmActivities />
+  } else if (activeTab === "Chat Support Surveys") {
+    SelectedTabView = <ChatSupportSurvey />
+  } else if (activeTab === "Support tickets") {
+    SelectedTabView = <SupportTIckets />
+  } else if (activeTab === "Upsell Opportunities") {
+    SelectedTabView = <UpsellOpportunities />
   }
 
   if (showDetail) {
@@ -310,15 +412,26 @@ const CustomerDetailPage = () => {
       <div className="mx-4 h-screen ">
         <div className="grid  w-full grid-cols-12">
           <DetailInformation
+            customerInfo={customerInfo}
             handleShowDetail={() => {
               handleShowDetail()
             }}
           />
           <div className={`col-span-8 mx-4 mt-1 `}>
-            <TabList showDetail={showDetail} />
-            <Metrics showDetail={showDetail} />
-            <FilterButton />
-            <ActivityChart />
+            <TabList
+              showDetail={showDetail}
+              handleChange={(tabName: string) => {
+                setActiveTab(tabName)
+              }}
+            />
+            {SelectedTabView}
+            <TabList
+              showDetail={showDetail}
+              handleChange={(tabName: string) => {
+                setActiveTab(tabName)
+              }}
+            />
+            {SelectedTabView}
           </div>
         </div>
       </div>
@@ -327,20 +440,24 @@ const CustomerDetailPage = () => {
     return (
       <div className="mx-4 flex h-screen flex-col">
         {/* <div className="grid w-full grid-cols-12"> */}
-        <CutomerNameInfo handleShowDetail={handleShowDetail} />
+        <CutomerNameInfo
+          handleShowDetail={handleShowDetail}
+          customerInfo={customerInfo}
+        />
         <div className={`col-span-12 mt-4`}>
-          <TabList />
-          <Metrics />
-          <FilterButton />
-          {/* </div> */}
+          <TabList
+            handleChange={(tabName: string) => {
+              console.log("tabname", tabName)
+              setActiveTab(tabName)
+            }}
+          />
+          {SelectedTabView}
         </div>
-        <ActivityChart />
       </div>
     )
   }
 }
 
-export default CustomerDetailPage
 {
   /* <div className="mx-2 flex w-1/2 bg-red-400 p-2 border border-gray-300 shadow-lg rounded-lg"> */
 }
