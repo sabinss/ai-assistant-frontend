@@ -8,7 +8,7 @@ import { GrAdd } from "react-icons/gr"
 import useAuth from "@/store/user"
 import http from "@/config/http"
 import { IoIosArrowDropdown } from "react-icons/io"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
@@ -77,26 +77,24 @@ export default function ChatTopbar() {
                 <div className="flex items-center space-x-2">
                   <span className="text-xl font-bold">{selectedOption}</span>{" "}
                   {/* Display the currently selected option */}
-                  {!publicChat && <IoIosArrowDropdown size={25} />}
+                  <IoIosArrowDropdown size={25} />
                 </div>
               </DropdownMenuTrigger>
-              {!publicChat && (
-                <DropdownMenuContent>
-                  <DropdownMenuSeparator />
-                  {/* Selecting Product Knowledge */}
-                  <DropdownMenuItem
-                    onClick={() => handleSelect("Product Knowledge")}
-                  >
-                    Product Knowledge
-                  </DropdownMenuItem>
-                  {/* Selecting Customer Information */}
-                  <DropdownMenuItem
-                    onClick={() => handleSelect("Customer Information")}
-                  >
-                    Customer Information
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              )}
+              <DropdownMenuContent>
+                <DropdownMenuSeparator />
+                {/* Selecting Product Knowledge */}
+                <DropdownMenuItem
+                  onClick={() => handleSelect("Product Knowledge")}
+                >
+                  Product Knowledge
+                </DropdownMenuItem>
+                {/* Selecting Customer Information */}
+                <DropdownMenuItem
+                  onClick={() => handleSelect("Customer Information")}
+                >
+                  Customer Information
+                </DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
