@@ -10,6 +10,8 @@ import { motion } from "framer-motion"
 import useAuth from "@/store/user" // Import useAuth hook
 import usePublicChat from "@/store/public_chat"
 import useNavBarStore from "@/store/store"
+import { marked } from "marked"
+
 export const MessageDiv = ({ msg }: any) => {
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
@@ -49,7 +51,80 @@ export const MessageDiv = ({ msg }: any) => {
 
     return updatedParagraph
   }
+  // function convertToHTMLList(paragraph: any) {
+  //   if (!paragraph) return ""
 
+  //   // Convert numbered (ordered) lists
+  //   const orderedListRegex = /(\d+\.\s)([^\n]+)/g
+  //   let updatedParagraph = paragraph.replace(/\n/g, "") // Remove newline characters for easier processing
+
+  //   // Wrap ordered list items in <li> tags and then in <ol>
+  //   let orderedMatches
+  //   while (
+  //     (orderedMatches = orderedListRegex.exec(updatedParagraph)) !== null
+  //   ) {
+  //     const listItem = `<li>${orderedMatches[2]}</li>`
+  //     updatedParagraph = updatedParagraph.replace(orderedMatches[0], listItem)
+  //   }
+
+  //   if (
+  //     updatedParagraph.includes("<li>") &&
+  //     !updatedParagraph.includes("<ul>")
+  //   ) {
+  //     updatedParagraph = `<ol>${updatedParagraph}</ol>`
+  //   }
+
+  //   // Convert bulleted (unordered) lists
+  //   const unorderedListRegex = /(-\s)([^\n]+)/g
+
+  //   // Wrap unordered list items in <li> tags and then in <ul>
+  //   let unorderedMatches
+  //   while (
+  //     (unorderedMatches = unorderedListRegex.exec(updatedParagraph)) !== null
+  //   ) {
+  //     const listItem = `<li>${unorderedMatches[2]}</li>`
+  //     updatedParagraph = updatedParagraph.replace(unorderedMatches[0], listItem)
+  //   }
+
+  //   if (
+  //     updatedParagraph.includes("<li>") &&
+  //     !updatedParagraph.includes("<ol>")
+  //   ) {
+  //     updatedParagraph = `<ul>${updatedParagraph}</ul>`
+  //   }
+
+  //   // Convert bold (**text**)
+  //   updatedParagraph = updatedParagraph.replace(
+  //     /\*\*(.*?)\*\*/g,
+  //     "<strong>$1</strong>"
+  //   )
+
+  //   // Convert italic (*text*)
+  //   updatedParagraph = updatedParagraph.replace(
+  //     /\*(?!\*)(.*?)\*/g,
+  //     "<em>$1</em>"
+  //   )
+
+  //   // Convert inline code (`code`)
+  //   updatedParagraph = updatedParagraph.replace(/`([^`]+)`/g, "<code>$1</code>")
+
+  //   // Convert links [text](url)
+  //   updatedParagraph = updatedParagraph.replace(
+  //     /\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g,
+  //     '<a href="$2" target="_blank">$1</a>'
+  //   )
+
+  //   return updatedParagraph
+  // }
+  const cleanAndConvertMessage = (message: string) => {
+    // Remove HTML tags
+    const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
+
+    // Convert Markdown to HTML
+    const htmlMessage = marked(strippedMessage)
+
+    return htmlMessage
+  }
   const sendFeedbackToBackend = async (
     feedbackType: "liked" | "disliked",
     id: string
@@ -130,7 +205,9 @@ export const MessageDiv = ({ msg }: any) => {
             className="max-w-[90%] rounded-md border-[#838383] bg-[#F7f7f7] p-3 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            dangerouslySetInnerHTML={{ __html: convertToHTMLList(msg.message) }}
+            dangerouslySetInnerHTML={{
+              __html: cleanAndConvertMessage(msg.message),
+            }}
           ></motion.div>
           <div className="likebuttons absolute  left-2 py-1 pl-2">
             {msg.id !== "greeting" && msg.id !== "loading" && (
