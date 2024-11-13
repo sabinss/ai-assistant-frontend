@@ -77,7 +77,7 @@ export default function ChatTopbar() {
                 <div className="flex items-center space-x-2">
                   <span className="text-xl font-bold">{selectedOption}</span>{" "}
                   {/* Display the currently selected option */}
-                  <IoIosArrowDropdown size={25} />
+                  {!publicChat && <IoIosArrowDropdown size={25} />}
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
