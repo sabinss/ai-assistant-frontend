@@ -105,7 +105,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
       }) // add to frontend
       updateMessageLoading(false)
     } catch (error) {
-      console.log("error", error)
       updateMessageLoading(false)
       appendMessage({
         sender: botName,

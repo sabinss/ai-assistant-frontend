@@ -10,12 +10,13 @@ import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import useAuth from "@/store/user"
 import useChatConfig from "@/store/useChatSetting"
-import { MOCK_DATA } from "@/constants"
 import { parseMarkup } from "@/utility"
 
+import useOrgCustomer from "@/store/organization_customer"
 export default function Page() {
-  const sources = ["gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]
-  const { access_token } = useAuth() // Call useAuth here
+  const sources = ["gpt-4o", "gpt-3.5-turbo", "gpt-4", "gpt-4-1106-preview"]
+  const { access_token, user_data } = useAuth() // Call useAuth here
+  const { setOrgToken, orgToken } = useOrgCustomer()
   const [organizationData, setOrganizationData] = useState<any>(null)
   const [selectedModel, setSelectedModel] = useState("")
   const [temperature, setTemperature] = useState(0)
@@ -33,7 +34,10 @@ export default function Page() {
     survey_prompt: "",
     log_prompt: "",
   })
-
+  const handleCopy = () => {
+    navigator.clipboard.writeText(access_token)
+    alert("Access token copied to clipboard!")
+  }
   // const [workflowFlag, setWorkFlow] = useState(false)
   // const [mockData, setMockData] = useState("")
   const { workflowFlag, mockData, setWorkFlowFlag, setMockData } =
@@ -82,8 +86,25 @@ export default function Page() {
         setIsLoading(false)
       }
     }
+
     getOrgDetails()
   }, [access_token])
+
+  useEffect(() => {
+    async function getOrgToken() {
+      try {
+        console.log("getOrgToken", orgToken)
+        if (!orgToken) {
+          console.log("API called")
+          const res = await http.get("/generate/token", {
+            headers: { Authorization: `Bearer ${access_token}` },
+          })
+          setOrgToken(res.data.token)
+        }
+      } catch (err) {}
+    }
+    getOrgToken()
+  }, [])
 
   const handleChangeAdditionalPrompt = (field: any) => (event: any) => {
     setAdditionalPrompt((prev) => ({
@@ -165,7 +186,6 @@ export default function Page() {
             onChange={(value) => setSelectedModel(value)}
           />
         </div>
-
         <div className="temperature mt-4">
           <p className="mb-4 font-semibold tracking-widest">Temperature</p>
           <RangeSlider
@@ -185,6 +205,23 @@ export default function Page() {
           {errors.apiKey && (
             <span className="text-red-500">API key cannot be empty</span>
           )}
+        </div>
+        <div className="apikeyflex mt-4 flex-col">
+          <h3 className="text-sm text-primary">Organization Token</h3>
+
+          <Textarea
+            className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
+            rows={4}
+            placeholder="Type your Greeting..."
+            value={orgToken}
+          />
+          {/* Copy Button */}
+          <button
+            onClick={handleCopy}
+            className="absolute bottom-0 right-0 top-0 px-3 text-gray-500 hover:text-gray-700"
+          >
+            {/* <FiCopy size={20} />sfsd */}sdfsdfd
+          </button>
         </div>
 
         <div className="prompt mt-4">

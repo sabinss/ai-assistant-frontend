@@ -1,28 +1,34 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { create } from "zustand"
+import { persist } from "zustand/middleware"
 
 type UserData = {
-  email: string;
-  user_id: string;
-  organization: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  status: string;
-};
+  email: string
+  user_id: string
+  organization: string
+  first_name: string
+  last_name: string
+  role: string
+  status: string
+}
 
 type UserStore = {
-  _hasHydrated: boolean;
-  setHasHydrated: (state: boolean) => void;
-  is_logged_in: boolean | undefined;
-  user_data: UserData | null;
-  access_token: string | null;
-  loginUser: (user_data: UserData, access_token: string, rolePermission: string[], chatSession: string) => void;
-  logoutUser: () => void;
-  rolePermission: string[];
-  chatSession: string;
-  setChatSession: (chatSession: string) => void;
-};
+  _hasHydrated: boolean
+  setHasHydrated: (state: boolean) => void
+  is_logged_in: boolean | undefined
+  user_data: UserData | null
+  access_token: string | null
+  loginUser: (
+    user_data: UserData,
+    access_token: string,
+    rolePermission: string[],
+    chatSession: string
+  ) => void
+  logoutUser: () => void
+  rolePermission: string[]
+  chatSession: string
+  setChatSession: (chatSession: string) => void
+  setOrgToken: (token: string) => void
+}
 
 const useAuth = create(
   persist<UserStore>(
@@ -31,14 +37,19 @@ const useAuth = create(
       setHasHydrated: (state) => {
         set({
           _hasHydrated: state,
-        });
+        })
       },
-      chatSession: '',
+      chatSession: "",
       rolePermission: [],
       is_logged_in: undefined,
       user_data: null,
       access_token: null,
-      loginUser: (user_data: UserData, access_token: string, rolePermission: string[], chatSession: string) => {
+      loginUser: (
+        user_data: UserData,
+        access_token: string,
+        rolePermission: string[],
+        chatSession: string
+      ) => {
         set((state) => ({
           ...state,
           is_logged_in: true,
@@ -46,8 +57,9 @@ const useAuth = create(
           access_token,
           rolePermission,
           chatSession,
-        }));
+        }))
       },
+
       logoutUser: () => {
         set((state) => ({
           ...state,
@@ -55,23 +67,23 @@ const useAuth = create(
           user_data: null,
           access_token: null,
           rolePermission: [],
-          chatSession: '',
-        }));
+          chatSession: "",
+        }))
       },
       setChatSession: (chatSession: string) => {
         set((state) => ({
           ...state,
           chatSession,
-        }));
+        }))
       },
     }),
     {
-      name: 'agile-user-data', // unique name for the storage
+      name: "agile-user-data", // unique name for the storage
       onRehydrateStorage: () => (state) => {
-        state.setHasHydrated(true);
+        state.setHasHydrated(true)
       },
     }
   )
-);
+)
 
-export default useAuth;
+export default useAuth

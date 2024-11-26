@@ -117,13 +117,17 @@ export const MessageDiv = ({ msg }: any) => {
   //   return updatedParagraph
   // }
   const cleanAndConvertMessage = (message: string) => {
-    // Remove HTML tags
-    const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
+    if (message) {
+      // Remove HTML tags
+      const strippedMessage = message?.replace(/<\/?[^>]+(>|$)/g, "")
 
-    // Convert Markdown to HTML
-    const htmlMessage = marked(strippedMessage)
+      // Convert Markdown to HTML
+      const htmlMessage = marked(strippedMessage)
 
-    return htmlMessage
+      return htmlMessage
+    } else {
+      return ""
+    }
   }
   const sendFeedbackToBackend = async (
     feedbackType: "liked" | "disliked",
