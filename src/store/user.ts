@@ -27,7 +27,6 @@ type UserStore = {
   rolePermission: string[]
   chatSession: string
   setChatSession: (chatSession: string) => void
-  setOrgToken: (token: string) => void
 }
 
 const useAuth = create(
