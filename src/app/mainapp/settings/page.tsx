@@ -34,10 +34,7 @@ export default function Page() {
     survey_prompt: "",
     log_prompt: "",
   })
-  const handleCopy = () => {
-    navigator.clipboard.writeText(access_token)
-    alert("Access token copied to clipboard!")
-  }
+
   // const [workflowFlag, setWorkFlow] = useState(false)
   // const [mockData, setMockData] = useState("")
   const { workflowFlag, mockData, setWorkFlowFlag, setMockData } =
@@ -47,7 +44,6 @@ export default function Page() {
     prompt: false,
     greeting: false,
   })
-
   useEffect(() => {
     async function getOrgDetails() {
       try {
@@ -93,14 +89,10 @@ export default function Page() {
   useEffect(() => {
     async function getOrgToken() {
       try {
-        console.log("getOrgToken", orgToken)
-        if (!orgToken) {
-          console.log("API called")
-          const res = await http.get("/generate/token", {
-            headers: { Authorization: `Bearer ${access_token}` },
-          })
-          setOrgToken(res.data.token)
-        }
+        const res = await http.get("/generate/token", {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        setOrgToken(res.data.token)
       } catch (err) {}
     }
     getOrgToken()
@@ -215,13 +207,6 @@ export default function Page() {
             placeholder="Type your Greeting..."
             value={orgToken}
           />
-          {/* Copy Button */}
-          <button
-            onClick={handleCopy}
-            className="absolute bottom-0 right-0 top-0 px-3 text-gray-500 hover:text-gray-700"
-          >
-            {/* <FiCopy size={20} />sfsd */}sdfsdfd
-          </button>
         </div>
 
         <div className="prompt mt-4">
