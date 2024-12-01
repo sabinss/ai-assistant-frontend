@@ -206,7 +206,7 @@ export const MessageDiv = ({ msg }: any) => {
             <span>{msg.time}</span>
           </div>
           <motion.div
-            className="max-w-[90%] rounded-md border-[#838383] bg-[#F7f7f7] p-3 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            className="max-w-[90%] rounded-md border-[#838383] bg-[#F7f7f7] p-5 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             dangerouslySetInnerHTML={{
