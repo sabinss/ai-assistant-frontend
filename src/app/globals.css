@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @import url("../../styles/theme.css");
+ol {
+  list-style-type: decimal;
+}
 @layer base {
   :root {
     --background: 0 0% 100%;
