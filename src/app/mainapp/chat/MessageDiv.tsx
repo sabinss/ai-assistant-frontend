@@ -206,7 +206,7 @@ export const MessageDiv = ({ msg }: any) => {
             <span>{msg.time}</span>
           </div>
           <motion.div
-            className="max-w-[90%] rounded-md border-[#838383] bg-[#F7f7f7] p-5 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            className="ml-4 max-w-[90%] space-y-4 rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]" // Add space or extra padding if needed
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             dangerouslySetInnerHTML={{
