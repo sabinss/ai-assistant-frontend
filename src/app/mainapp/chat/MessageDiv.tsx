@@ -51,80 +51,62 @@ export const MessageDiv = ({ msg }: any) => {
 
     return updatedParagraph
   }
-  // function convertToHTMLList(paragraph: any) {
-  //   if (!paragraph) return ""
 
-  //   // Convert numbered (ordered) lists
-  //   const orderedListRegex = /(\d+\.\s)([^\n]+)/g
-  //   let updatedParagraph = paragraph.replace(/\n/g, "") // Remove newline characters for easier processing
+  const message = `Here's a Markdown table comparing the top 3 cloud service providers, focusing on features like storage, cost, and scalability:
 
-  //   // Wrap ordered list items in <li> tags and then in <ol>
-  //   let orderedMatches
-  //   while (
-  //     (orderedMatches = orderedListRegex.exec(updatedParagraph)) !== null
-  //   ) {
-  //     const listItem = `<li>${orderedMatches[2]}</li>`
-  //     updatedParagraph = updatedParagraph.replace(orderedMatches[0], listItem)
+\`\`\`markdown
+| Feature       | Amazon Web Services (AWS) | Microsoft Azure        | Google Cloud Platform (GCP) |
+|---------------|----------------------------|------------------------|-----------------------------|
+| **Storage**   | Amazon S3, EBS, Glacier    | Azure Blob Storage, Azure Files | Google Cloud Storage, Persistent Disk |
+| **Cost**      | Pay-as-you-go, Reserved Instances, Spot Instances | Pay-as-you-go, Reserved VM Instances | Pay-as-you-go, Sustained Use Discounts |
+| **Scalability** | Auto Scaling, Elastic Load Balancing | Azure Autoscale, Load Balancer | Google Kubernetes Engine, Load Balancing |
+| **Compute**   | EC2, Lambda, ECS           | Virtual Machines, Azure Functions | Compute Engine, App Engine |
+| **Networking**| VPC, Direct Connect       | Virtual Network, ExpressRoute | VPC, Cloud Interconnect |
+| **Security**  | IAM, AWS Shield, KMS       | Azure Active Directory, Security Center | IAM, Cloud Security Command Center |
+| **Machine Learning** | SageMaker, Comprehend | Azure Machine Learning, Cognitive Services | AI Platform, AutoML |
+| **Global Reach** | 25 regions, 80+ availability zones | 60+ regions, 200+ data centers | 35 regions, 100+ zones |
+\`\`\`
+
+This table provides a high-level comparison of the key features offered by Amazon Web Services (AWS), Microsoft Azure, and Google Cloud Platform (GCP). Each provider offers a range of services tailored to different needs, with varying strengths in areas such as storage, cost management, and scalability.`
+
+  // const cleanAndConvertMessage = (message: string) => {
+  //   if (message) {
+  //     // Remove HTML tags
+  //     // const strippedMessage = message?.replace(/<\/?[^>]+(>|$)/g, "")
+
+  //     // Convert Markdown to HTML
+  //     const sanitizedMessage = message.replace(/\\`/g, "`")
+  //     const htmlMessage = marked(sanitizedMessage)
+
+  //     return htmlMessage
+  //   } else {
+  //     return ""
   //   }
-
-  //   if (
-  //     updatedParagraph.includes("<li>") &&
-  //     !updatedParagraph.includes("<ul>")
-  //   ) {
-  //     updatedParagraph = `<ol>${updatedParagraph}</ol>`
-  //   }
-
-  //   // Convert bulleted (unordered) lists
-  //   const unorderedListRegex = /(-\s)([^\n]+)/g
-
-  //   // Wrap unordered list items in <li> tags and then in <ul>
-  //   let unorderedMatches
-  //   while (
-  //     (unorderedMatches = unorderedListRegex.exec(updatedParagraph)) !== null
-  //   ) {
-  //     const listItem = `<li>${unorderedMatches[2]}</li>`
-  //     updatedParagraph = updatedParagraph.replace(unorderedMatches[0], listItem)
-  //   }
-
-  //   if (
-  //     updatedParagraph.includes("<li>") &&
-  //     !updatedParagraph.includes("<ol>")
-  //   ) {
-  //     updatedParagraph = `<ul>${updatedParagraph}</ul>`
-  //   }
-
-  //   // Convert bold (**text**)
-  //   updatedParagraph = updatedParagraph.replace(
-  //     /\*\*(.*?)\*\*/g,
-  //     "<strong>$1</strong>"
-  //   )
-
-  //   // Convert italic (*text*)
-  //   updatedParagraph = updatedParagraph.replace(
-  //     /\*(?!\*)(.*?)\*/g,
-  //     "<em>$1</em>"
-  //   )
-
-  //   // Convert inline code (`code`)
-  //   updatedParagraph = updatedParagraph.replace(/`([^`]+)`/g, "<code>$1</code>")
-
-  //   // Convert links [text](url)
-  //   updatedParagraph = updatedParagraph.replace(
-  //     /\[([^\]]+)\]\((https?:\/\/[^\s]+)\)/g,
-  //     '<a href="$2" target="_blank">$1</a>'
-  //   )
-
-  //   return updatedParagraph
   // }
   const cleanAndConvertMessage = (message: string) => {
     if (message) {
-      // Remove HTML tags
-      const strippedMessage = message?.replace(/<\/?[^>]+(>|$)/g, "")
+      try {
+        // Remove HTML tags if needed (optional)
+        const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
 
-      // Convert Markdown to HTML
-      const htmlMessage = marked(strippedMessage)
+        // Detect and extract the Markdown from the code block
+        const codeBlockRegex = /```markdown([\s\S]*?)```/
+        const match = strippedMessage.match(codeBlockRegex)
 
-      return htmlMessage
+        let contentToParse = strippedMessage
+        if (match) {
+          // Use only the content inside the code block
+          contentToParse = match[1].trim()
+        }
+
+        // Convert Markdown to HTML
+        const htmlMessage = marked(contentToParse)
+
+        return htmlMessage
+      } catch (error) {
+        console.error("Error parsing Markdown:", error)
+        return "Error parsing content."
+      }
     } else {
       return ""
     }
