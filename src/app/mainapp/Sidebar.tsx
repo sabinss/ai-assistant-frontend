@@ -6,11 +6,12 @@ import {
   MessageSquareMore,
   Users,
   TrendingUp,
-  Settings,
   Info,
   LogOut,
   MessageCircleMore,
   UserRound,
+  Settings,
+  Cog,
 } from "lucide-react"
 import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
@@ -60,6 +61,11 @@ function getNavLinks(rolePermission) {
       icon: Settings,
     },
     {
+      name: "Configuration",
+      path: "/mainapp/configuration",
+      icon: Cog,
+    },
+    {
       name: "Organization",
       path: "/mainapp/organization",
       icon: TrendingUp,
@@ -104,7 +110,7 @@ function getNavLinks(rolePermission) {
 function Navbar() {
   const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
   const { user_data, rolePermission } = useAuth()
-
+  console.log("rolePermission", rolePermission)
   useEffect(() => {
     console.log({ rolePermission })
 

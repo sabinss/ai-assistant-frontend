@@ -209,7 +209,7 @@ export default function Page() {
           />
         </div>
 
-        <div className="prompt mt-4">
+        {/* <div className="prompt mt-4">
           <h3 className="text-sm">Enter your Greeting</h3>
           <Textarea
             className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.greeting ? "border-red-500" : ""}`}
@@ -221,9 +221,9 @@ export default function Page() {
           {errors.greeting && (
             <span className="text-red-500">Greeting cannot be empty</span>
           )}
-        </div>
+        </div> */}
 
-        <div className="prompt mt-4">
+        {/* <div className="prompt mt-4">
           <h3 className="text-sm">Enter your prompt</h3>
           <Textarea
             className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7] ${errors.prompt ? "border-red-500" : ""}`}
@@ -235,7 +235,7 @@ export default function Page() {
           {errors.prompt && (
             <span className="text-red-500">Prompt cannot be empty</span>
           )}
-        </div>
+        </div> */}
 
         <div className="w-full"></div>
 
@@ -254,7 +254,8 @@ export default function Page() {
             Use support workflow
           </label>
         </div>
-        {workflowFlag && (
+        {/* workflowFlag */}
+        {false && (
           <div>
             <div className="prompt mt-4">
               <h3 className="text-sm">Primary Agent Prompt</h3>
