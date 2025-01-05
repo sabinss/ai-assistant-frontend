@@ -58,6 +58,7 @@ export default function ChatTopbar() {
     }
   }
   const { botName } = useNavBarStore()
+  console.log("publicChat", publicChat)
   return (
     <div className="flex  w-full flex-col rounded-md bg-muted p-3 ">
       <div className="flex items-center justify-between">
@@ -70,32 +71,36 @@ export default function ChatTopbar() {
             width={30}
           />
           {/* <h2 className="inline text-xl font-bold">Chat with ss{botName}</h2> */}
-          <span className="inline text-xl font-bold">Chat about</span>
+          <span className="inline text-xl font-bold">
+            Chat about {publicChat && "Product Knowledge"}
+          </span>
           <div className="ml-1.5 flex pb-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl font-bold">{selectedOption}</span>{" "}
-                  {/* Display the currently selected option */}
-                  {!publicChat && <IoIosArrowDropdown size={25} />}
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuSeparator />
-                {/* Selecting Product Knowledge */}
-                <DropdownMenuItem
-                  onClick={() => handleSelect("Product Knowledge")}
-                >
-                  Product Knowledge
-                </DropdownMenuItem>
-                {/* Selecting Customer Information */}
-                <DropdownMenuItem
-                  onClick={() => handleSelect("Customer Information")}
-                >
-                  Customer Information
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {!publicChat && (
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xl font-bold">{selectedOption}</span>{" "}
+                    {/* Display the currently selected option */}
+                    {!publicChat && <IoIosArrowDropdown size={25} />}
+                  </div>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuSeparator />
+                  {/* Selecting Product Knowledge */}
+                  <DropdownMenuItem
+                    onClick={() => handleSelect("Product Knowledge")}
+                  >
+                    Product Knowledge
+                  </DropdownMenuItem>
+                  {/* Selecting Customer Information */}
+                  <DropdownMenuItem
+                    onClick={() => handleSelect("Customer Information")}
+                  >
+                    Customer Information
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
         <div
