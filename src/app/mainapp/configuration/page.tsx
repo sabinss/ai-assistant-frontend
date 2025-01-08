@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import useOrgCustomer from "@/store/organization_customer"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+
 const Accordion = ({ title, children, isOpen, onToggle, savePrompts }: any) => (
   <div className="mb-4 rounded border border-gray-300">
     <div
@@ -57,6 +58,9 @@ const Configuration = () => {
     customer_outreach_prompt: "",
     data_agent_prompt: "",
     email_outreach: "",
+    schema_prompt: "",
+    abstract_refinement_prompt: "",
+    nltosql_prompt: "",
   })
   const [selectedModel, setSelectedModel] = useState("")
   const [greeting, setGreeting] = useState("")
@@ -81,6 +85,10 @@ const Configuration = () => {
           customer_outreach_prompt: orgData.customer_outreach_prompt || "",
           data_agent_prompt: orgData.data_agent_prompt || "",
           email_reply_prompt: orgData.email_reply_prompt || "",
+          prompt: prompt,
+          nltosql_prompt: orgData?.nltosql_prompt,
+          schema_prompt: orgData?.schema_prompt,
+          abstract_refinement_prompt: orgData?.abstract_refinement_prompt,
         })
         setPrompt(orgData?.prompt || "")
         setApiKey(orgData?.api || "")
@@ -146,6 +154,9 @@ const Configuration = () => {
       }),
       ...(from === "customer_insights" && {
         data_agent_prompt: additionalPrompt.data_agent_prompt,
+        nltosql_prompt: additionalPrompt.nltosql_prompt,
+        schema_prompt: additionalPrompt.schema_prompt,
+        abstract_refinement_prompt: additionalPrompt.abstract_refinement_prompt,
       }),
       ...(from === "email_outreach" && {
         email_reply_prompt: additionalPrompt.email_reply_prompt || "",
@@ -170,16 +181,6 @@ const Configuration = () => {
         savePrompts={() => savePrompts("support_workflow")}
       >
         <ul className="list-none pl-5">
-          <div className="prompt mt-4">
-            <h3 className="text-sm">Enter your Greeting</h3>
-            <Textarea
-              className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
-              rows={10}
-              placeholder="Type your Greeting..."
-              value={greeting}
-              onChange={(e) => setGreeting(e.target.value)}
-            />
-          </div>
           <li className="prompt mt-4">
             <h3 className="text-sm">Enter your Greeting</h3>
             <Textarea
@@ -232,6 +233,16 @@ const Configuration = () => {
               onChange={handleChangeAdditionalPrompt("log_prompt")}
             />
           </li>
+          <li className="prompt mt-4">
+            <h3 className="text-sm">Internal Solution Prompt</h3>
+            <Textarea
+              className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
+              rows={10}
+              placeholder="Type your prompt here..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+            />
+          </li>
         </ul>
       </Accordion>
 
@@ -247,13 +258,35 @@ const Configuration = () => {
       >
         <ul className="list-none pl-5">
           <li className="prompt mt-4">
-            <h3 className="text-sm">Query Prompt</h3>
+            <h3 className="text-sm">Schema</h3>
             <Textarea
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
               rows={10}
               placeholder="Type your prompt here..."
-              value={additionalPrompt.data_agent_prompt}
-              onChange={handleChangeAdditionalPrompt("data_agent_prompt")}
+              value={additionalPrompt.schema_prompt}
+              onChange={handleChangeAdditionalPrompt("schema_prompt")}
+            />
+          </li>
+          <li className="prompt mt-4">
+            <h3 className="text-sm">Abstract refinement prompt</h3>
+            <Textarea
+              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+              rows={10}
+              placeholder="Type your prompt here..."
+              value={additionalPrompt.abstract_refinement_prompt}
+              onChange={handleChangeAdditionalPrompt(
+                "abstract_refinement_prompt"
+              )}
+            />
+          </li>
+          <li className="prompt mt-4">
+            <h3 className="text-sm">NLtoSQL Prompt</h3>
+            <Textarea
+              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+              rows={10}
+              placeholder="Type your prompt here..."
+              value={additionalPrompt.nltosql_prompt}
+              onChange={handleChangeAdditionalPrompt("nltosql_prompt")}
             />
           </li>
         </ul>
