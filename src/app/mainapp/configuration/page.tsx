@@ -90,6 +90,7 @@ const Configuration = () => {
           schema_prompt: orgData?.schema_prompt,
           abstract_refinement_prompt: orgData?.abstract_refinement_prompt,
         })
+        console.log("orgData", orgData)
         setPrompt(orgData?.prompt || "")
         setApiKey(orgData?.api || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
@@ -114,7 +115,6 @@ const Configuration = () => {
   }
   const handleSubmit = async (data: any) => {
     try {
-      console.log("final data", data)
       setIsLoading(true)
       const response = await http.patch(
         "/organization",
@@ -187,7 +187,7 @@ const Configuration = () => {
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
               rows={10}
               placeholder="Type your Greeting..."
-              value={additionalPrompt.primary_assistant_prompt}
+              value={greeting}
               onChange={(e) => setGreeting(e.target.value)}
             />
           </li>
