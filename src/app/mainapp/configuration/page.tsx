@@ -48,10 +48,11 @@ const Configuration = () => {
   const { setOrgToken } = useOrgCustomer()
   const [activeAccordion, setActiveAccordion] = useState("Support Workflow")
   const [temperature, setTemperature] = useState(0)
+
   const [additionalPrompt, setAdditionalPrompt] = useState<any>({
-    primary_assistant_prompt: "",
+    primary_prompt: "",
     solution_prompt: "",
-    recommendation_prompt: "",
+    followup_prompt: "",
     upsell_prompt: "",
     survey_prompt: "",
     log_prompt: "",
@@ -61,6 +62,7 @@ const Configuration = () => {
     schema_prompt: "",
     abstract_refinement_prompt: "",
     nltosql_prompt: "",
+    internal_solution_prompt: "",
   })
   const [selectedModel, setSelectedModel] = useState("")
   const [greeting, setGreeting] = useState("")
@@ -75,23 +77,23 @@ const Configuration = () => {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
+        console.log("orgData", res)
         setAdditionalPrompt({
-          primary_assistant_prompt: orgData.primary_assistant_prompt || "",
+          primary_assistant_prompt: orgData.primary_prompt || "",
           solution_prompt: orgData.solution_prompt || "",
-          recommendation_prompt: orgData.recommendation_prompt || "",
+          followup_prompt: orgData.followup_prompt || "",
           upsell_prompt: orgData.upsell_prompt || "",
           survey_prompt: orgData.survey_prompt || "",
           log_prompt: orgData.log_prompt || "",
           customer_outreach_prompt: orgData.customer_outreach_prompt || "",
           data_agent_prompt: orgData.data_agent_prompt || "",
           email_reply_prompt: orgData.email_reply_prompt || "",
-          prompt: prompt,
+          internal_solution_prompt: orgData.internal_solution_prompt,
           nltosql_prompt: orgData?.nltosql_prompt,
           schema_prompt: orgData?.schema_prompt,
           abstract_refinement_prompt: orgData?.abstract_refinement_prompt,
         })
-        console.log("orgData", orgData)
-        setPrompt(orgData?.prompt || "")
+        setPrompt(orgData?.internal_solution_prompt || "")
         setApiKey(orgData?.api || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setGreeting(orgData?.greeting)
@@ -142,15 +144,16 @@ const Configuration = () => {
       console.log("Orgnaization update error", err)
     }
   }
+
   const savePrompts = async (from: string) => {
     const data = {
       ...(from === "support_workflow" && {
         greeting,
-        primary_assistant_prompt: additionalPrompt.primary_assistant_prompt,
+        primary_assistant_prompt: additionalPrompt.primary_prompt,
         solution_prompt: additionalPrompt.solution_prompt,
-        recommendation_prompt: additionalPrompt.recommendation_prompt,
-        log_prompt: additionalPrompt.log_prompt,
-        prompt,
+        recommendation_prompt: additionalPrompt.followup_prompt,
+        // log_prompt: additionalPrompt.log_prompt,
+        internal_solution_prompt: additionalPrompt.internal_solution_prompt,
       }),
       ...(from === "customer_insights" && {
         data_agent_prompt: additionalPrompt.data_agent_prompt,
@@ -219,8 +222,8 @@ const Configuration = () => {
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
               rows={10}
               placeholder="Type your prompt here..."
-              value={additionalPrompt.recommendation_prompt}
-              onChange={handleChangeAdditionalPrompt("recommendation_prompt")}
+              value={additionalPrompt.followup_prompt}
+              onChange={handleChangeAdditionalPrompt("followup_prompt")}
             />
           </li>
           {/* <li className="prompt mt-4">
@@ -239,8 +242,10 @@ const Configuration = () => {
               className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
               rows={10}
               placeholder="Type your prompt here..."
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              value={additionalPrompt.internal_solution_prompt}
+              onChange={(e) =>
+                handleChangeAdditionalPrompt("internal_solution_prompt")
+              }
             />
           </li>
         </ul>
