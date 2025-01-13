@@ -223,7 +223,7 @@ const Configuration = () => {
               onChange={handleChangeAdditionalPrompt("recommendation_prompt")}
             />
           </li>
-          <li className="prompt mt-4">
+          {/* <li className="prompt mt-4">
             <h3 className="text-sm">Log Prompt</h3>
             <Textarea
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
@@ -232,7 +232,7 @@ const Configuration = () => {
               value={additionalPrompt.log_prompt}
               onChange={handleChangeAdditionalPrompt("log_prompt")}
             />
-          </li>
+          </li> */}
           <li className="prompt mt-4">
             <h3 className="text-sm">Internal Solution Prompt</h3>
             <Textarea
