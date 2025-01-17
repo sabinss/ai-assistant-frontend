@@ -12,7 +12,6 @@ export default function TopNavBar() {
   const { isCollapsed, setOpen, setCollapse, showSideBar, handleSideBar } =
     useNavBarStore()
   const { is_logged_in } = useAuth()
-  console.log("is_logged_in", is_logged_in)
   return (
     <div className="nav fixed top-0 z-10 box-border flex h-16 w-full items-center justify-between gap-10 border-b bg-[#174894] bg-fixed px-5 py-3 text-white shadow-md">
       <div className="flex items-center ">
