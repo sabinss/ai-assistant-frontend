@@ -209,10 +209,8 @@ const Configuration = () => {
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
               rows={10}
               placeholder="Type your prompt here..."
-              value={additionalPrompt.primary_assistant_prompt}
-              onChange={handleChangeAdditionalPrompt(
-                "primary_assistant_prompt"
-              )}
+              value={additionalPrompt.primary_prompt}
+              onChange={handleChangeAdditionalPrompt("primary_prompt")}
             />
           </li>
           <li className="prompt mt-4">

@@ -1,9 +1,9 @@
-import { Suspense } from 'react'
-import Wrapper from "./wrapper";
+import { Suspense } from "react"
+import Wrapper from "./wrapper"
 export default function Page() {
-    return (
-        <Suspense>
-            <Wrapper />
-        </Suspense>
-    )
+  return (
+    <Suspense>
+      <Wrapper />
+    </Suspense>
+  )
 }

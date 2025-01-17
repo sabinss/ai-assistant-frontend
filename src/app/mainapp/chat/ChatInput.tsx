@@ -25,6 +25,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
+  const [publicChatReponsePayload, setPublicChatResponse] = useState({
+    user_email: null,
+    customer_id: null,
+  })
 
   useEffect(() => {
     async function getOrgDetails() {
@@ -57,7 +61,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
 
   const sendMessagetoBackend = async (query: string) => {
     try {
-      console.log("send message 1", sessionId)
+      console.log("send message 1", sessionId, publicChatReponsePayload)
       let res: any
       updateMessageLoading(true)
       appendMessage({ sender: "user", message, time: getClockTime(), id: "" }) // Add the message to the chat
@@ -71,10 +75,24 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
           {
             //adding to our backend question and answer
             question: query,
+            user_email: publicChatReponsePayload.user_email,
+            customer_id: publicChatReponsePayload.customer_id,
             // answer
           },
           { headers: publicChatHeaders }
         )
+        console.log(
+          "public chat response",
+          res.data.user_email,
+          res.data.customer_id
+        )
+        if (res.data) {
+          setPublicChatResponse((prevState) => ({
+            ...prevState,
+            user_email: res.data.user_email || null,
+            customer_id: res.data.customer_id || null,
+          }))
+        }
       } else {
         res = await http.post(
           "/conversation/add",
