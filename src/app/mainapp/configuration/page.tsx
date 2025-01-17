@@ -63,6 +63,8 @@ const Configuration = () => {
     abstract_refinement_prompt: "",
     nltosql_prompt: "",
     internal_solution_prompt: "",
+    outreach_email_generation_prompt: "",
+    outreach_customer_list_generation_prompt: "",
   })
   const [selectedModel, setSelectedModel] = useState("")
   const [greeting, setGreeting] = useState("")
@@ -92,6 +94,10 @@ const Configuration = () => {
           nltosql_prompt: orgData?.nltosql_prompt,
           schema_prompt: orgData?.schema_prompt,
           abstract_refinement_prompt: orgData?.abstract_refinement_prompt,
+          outreach_email_generation_prompt:
+            orgData.outreach_email_generation_prompt,
+          outreach_customer_list_generation_prompt:
+            orgData.outreach_customer_list_generation_prompt,
         })
         setPrompt(orgData?.internal_solution_prompt || "")
         setApiKey(orgData?.api || "")
@@ -163,7 +169,10 @@ const Configuration = () => {
       }),
       ...(from === "email_outreach" && {
         email_reply_prompt: additionalPrompt.email_reply_prompt || "",
-        customer_outreach_prompt: additionalPrompt.customer_outreach_prompt,
+        outreach_email_generation_prompt:
+          additionalPrompt.outreach_email_generation_prompt,
+        outreach_customer_list_generation_prompt:
+          additionalPrompt.outreach_customer_list_generation_prompt,
       }),
     }
     console.log("Saving data:", data)
@@ -319,14 +328,28 @@ const Configuration = () => {
             />
           </li>
           <li className="prompt mt-4">
-            <h3 className="text-sm">Customer Outreach Prompt</h3>
+            <h3 className="text-sm">Outreach email generation Prompt</h3>
             <Textarea
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
               rows={10}
               placeholder="Type your prompt here..."
-              value={additionalPrompt.customer_outreach_prompt}
+              value={additionalPrompt.outreach_email_generation_prompt}
               onChange={handleChangeAdditionalPrompt(
-                "customer_outreach_prompt"
+                "outreach_email_generation_prompt"
+              )}
+            />
+          </li>
+          <li className="prompt mt-4">
+            <h3 className="text-sm">
+              Outreach customer list generation prompt
+            </h3>
+            <Textarea
+              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+              rows={10}
+              placeholder="Type your prompt here..."
+              value={additionalPrompt.outreach_customer_list_generation_prompt}
+              onChange={handleChangeAdditionalPrompt(
+                "outreach_customer_list_generation_prompt"
               )}
             />
           </li>
