@@ -52,23 +52,6 @@ export const MessageDiv = ({ msg }: any) => {
     return updatedParagraph
   }
 
-  const message = `Here's a Markdown table comparing the top 3 cloud service providers, focusing on features like storage, cost, and scalability:
-
-\`\`\`markdown
-| Feature       | Amazon Web Services (AWS) | Microsoft Azure        | Google Cloud Platform (GCP) |
-|---------------|----------------------------|------------------------|-----------------------------|
-| **Storage**   | Amazon S3, EBS, Glacier    | Azure Blob Storage, Azure Files | Google Cloud Storage, Persistent Disk |
-| **Cost**      | Pay-as-you-go, Reserved Instances, Spot Instances | Pay-as-you-go, Reserved VM Instances | Pay-as-you-go, Sustained Use Discounts |
-| **Scalability** | Auto Scaling, Elastic Load Balancing | Azure Autoscale, Load Balancer | Google Kubernetes Engine, Load Balancing |
-| **Compute**   | EC2, Lambda, ECS           | Virtual Machines, Azure Functions | Compute Engine, App Engine |
-| **Networking**| VPC, Direct Connect       | Virtual Network, ExpressRoute | VPC, Cloud Interconnect |
-| **Security**  | IAM, AWS Shield, KMS       | Azure Active Directory, Security Center | IAM, Cloud Security Command Center |
-| **Machine Learning** | SageMaker, Comprehend | Azure Machine Learning, Cognitive Services | AI Platform, AutoML |
-| **Global Reach** | 25 regions, 80+ availability zones | 60+ regions, 200+ data centers | 35 regions, 100+ zones |
-\`\`\`
-
-This table provides a high-level comparison of the key features offered by Amazon Web Services (AWS), Microsoft Azure, and Google Cloud Platform (GCP). Each provider offers a range of services tailored to different needs, with varying strengths in areas such as storage, cost management, and scalability.`
-
   // const cleanAndConvertMessage = (message: string) => {
   //   if (message) {
   //     // Remove HTML tags
