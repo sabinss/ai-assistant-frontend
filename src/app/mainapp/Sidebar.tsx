@@ -110,10 +110,7 @@ function getNavLinks(rolePermission) {
 function Navbar() {
   const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
   const { user_data, rolePermission } = useAuth()
-  console.log("rolePermission", rolePermission)
   useEffect(() => {
-    console.log({ rolePermission })
-
     const handleResize = () => {
       if (window.innerWidth <= 640) {
         setCollapse()

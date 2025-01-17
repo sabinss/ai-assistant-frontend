@@ -24,6 +24,9 @@ export default function Page() {
   const [prompt, setPrompt] = useState("")
   const [greeting, setGreeting] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [updatingWorkflow, setUpdatingWorkflow] = useState(false)
+
+  const [supportWorkflowFlag, setSupportWorkflowFlag] = useState(false)
 
   const [additionalPrompt, setAdditionalPrompt] = useState<any>({
     primary_assistant_prompt: "",
@@ -33,6 +36,7 @@ export default function Page() {
     upsell_prompt: "",
     survey_prompt: "",
     log_prompt: "",
+    workflow_engine_enabled: false,
   })
 
   // const [workflowFlag, setWorkFlow] = useState(false)
@@ -44,6 +48,7 @@ export default function Page() {
     prompt: false,
     greeting: false,
   })
+
   useEffect(() => {
     async function getOrgDetails() {
       try {
@@ -52,21 +57,11 @@ export default function Page() {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
-        console.log("orgData", orgData)
+        console.log("orgData------", orgData.workflow_engine_enabled)
         setOrganizationData(orgData)
-        setAdditionalPrompt({
-          primary_assistant_prompt: parseMarkup(
-            orgData.primary_assistant_prompt
-          ),
-          investigation_prompt: parseMarkup(orgData.investigation_prompt),
-          solution_prompt: parseMarkup(orgData.solution_prompt),
-          recommendation_prompt: parseMarkup(orgData.recommendation_prompt),
-          upsell_prompt: parseMarkup(orgData.upsell_prompt),
-          survey_prompt: parseMarkup(orgData.survey_prompt),
-          log_prompt: parseMarkup(orgData.log_prompt),
-        })
+
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
-        setWorkFlowFlag(orgData?.workflow_engine_enabled)
+        setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
         setTemperature(
           orgData?.temperature !== null && orgData?.temperature !== undefined
@@ -85,6 +80,7 @@ export default function Page() {
 
     getOrgDetails()
   }, [access_token])
+  console.log("supportWorkflowFlag-----", supportWorkflowFlag)
 
   useEffect(() => {
     async function getOrgToken() {
@@ -154,8 +150,29 @@ export default function Page() {
     }
   }
 
-  const handleCheckboxChange = () => {
-    setWorkFlowFlag(!workflowFlag)
+  const handleCheckboxChange = async (flag: boolean) => {
+    try {
+      if (updatingWorkflow) return
+      setUpdatingWorkflow(true)
+
+      const res = await http.patch(
+        "/organization/support-workflow",
+        {
+          org_id: organizationData._id,
+          workflow_engine_enabled: flag,
+        },
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      )
+      console.log("update support", res.data)
+      setSupportWorkflowFlag(flag)
+      toast.success("Organization support workflow updated successfully")
+    } catch (err) {
+      // setUpdatingWorkflow(() => false)
+    } finally {
+      setUpdatingWorkflow(false)
+    }
   }
 
   return (
@@ -243,8 +260,11 @@ export default function Page() {
           <input
             id="workflow-engine"
             type="checkbox"
-            checked={workflowFlag}
-            onChange={handleCheckboxChange}
+            disabled={updatingWorkflow}
+            checked={supportWorkflowFlag}
+            onChange={(event: any) =>
+              handleCheckboxChange(event?.target.checked)
+            }
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           <label
