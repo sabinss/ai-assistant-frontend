@@ -12,6 +12,7 @@ import {
   UserRound,
   Settings,
   Cog,
+  Bell,
 } from "lucide-react"
 import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
@@ -22,6 +23,11 @@ import { useEffect, useRef } from "react"
 
 function getNavLinks(rolePermission) {
   const mainLinks = [
+    {
+      name: "Notifications",
+      path: "/mainapp/notification",
+      icon: Bell,
+    },
     {
       name: "Dashboard",
       path: "/mainapp/admin",
@@ -129,7 +135,7 @@ function Navbar() {
 
   const divRef = useRef<HTMLDivElement>(null)
   const path = usePathname()
-  const navLinks = getNavLinks([...rolePermission, "customers"])
+  const navLinks = getNavLinks([...rolePermission, "customers", "notification"])
 
   if (isCollapsed && divRef.current) {
     divRef.current.classList.add("translate-x-[-100%]")
