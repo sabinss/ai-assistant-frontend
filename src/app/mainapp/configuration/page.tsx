@@ -81,7 +81,7 @@ const Configuration = () => {
         const orgData = res?.data?.org
         console.log("orgData", res)
         setAdditionalPrompt({
-          primary_assistant_prompt: orgData.primary_prompt || "",
+          primary_prompt: orgData.primary_prompt || "",
           solution_prompt: orgData.solution_prompt || "",
           followup_prompt: orgData.followup_prompt || "",
           upsell_prompt: orgData.upsell_prompt || "",
