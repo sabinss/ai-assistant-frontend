@@ -17,12 +17,13 @@ import initialEmails from "./notification-data"
 // Sample data - replace with your actual data source
 
 const tableHeader = [
-  { name: "Email From", sortable: false },
-  { name: "Email To", sortable: false },
+  { name: "Action", sortable: false },
+  { name: "Event" },
   { name: "Subject", sortable: false },
+  { name: "Email To", sortable: false },
   { name: "Date/time", sortable: false },
   { name: "Status", sortable: true, sortKey: "last_seen" },
-  { name: "Action" },
+  { name: "" },
 ]
 
 const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
@@ -43,16 +44,21 @@ const MemoizedTableRow = React.memo(
         key={item._id}
         className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} cursor-pointer hover:bg-gray-100 ${item.status === "open" ? "font-bold" : ""}`}
       >
-        <TableCell className="max-w-20 break-words py-3">{item.from}</TableCell>
-        <TableCell className="max-w-20 break-words py-3">{item.to}</TableCell>
         <TableCell className="max-w-20 break-words py-3">
+          {item.action}
+        </TableCell>
+        <TableCell className="max-w-19 break-words py-3">
+          {item.event}
+        </TableCell>
+        <TableCell className="max-w-19 break-words py-3">
           {item.subject}
         </TableCell>
-        <TableCell className="max-w-20 break-words py-3">
+        <TableCell className="max-w-17 break-words py-3">{item.to}</TableCell>
+        <TableCell className="max-w-17 break-words py-3">
           {format(item.datetime, "MMM d, yyyy h:mm a")}
         </TableCell>
 
-        <TableCell className="max-w-20 break-words py-3">
+        <TableCell className="max-w-19 break-words py-3">
           <span
             className={`text-xm rounded-full px-3 py-1 font-semibold uppercase ${
               item.status === "open"
@@ -64,7 +70,7 @@ const MemoizedTableRow = React.memo(
           </span>
         </TableCell>
         <TableCell className="max-w-20 break-words py-3">
-          <label className="flex items-center space-x-1">
+          {/* <label className="flex items-center space-x-1">
             <input
               type="checkbox"
               checked={item.status === "open"}
@@ -73,7 +79,7 @@ const MemoizedTableRow = React.memo(
               }}
             />
             <span>In Progress</span>
-          </label>
+          </label> */}
           <label className="flex items-center space-x-1">
             <input
               type="checkbox"
@@ -176,7 +182,12 @@ export default function NotificationListTable() {
                   handleDone={(value: string, id: number) => {
                     setNotificationList((prevList) =>
                       prevList.map((item) =>
-                        item._id == id ? { ...item, status: "done" } : item
+                        item._id == id
+                          ? {
+                              ...item,
+                              status: item.status == "done" ? "open" : "done",
+                            }
+                          : item
                       )
                     )
                   }}
@@ -184,33 +195,35 @@ export default function NotificationListTable() {
               ))
             )}
           </TableBody>
-          <div className="mt-4 flex items-center justify-between">
-            <button
-              disabled={currentPage === 1}
-              onClick={() => handlePageChange(currentPage - 1)}
-              className={`rounded-md px-4 py-2 ${
-                currentPage === 1 ? "bg-gray-200" : "bg-blue-500 text-white"
-              }`}
-            >
-              Previous
-            </button>
-            <p>
-              Page {currentPage} of {totalPages}
-            </p>
-            <button
-              disabled={currentPage === totalPages}
-              onClick={() => handlePageChange(currentPage + 1)}
-              className={`rounded-md px-4 py-2 ${
-                currentPage === totalPages
-                  ? "bg-gray-200"
-                  : "bg-blue-500 text-white"
-              }`}
-            >
-              Next
-            </button>
-          </div>
         </Suspense>
       </Table>
+      <div className="mt-4 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
+            className={`rounded-md px-4 py-2 ${
+              currentPage === 1 ? "bg-gray-200" : "bg-blue-500 text-white"
+            }`}
+          >
+            Previous
+          </button>
+          <p>
+            Page {currentPage} of {totalPages}
+          </p>
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
+            className={`rounded-md px-4 py-2 ${
+              currentPage === totalPages
+                ? "bg-gray-200"
+                : "bg-blue-500 text-white"
+            }`}
+          >
+            Next
+          </button>
+        </div>
+      </div>
     </div>
   )
 }
