@@ -57,7 +57,7 @@ export default function Page() {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
-        console.log("orgData------", orgData.workflow_engine_enabled)
+        console.log("orgData------", orgData)
         setOrganizationData(orgData)
 
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
@@ -103,41 +103,37 @@ export default function Page() {
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
-      let hasError = false
-      // Reset errors
-      setErrors({
-        apiKey: false,
-        prompt: false,
-        greeting: false,
-      })
+      // let hasError = false
+      // // Reset errors
+      // setErrors({
+      //   apiKey: false,
+      //   prompt: false,
+      //   greeting: false,
+      // })
 
       // Validate fields
       // if (!apiKey) {
       //   setErrors(prevErrors => ({ ...prevErrors, apiKey: true }));
       //   hasError = true;
       // }
-      if (!prompt) {
-        setErrors((prevErrors) => ({ ...prevErrors, prompt: true }))
-        hasError = true
-      }
-      // if (!greeting) {
-      //   setErrors(prevErrors => ({ ...prevErrors, greeting: true }));
-      //   hasError = true;
+      // if (!prompt) {
+      //   setErrors((prevErrors) => ({ ...prevErrors, prompt: true }))
+      //   hasError = true
       // }
+      // // if (!greeting) {
+      // //   setErrors(prevErrors => ({ ...prevErrors, greeting: true }));
+      // //   hasError = true;
+      // // }
 
-      if (hasError) {
-        return
-      }
+      // if (hasError) {
+      //   return
+      // }
 
       const data = {
         selectedModel,
         temperature,
         apiKey,
-        prompt,
-        greeting,
-        workflowFlag,
-        mockData,
-        additionalPrompt,
+        configuration: "setting",
       }
       await http.patch("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
