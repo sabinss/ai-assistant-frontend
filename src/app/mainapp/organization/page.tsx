@@ -267,7 +267,6 @@ const ChatProvider = ({ org_id }) => {
           disabled={checkingGoogleUser}
           isLoggedIn={isGoogleLogin}
           onClick={() => {
-            console.log("clicked")
             const url = getGoogleOAuthURL()
             window.location.href = url
           }}
