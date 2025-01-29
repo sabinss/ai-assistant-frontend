@@ -268,6 +268,7 @@ const ChatProvider = ({ org_id }) => {
           isLoggedIn={isGoogleLogin}
           onClick={() => {
             const url = getGoogleOAuthURL()
+            console.log("url", url)
             window.location.href = url
           }}
         />
