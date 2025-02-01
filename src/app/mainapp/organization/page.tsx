@@ -263,7 +263,7 @@ const ChatProvider = ({ org_id }) => {
         >
           Click to copy EmbedCode
         </button>
-        <GmailLoginButton
+        {/* <GmailLoginButton
           disabled={checkingGoogleUser}
           isLoggedIn={isGoogleLogin}
           onClick={() => {
@@ -271,7 +271,7 @@ const ChatProvider = ({ org_id }) => {
             console.log("url", url)
             window.location.href = url
           }}
-        />
+        /> */}
       </div>
     </div>
   )
