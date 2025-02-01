@@ -10,6 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { useForm } from "react-hook-form"
 import useAuth from "@/store/user"
 import { getGoogleOAuthURL } from "@/utility/getGoogleUrl"
+import GmailLoginButton from "@/components/ui/googleLoginButton"
 
 interface FormData {
   first_name: string
@@ -29,6 +30,35 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
   const [status, setStatus] = useState<{ id: string; name: string }[]>([])
+  const [isGoogleLogin, setGoogleLogin] = useState(false)
+  const [checkingGoogleUser, setCheckingGoogleUser] = useState(false)
+
+  useEffect(() => {
+    checkGoogleLoggedInUser()
+  }, [])
+
+  const checkGoogleLoggedInUser = async () => {
+    try {
+      setCheckingGoogleUser(true)
+      if (user_data?.email) {
+        const res = await http.post(
+          "/auth/google-login-verify",
+          { email: user_data.email },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        console.log("res", res.data)
+        if (res?.data?.success) {
+          setGoogleLogin(true)
+        }
+        setCheckingGoogleUser(false)
+      }
+    } catch (err) {
+      console.log(err)
+      setCheckingGoogleUser(false)
+    }
+  }
 
   const {
     register,
@@ -334,12 +364,21 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         >
           Cancel
         </Button>
-        <a
+        {/* <a
           href={`${getGoogleOAuthURL()}`}
           className="font-medium text-[#174894] underline hover:text-[#173094]"
         >
           Authorize access to your email box
-        </a>
+        </a> */}
+        <GmailLoginButton
+          disabled={checkingGoogleUser}
+          isLoggedIn={isGoogleLogin}
+          onClick={() => {
+            const url = getGoogleOAuthURL()
+            console.log("url", url)
+            window.location.href = url
+          }}
+        />
       </div>
     </div>
   )
