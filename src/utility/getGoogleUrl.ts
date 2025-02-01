@@ -7,12 +7,15 @@ function getGoogleOAuthURL() {
     access_type: "offline",
     response_type: "code",
     prompt: "consent",
-    state: new Date().getTime().toString(), // Unique value to prevent caching
+    state: "auth_flow", // Unique value to prevent caching
     scope: [
       "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/userinfo.email",
+      "https://www.googleapis.com/auth/gmail.readonly",
+      "https://www.googleapis.com/auth/gmail.modify",
     ].join(" "),
   }
+
   console.log("options", options)
   const qs = new URLSearchParams(options)
   console.log("qs", qs.toString())
