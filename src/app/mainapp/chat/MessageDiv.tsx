@@ -11,6 +11,9 @@ import useAuth from "@/store/user" // Import useAuth hook
 import usePublicChat from "@/store/public_chat"
 import useNavBarStore from "@/store/store"
 import { marked } from "marked"
+import DOMPurify from "dompurify"
+import ReactMarkdown from "react-markdown"
+import rehypeRaw from "rehype-raw" // Allows rendering inline HTML inside Markdown
 
 export const MessageDiv = ({ msg }: any) => {
   const { access_token, user_data } = useAuth() // Call useAuth here
@@ -66,32 +69,54 @@ export const MessageDiv = ({ msg }: any) => {
   //     return ""
   //   }
   // }
+  // const cleanAndConvertMessage = (message: string) => {
+  //   if (message) {
+  //     try {
+  //       // Remove HTML tags if needed (optional)
+  //       const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
+
+  //       // Detect and extract the Markdown from the code block
+  //       const codeBlockRegex = /```markdown([\s\S]*?)```/
+  //       const match = strippedMessage.match(codeBlockRegex)
+
+  //       let contentToParse = strippedMessage
+  //       if (match) {
+  //         // Use only the content inside the code block
+  //         contentToParse = match[1].trim()
+  //       }
+
+  //       // Convert Markdown to HTML
+  //       const htmlMessage = marked(contentToParse)
+
+  //       return htmlMessage
+  //     } catch (error) {
+  //       console.error("Error parsing Markdown:", error)
+  //       return "Error parsing content."
+  //     }
+  //   } else {
+  //     return ""
+  //   }
+  // }
   const cleanAndConvertMessage = (message: string) => {
-    if (message) {
-      try {
-        // Remove HTML tags if needed (optional)
-        const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
+    console.log("------")
+    console.log("msg.message", msg.message)
+    console.log("------")
+    if (!message) return ""
 
-        // Detect and extract the Markdown from the code block
-        const codeBlockRegex = /```markdown([\s\S]*?)```/
-        const match = strippedMessage.match(codeBlockRegex)
+    try {
+      // Remove HTML tags if needed (optional)
+      const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
 
-        let contentToParse = strippedMessage
-        if (match) {
-          // Use only the content inside the code block
-          contentToParse = match[1].trim()
-        }
+      // Convert Markdown to HTML
+      const htmlMessage = marked(strippedMessage)
 
-        // Convert Markdown to HTML
-        const htmlMessage = marked(contentToParse)
+      // Sanitize the HTML content
+      const sanitizedHtmlMessage = DOMPurify.sanitize(htmlMessage)
 
-        return htmlMessage
-      } catch (error) {
-        console.error("Error parsing Markdown:", error)
-        return "Error parsing content."
-      }
-    } else {
-      return ""
+      return sanitizedHtmlMessage
+    } catch (error) {
+      console.error("Error parsing Markdown:", error)
+      return "Error parsing content."
     }
   }
   const sendFeedbackToBackend = async (
@@ -170,14 +195,26 @@ export const MessageDiv = ({ msg }: any) => {
             <p dangerouslySetInnerHTML={{ __html: botName }} />
             <span>{msg.time}</span>
           </div>
-          <motion.div
+          {/* <motion.div
             className="ml-4 max-w-[90%] space-y-4 rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]" // Add space or extra padding if needed
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             dangerouslySetInnerHTML={{
               __html: cleanAndConvertMessage(msg.message),
             }}
-          ></motion.div>
+          ></motion.div> */}
+          <motion.div
+            className="ml-4 max-w-[90%] space-y-4 rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <h2 className="mb-4  text-gray-800">Customer Success Plan</h2>
+            <div className="prose prose-lg prose-gray max-w-none text-sm">
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                {msg.message}
+              </ReactMarkdown>
+            </div>
+          </motion.div>
           <div className="likebuttons absolute  left-2 py-1 pl-2">
             {msg.id !== "greeting" && msg.id !== "loading" && (
               <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
@@ -215,7 +252,11 @@ export const MessageDiv = ({ msg }: any) => {
             transition={{ duration: 0.2 }}
             className="float-right max-w-[90%] break-words rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
           >
-            {msg.message}
+            <div className="prose prose-lg prose-gray max-w-none text-sm">
+              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+                {msg.message}
+              </ReactMarkdown>
+            </div>
           </motion.div>
         </div>
       )}
