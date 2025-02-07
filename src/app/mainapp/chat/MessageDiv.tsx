@@ -208,7 +208,6 @@ export const MessageDiv = ({ msg }: any) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <h2 className="mb-4  text-gray-800">Customer Success Plan</h2>
             <div className="prose prose-lg prose-gray max-w-none text-sm">
               <ReactMarkdown rehypePlugins={[rehypeRaw]}>
                 {msg.message}
