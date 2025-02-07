@@ -35,9 +35,15 @@ export default function page() {
         router.push("/mainapp/admin")
         toast.success("Logged in successfully", { autoClose: 100 })
       }
-    } catch (error) {
-      toast.error("Something went wrong. Please try again")
+    } catch (error: any) {
       console.log("Error Occured ", error)
+      if (error.response?.status === 401) {
+        toast.error(
+          error.response?.data?.message || "Unauthorized! Invalid credentials."
+        )
+      } else {
+        toast.error("Something went wrong. Please try again.")
+      }
     }
   }
 
