@@ -1,54 +1,33 @@
 "use client"
 import React, { useState, useEffect } from "react"
 import { Textarea } from "@/components/ui/textarea"
-import http from "@/config/http"
 import useChatConfig from "@/store/useChatSetting"
-import useAuth from "@/store/user"
-import { ChevronUp, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import useOrgCustomer from "@/store/organization_customer"
+import useAuth from "@/store/user"
+import { Button } from "react-day-picker"
+import http from "@/config/http"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import { TaskAgentTable } from "./TaskAgentTable"
+const TABS = [
+  { key: "support_workflow", label: "Support Workflow" },
+  { key: "customer_insights", label: "Customer Insights" },
+  { key: "email_rply", label: "Email Reply" },
+  { key: "task_agent", label: "Task Agent" },
+]
 
-const Accordion = ({ title, children, isOpen, onToggle, savePrompts }: any) => (
-  <div className="mb-4 rounded border border-gray-300">
-    <div
-      className="flex w-full cursor-pointer justify-between bg-gray-100 p-4 text-left font-semibold hover:bg-gray-200"
-      onClick={onToggle}
-    >
-      {title}
-      {isOpen ? <ChevronUp /> : <ChevronDown />}
-    </div>
-    <div
-      className={`overflow-hidden transition-all duration-300 ${
-        isOpen ? "max-h-96 overflow-y-auto" : "max-h-0"
-      }`}
-    >
-      <div className="p-4">{children}</div>
-      {isOpen && (
-        <div className="flex justify-end p-3">
-          <Button
-            className="bg-[#174894] font-medium hover:bg-[#173094]"
-            onClick={(e) => {
-              e.stopPropagation()
-              savePrompts()
-            }}
-          >
-            Update
-          </Button>
-        </div>
-      )}
-    </div>
-  </div>
-)
-
-const Configuration = () => {
+export const Configuration = () => {
+  const [selectedModel, setSelectedModel] = useState("")
+  const [greeting, setGreeting] = useState("")
+  const [prompt, setPrompt] = useState("")
+  const { workflowFlag, mockData } = useChatConfig()
+  const [apiKey, setApiKey] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const { access_token } = useAuth()
-  const { setOrgToken } = useOrgCustomer()
-  const [activeAccordion, setActiveAccordion] = useState("Support Workflow")
   const [temperature, setTemperature] = useState(0)
-
+  const [activeTab, setActiveTab] = useState("support_workflow")
+  const [organization_id, setOrganizationId] = useState(null)
+  const [orgTaskAgents, setOrgTaskAgents] = useState<any>([])
   const [additionalPrompt, setAdditionalPrompt] = useState<any>({
     primary_prompt: "",
     solution_prompt: "",
@@ -66,12 +45,6 @@ const Configuration = () => {
     outreach_email_generation_prompt: "",
     outreach_customer_list_generation_prompt: "",
   })
-  const [selectedModel, setSelectedModel] = useState("")
-  const [greeting, setGreeting] = useState("")
-  const [prompt, setPrompt] = useState("")
-  const { workflowFlag, mockData } = useChatConfig()
-  const [apiKey, setApiKey] = useState("")
-
   useEffect(() => {
     async function fetchOrganizationData() {
       try {
@@ -79,7 +52,8 @@ const Configuration = () => {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
-        console.log("orgData", res)
+        console.log("orgData--", orgData._id)
+        setOrganizationId(orgData._id)
         setAdditionalPrompt({
           primary_prompt: orgData.primary_prompt || "",
           solution_prompt: orgData.solution_prompt || "",
@@ -115,6 +89,28 @@ const Configuration = () => {
     fetchOrganizationData()
   }, [access_token])
 
+  useEffect(() => {
+    if (organization_id) {
+      fetchOrganizationTaskAgents(organization_id)
+    }
+  }, [organization_id])
+  const fetchOrganizationTaskAgents = async (organization_id) => {
+    try {
+      setIsLoading(true)
+      const res = await http.get(
+        `/organization/${organization_id}/task_agent`,
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      )
+      console.log("Task agent response", res.data)
+      setOrgTaskAgents(res?.data?.taskAgents)
+      setIsLoading(false)
+    } catch (err) {
+      setIsLoading(false)
+      console.log("Error fetching organization task agents", err)
+    }
+  }
   const handleChangeAdditionalPrompt = (field: string) => (event: any) => {
     setAdditionalPrompt((prev) => ({
       ...prev,
@@ -143,7 +139,6 @@ const Configuration = () => {
           headers: { Authorization: `Bearer ${access_token}` },
         }
       )
-      console.log("response", response)
       toast.success("Organization data updated successfully")
     } catch (err) {
       setIsLoading(false)
@@ -167,192 +162,226 @@ const Configuration = () => {
         schema_prompt: additionalPrompt.schema_prompt,
         abstract_refinement_prompt: additionalPrompt.abstract_refinement_prompt,
       }),
-      ...(from === "email_outreach" && {
+      ...(from === "email_rply" && {
         email_reply_prompt: additionalPrompt.email_reply_prompt || "",
-        outreach_email_generation_prompt:
-          additionalPrompt.outreach_email_generation_prompt,
-        outreach_customer_list_generation_prompt:
-          additionalPrompt.outreach_customer_list_generation_prompt,
+        // outreach_email_generation_prompt:
+        //   additionalPrompt.outreach_email_generation_prompt,
+        // outreach_customer_list_generation_prompt:
+        //   additionalPrompt.outreach_customer_list_generation_prompt,
       }),
     }
-    console.log("Saving data:", data)
+    console.log("data", data)
     // Make API call here
     await handleSubmit(data)
   }
 
+  const saveOrUpdateTaskAgent = async (data: any) => {
+    try {
+      console.log("Task Agent data", data._id, access_token)
+      let toasMsg = "sfdsf"
+      if (data?._id) {
+        const res = await http.put(
+          `/organization/${organization_id}/task_agent/${data?._id}`,
+          data,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        console.log("Task agent response", res.data)
+        setOrgTaskAgents((prev: any) =>
+          prev.map((agent: any) =>
+            agent._id === data._id ? { ...agent, ...res.data } : agent
+          )
+        )
+        toasMsg = "Task Agent updated successfully"
+      } else {
+        const res = await http.post(
+          `/organization/${organization_id}/task_agent`,
+          data,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        console.log("Task agent response create", res.data)
+        // Add the new task agent to the orgTaskAgents list
+        setOrgTaskAgents((prev: any) => [res.data, ...prev])
+        toasMsg = "Task Agent created successfully"
+      }
+      setActiveTab("task_agent")
+      toast.success(toasMsg)
+    } catch (err) {
+      console.log("Failed saveOrUpdateTaskAgent", err)
+      toast.error(err?.response?.data?.message ?? "Something went wrong")
+    }
+  }
+
   return (
     <div className="mb-10">
-      <Accordion
-        title="Support Workflow"
-        isOpen={activeAccordion === "Support Workflow"}
-        onToggle={() =>
-          setActiveAccordion((prev) =>
-            prev === "Support Workflow" ? "" : "Support Workflow"
+      <div className="flex">
+        {TABS.map((tab) => {
+          return (
+            <button
+              onClick={() => setActiveTab(tab.key)}
+              key={tab.key}
+              className={`px-4 py-2 text-sm font-medium ${
+                activeTab === tab.key
+                  ? "border-b-2 border-blue-600 "
+                  : "text-gray-600 hover:text-blue-600"
+              }`}
+            >
+              {tab.label}
+            </button>
           )
-        }
-        savePrompts={() => savePrompts("support_workflow")}
-      >
-        <ul className="list-none pl-5">
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Enter your Greeting</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your Greeting..."
-              value={greeting}
-              onChange={(e) => setGreeting(e.target.value)}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Primary Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.primary_prompt}
-              onChange={handleChangeAdditionalPrompt("primary_prompt")}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Solution Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.solution_prompt}
-              onChange={handleChangeAdditionalPrompt("solution_prompt")}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Followup Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.followup_prompt}
-              onChange={handleChangeAdditionalPrompt("followup_prompt")}
-            />
-          </li>
-          {/* <li className="prompt mt-4">
-            <h3 className="text-sm">Log Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.log_prompt}
-              onChange={handleChangeAdditionalPrompt("log_prompt")}
-            />
-          </li> */}
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Internal Solution Prompt</h3>
-            <Textarea
-              className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.internal_solution_prompt}
-              onChange={(e) =>
-                handleChangeAdditionalPrompt("internal_solution_prompt")
-              }
-            />
-          </li>
-        </ul>
-      </Accordion>
+        })}
+      </div>
 
-      <Accordion
-        title="Customer Insights"
-        isOpen={activeAccordion === "Customer Insights"}
-        onToggle={() =>
-          setActiveAccordion((prev) =>
-            prev === "Customer Insights" ? "" : "Customer Insights"
-          )
-        }
-        savePrompts={() => savePrompts("customer_insights")}
-      >
-        <ul className="list-none pl-5">
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Schema</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.schema_prompt}
-              onChange={handleChangeAdditionalPrompt("schema_prompt")}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Abstract refinement prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.abstract_refinement_prompt}
-              onChange={handleChangeAdditionalPrompt(
-                "abstract_refinement_prompt"
-              )}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">NLtoSQL Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.nltosql_prompt}
-              onChange={handleChangeAdditionalPrompt("nltosql_prompt")}
-            />
-          </li>
-        </ul>
-      </Accordion>
+      {/* Tab Content */}
+      <div className="mt-4">
+        {activeTab === "support_workflow" && (
+          <>
+            <ul className="list-none pl-5">
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Enter your Greeting</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your Greeting..."
+                  value={greeting}
+                  onChange={(e) => setGreeting(e.target.value)}
+                />
+              </li>
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Primary Prompt</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.primary_prompt}
+                  onChange={handleChangeAdditionalPrompt("primary_prompt")}
+                />
+              </li>
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Solution Prompt</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.solution_prompt}
+                  onChange={handleChangeAdditionalPrompt("solution_prompt")}
+                />
+              </li>
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Followup Prompt</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.followup_prompt}
+                  onChange={handleChangeAdditionalPrompt("followup_prompt")}
+                />
+              </li>
 
-      <Accordion
-        title="Email Outreach"
-        isOpen={activeAccordion === "Email Outreach"}
-        onToggle={() =>
-          setActiveAccordion((prev) =>
-            prev === "Email Outreach" ? "" : "Email Outreach"
-          )
-        }
-        savePrompts={() => savePrompts("email_outreach")}
-      >
-        <ul className="list-none pl-5">
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Email Reply Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.email_reply_prompt}
-              onChange={handleChangeAdditionalPrompt("email_reply_prompt")}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">Outreach email generation Prompt</h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.outreach_email_generation_prompt}
-              onChange={handleChangeAdditionalPrompt(
-                "outreach_email_generation_prompt"
-              )}
-            />
-          </li>
-          <li className="prompt mt-4">
-            <h3 className="text-sm">
-              Outreach customer list generation prompt
-            </h3>
-            <Textarea
-              className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
-              rows={10}
-              placeholder="Type your prompt here..."
-              value={additionalPrompt.outreach_customer_list_generation_prompt}
-              onChange={handleChangeAdditionalPrompt(
-                "outreach_customer_list_generation_prompt"
-              )}
-            />
-          </li>
-        </ul>
-      </Accordion>
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Internal Solution Prompt</h3>
+                <Textarea
+                  className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.internal_solution_prompt}
+                  onChange={(e) =>
+                    handleChangeAdditionalPrompt("internal_solution_prompt")
+                  }
+                />
+              </li>
+            </ul>
+            <div className="flex justify-end p-3">
+              <button
+                onClick={() => savePrompts("support_workflow")}
+                className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:from-blue-800 hover:to-blue-600"
+              >
+                Update
+              </button>
+            </div>
+          </>
+        )}
+        {activeTab === "customer_insights" && (
+          <>
+            <ul className="list-none pl-5">
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Schema</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.schema_prompt}
+                  onChange={handleChangeAdditionalPrompt("schema_prompt")}
+                />
+              </li>
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Abstract refinement prompt</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.abstract_refinement_prompt}
+                  onChange={handleChangeAdditionalPrompt(
+                    "abstract_refinement_prompt"
+                  )}
+                />
+              </li>
+              <li className="prompt mt-4">
+                <h3 className="text-sm">NLtoSQL Prompt</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.nltosql_prompt}
+                  onChange={handleChangeAdditionalPrompt("nltosql_prompt")}
+                />
+              </li>
+              <div className="flex justify-end p-3">
+                <button
+                  onClick={() => savePrompts("customer_insights")}
+                  className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:from-blue-800 hover:to-blue-600"
+                >
+                  Update
+                </button>
+              </div>
+            </ul>
+          </>
+        )}
+
+        {activeTab === "email_rply" && (
+          <>
+            <ul className="list-none pl-5">
+              <li className="prompt mt-4">
+                <h3 className="text-sm">Email Reply Prompt</h3>
+                <Textarea
+                  className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
+                  rows={10}
+                  placeholder="Type your prompt here..."
+                  value={additionalPrompt.email_reply_prompt}
+                  onChange={handleChangeAdditionalPrompt("email_reply_prompt")}
+                />
+              </li>
+              <div className="flex justify-end p-3">
+                <button
+                  onClick={() => savePrompts("email_rply")}
+                  className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:from-blue-800 hover:to-blue-600"
+                >
+                  Update
+                </button>
+              </div>
+            </ul>
+          </>
+        )}
+        {activeTab === "task_agent" && !isLoading && (
+          <TaskAgentTable
+            orgTaskAgents={orgTaskAgents}
+            handleTaskAgent={saveOrUpdateTaskAgent}
+          />
+        )}
+      </div>
     </div>
   )
 }
