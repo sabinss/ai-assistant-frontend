@@ -14,7 +14,7 @@ import { marked } from "marked"
 import DOMPurify from "dompurify"
 import ReactMarkdown from "react-markdown"
 import rehypeRaw from "rehype-raw" // Allows rendering inline HTML inside Markdown
-
+import remarkGfm from "remark-gfm"
 export const MessageDiv = ({ msg }: any) => {
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
@@ -209,7 +209,10 @@ export const MessageDiv = ({ msg }: any) => {
             animate={{ opacity: 1 }}
           >
             <div className="prose prose-lg prose-gray max-w-none text-sm">
-              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+              >
                 {msg.message}
               </ReactMarkdown>
             </div>
@@ -252,7 +255,10 @@ export const MessageDiv = ({ msg }: any) => {
             className="float-right max-w-[90%] break-words rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
           >
             <div className="prose prose-lg prose-gray max-w-none text-sm">
-              <ReactMarkdown rehypePlugins={[rehypeRaw]}>
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+              >
                 {msg.message}
               </ReactMarkdown>
             </div>

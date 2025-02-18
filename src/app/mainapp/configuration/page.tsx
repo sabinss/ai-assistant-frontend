@@ -288,9 +288,9 @@ export const Configuration = () => {
                   rows={10}
                   placeholder="Type your prompt here..."
                   value={additionalPrompt.internal_solution_prompt}
-                  onChange={(e) =>
-                    handleChangeAdditionalPrompt("internal_solution_prompt")
-                  }
+                  onChange={handleChangeAdditionalPrompt(
+                    "internal_solution_prompt"
+                  )}
                 />
               </li>
             </ul>
