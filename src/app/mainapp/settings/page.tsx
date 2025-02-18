@@ -25,6 +25,7 @@ export default function Page() {
   const [greeting, setGreeting] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [updatingWorkflow, setUpdatingWorkflow] = useState(false)
+  const [settingData, setSettingData] = useState<any>(null)
 
   const [supportWorkflowFlag, setSupportWorkflowFlag] = useState(false)
 
@@ -89,6 +90,7 @@ export default function Page() {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         setOrgToken(res.data.token)
+        setSettingData(res.data.settings)
       } catch (err) {}
     }
     getOrgToken()
@@ -219,6 +221,37 @@ export default function Page() {
             rows={4}
             placeholder="Type your Greeting..."
             value={orgToken}
+          />
+        </div>
+
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Database Name</h3>
+          <Input
+            disabled={true}
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="Database Name"
+            value={settingData?.DATABASE_NAME}
+            onChange={(e) => {}}
+          />
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Red Shift Work Group</h3>
+          <Input
+            disabled={true}
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="Redshift Work Group"
+            value={settingData?.DATABASE_NAME}
+            onChange={(e) => {}}
+          />
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Redshit DB</h3>
+          <Input
+            disabled={true}
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="REDSHIFT_DB"
+            value={settingData?.REDSHIFT_DB}
+            onChange={(e) => {}}
           />
         </div>
 

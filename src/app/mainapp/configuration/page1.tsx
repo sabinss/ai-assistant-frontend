@@ -99,7 +99,7 @@ const Configuration = () => {
           outreach_customer_list_generation_prompt:
             orgData.outreach_customer_list_generation_prompt,
         })
-        setPrompt(orgData?.internal_solution_prompt || "")
+        // setPrompt(orgData?.internal_solution_prompt || "")
         setApiKey(orgData?.api || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setGreeting(orgData?.greeting)
@@ -114,8 +114,9 @@ const Configuration = () => {
     }
     fetchOrganizationData()
   }, [access_token])
-
+  console.log("additionalPrompt", additionalPrompt)
   const handleChangeAdditionalPrompt = (field: string) => (event: any) => {
+    console.log("field", field, event.target.value)
     setAdditionalPrompt((prev) => ({
       ...prev,
       [field]: event.target.value,
@@ -233,28 +234,29 @@ const Configuration = () => {
               onChange={handleChangeAdditionalPrompt("followup_prompt")}
             />
           </li>
-          {/* <li className="prompt mt-4">
-            <h3 className="text-sm">Log Prompt</h3>
+
+          <li className="prompt mt-4">
+            <h3 className="text-sm">Internal Solution Prompt</h3>
             <Textarea
               className="mt-2 border-[#CCCCCC] bg-[#F7f7f7]"
               rows={10}
               placeholder="Type your prompt here..."
-              value={additionalPrompt.log_prompt}
-              onChange={handleChangeAdditionalPrompt("log_prompt")}
+              value={additionalPrompt.followup_prompt}
+              onChange={handleChangeAdditionalPrompt("followup_prompt")}
             />
-          </li> */}
-          <li className="prompt mt-4">
+          </li>
+          {/* <li className="prompt mt-4">
             <h3 className="text-sm">Internal Solution Prompt</h3>
             <Textarea
               className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
-              rows={10}
+              rows={20}
               placeholder="Type your prompt here..."
               value={additionalPrompt.internal_solution_prompt}
-              onChange={(e) =>
-                handleChangeAdditionalPrompt("internal_solution_prompt")
-              }
+              onChange={(event) => {
+                console.log(event?.target.value)
+              }}
             />
-          </li>
+          </li> */}
         </ul>
       </Accordion>
 
