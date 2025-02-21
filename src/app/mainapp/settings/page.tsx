@@ -27,6 +27,12 @@ export default function Page() {
   const [updatingWorkflow, setUpdatingWorkflow] = useState(false)
   const [settingData, setSettingData] = useState<any>(null)
 
+  const [orgSetting, setOrgSetting] = useState({
+    database_name: "",
+    redshit_work_space: "",
+    redshift_db: "",
+  })
+
   const [supportWorkflowFlag, setSupportWorkflowFlag] = useState(false)
 
   const [additionalPrompt, setAdditionalPrompt] = useState<any>({
@@ -50,6 +56,11 @@ export default function Page() {
     greeting: false,
   })
 
+  const handleOrgSettingDb = (e: any) => {
+    const { name, value } = e.target
+    setOrgSetting((prev: any) => ({ ...prev, [name]: value }))
+  }
+
   useEffect(() => {
     async function getOrgDetails() {
       try {
@@ -60,7 +71,11 @@ export default function Page() {
         const orgData = res?.data?.org
         console.log("orgData------", orgData)
         setOrganizationData(orgData)
-
+        setOrgSetting({
+          database_name: orgData?.database_name ?? "",
+          redshit_work_space: orgData?.redshit_work_space ?? "",
+          redshift_db: orgData?.redshift_db ?? "",
+        })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -81,20 +96,19 @@ export default function Page() {
 
     getOrgDetails()
   }, [access_token])
-  console.log("supportWorkflowFlag-----", supportWorkflowFlag)
 
-  useEffect(() => {
-    async function getOrgToken() {
-      try {
-        const res = await http.get("/generate/token", {
-          headers: { Authorization: `Bearer ${access_token}` },
-        })
-        setOrgToken(res.data.token)
-        setSettingData(res.data.settings)
-      } catch (err) {}
-    }
-    getOrgToken()
-  }, [])
+  // useEffect(() => {
+  //   async function getOrgToken() {
+  //     try {
+  //       const res = await http.get("/generate/token", {
+  //         headers: { Authorization: `Bearer ${access_token}` },
+  //       })
+  //       setOrgToken(res.data.token)
+  //       setSettingData(res.data.settings)
+  //     } catch (err) {}
+  //   }
+  //   getOrgToken()
+  // }, [])
 
   const handleChangeAdditionalPrompt = (field: any) => (event: any) => {
     setAdditionalPrompt((prev) => ({
@@ -136,6 +150,7 @@ export default function Page() {
         temperature,
         apiKey,
         configuration: "setting",
+        orgDbSetting: { ...orgSetting },
       }
       await http.patch("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
@@ -227,31 +242,31 @@ export default function Page() {
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Database Name</h3>
           <Input
-            disabled={true}
+            name="database_name"
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
             placeholder="Database Name"
-            value={settingData?.DATABASE_NAME}
-            onChange={(e) => {}}
+            value={orgSetting?.database_name}
+            onChange={handleOrgSettingDb}
           />
         </div>
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
-          <h3 className="text-sm text-primary">Red Shift Work Group</h3>
+          <h3 className="text-sm text-primary">Red Shift Work Space</h3>
           <Input
-            disabled={true}
+            name="redshit_work_space"
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
             placeholder="Redshift Work Group"
-            value={settingData?.DATABASE_NAME}
-            onChange={(e) => {}}
+            value={orgSetting?.redshit_work_space}
+            onChange={handleOrgSettingDb}
           />
         </div>
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Redshit DB</h3>
           <Input
-            disabled={true}
+            name="redshift_db"
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
             placeholder="REDSHIFT_DB"
-            value={settingData?.REDSHIFT_DB}
-            onChange={(e) => {}}
+            value={orgSetting?.redshift_db}
+            onChange={handleOrgSettingDb}
           />
         </div>
 
