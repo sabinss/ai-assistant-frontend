@@ -143,30 +143,38 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
   }
 
   return (
-    <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
-      <textarea
-        rows={1}
-        ref={textareaRef}
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={handleKeyPress}
-        // disabled={isMessageLoading}
-        placeholder={isMessageLoading ? "......" : "Type your message here..."}
-        className="flex min-h-9 w-full resize-none overflow-hidden border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
-      />
-      <div className="m-2 flex w-20 items-center justify-center">
-        <span className="text-sm text-[#838383]">{message?.length}/4000</span>
-        <button
-          type="button"
-          onClick={sendMessage}
-          className={cn(
-            buttonVariants({ variant: "ghost", size: "icon" }),
-            "h-9 w-9",
-            "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-          )}
-        >
-          <IoMdSend size={20} className=" text-[#174894]" />
-        </button>
+    <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
+      <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
+        <textarea
+          rows={1}
+          ref={textareaRef}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyPress}
+          onInput={() => {
+            textareaRef.current.style.height = "auto"
+            textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`
+          }}
+          // disabled={isMessageLoading}
+          placeholder={
+            isMessageLoading ? "......" : "Type your message here..."
+          }
+          className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
+        />
+        <div className="m-2 flex w-20 items-center justify-center">
+          <span className="text-sm text-[#838383]">{message?.length}/4000</span>
+          <button
+            type="button"
+            onClick={sendMessage}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "h-9 w-9",
+              "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+            )}
+          >
+            <IoMdSend size={20} className=" text-[#174894]" />
+          </button>
+        </div>
       </div>
     </div>
   )
