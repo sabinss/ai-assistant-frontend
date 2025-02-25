@@ -1,5 +1,5 @@
 "use client"
-import React, { Suspense, useState } from "react"
+import React, { Suspense, useEffect, useState } from "react"
 import {
   Table,
   TableBody,
@@ -55,7 +55,7 @@ const MemoizedTableRow = React.memo(
         </TableCell>
         <TableCell className="max-w-17 break-words py-3">{item.to}</TableCell>
         <TableCell className="max-w-17 break-words py-3">
-          {format(item.datetime, "MMM d, yyyy h:mm a")}
+          {format(item.timestamp, "MMM d, yyyy h:mm a")}
         </TableCell>
 
         <TableCell className="max-w-19 break-words py-3">
@@ -95,22 +95,34 @@ const MemoizedTableRow = React.memo(
     )
   }
 )
-export default function NotificationListTable() {
+export default function NotificationListTable({ notifications }: any) {
   const handleSort = (item: any) => {}
   const [showOpenOnly, setShowOpenOnly] = useState(false)
-  const [notificationList, setNotificationList] = useState(initialEmails)
   const [currentPage, setCurrentPage] = useState(1)
+  const [notificationList, setNotificationList] = useState(notifications)
   //pagination logic
+  const [originalNotifications, setOriginalNotifications] =
+    useState(notifications) // Keep original list
+
+  useEffect(() => {
+    console.log(notifications) // Check the incoming data
+
+    setNotificationList(notifications)
+    setOriginalNotifications(notifications) // Update original when notifications change
+  }, [notifications])
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage)
+  }
+  console.log(notificationList)
   const itemsPerPage = 7
   const totalPages = Math.ceil(notificationList.length / itemsPerPage)
   const paginatedData = notificationList.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   )
+  console.log(notifications) // Check the incoming data
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage)
-  }
   return (
     <div className="relative mb-10 w-full overflow-y-auto rounded-md bg-white p-4 text-[#333333]">
       <div className="flex justify-end space-x-2">
@@ -118,18 +130,16 @@ export default function NotificationListTable() {
           id="terms"
           checked={showOpenOnly}
           onCheckedChange={(checked) => {
-            console.log("checked unchedked", checked)
+            setShowOpenOnly(checked)
+
             if (checked) {
-              const filteredEmails = notificationList.filter(
+              const filteredEmails = originalNotifications.filter(
                 (email) => email.status === "open"
               )
-
-              setNotificationList(() => filteredEmails)
+              setNotificationList(filteredEmails)
             } else {
-              setNotificationList(initialEmails)
+              setNotificationList(originalNotifications) // Reset correctly
             }
-
-            setShowOpenOnly(checked)
           }}
         />
 
