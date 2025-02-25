@@ -250,7 +250,7 @@ export default function Page() {
           />
         </div>
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
-          <h3 className="text-sm text-primary">Red Shift Work Space</h3>
+          <h3 className="text-sm text-primary">Red Shift Work Group</h3>
           <Input
             name="redshit_work_space"
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
