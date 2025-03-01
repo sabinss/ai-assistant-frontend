@@ -374,7 +374,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
           disabled={checkingGoogleUser}
           isLoggedIn={isGoogleLogin}
           onClick={() => {
-            const url = getGoogleOAuthURL()
+            const url = getGoogleOAuthURL(user_data?.organization)
             console.log("url", url)
             window.location.href = url
           }}

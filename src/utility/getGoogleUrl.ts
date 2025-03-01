@@ -1,4 +1,4 @@
-function getGoogleOAuthURL() {
+function getGoogleOAuthURL(orgId: any) {
   const rootURL = "https://accounts.google.com/o/oauth2/v2/auth"
 
   const options = {
@@ -7,7 +7,8 @@ function getGoogleOAuthURL() {
     access_type: "offline",
     response_type: "code",
     prompt: "consent",
-    state: "auth_flow", // Unique value to prevent caching
+    // state: "auth_flow",
+    state: JSON.stringify({ auth_flow: "auth_flow", orgId }),
     scope: [
       "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/userinfo.email",
