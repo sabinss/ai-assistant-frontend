@@ -9,11 +9,13 @@ import http from "@/config/http"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { TaskAgentTable } from "./TaskAgentTable"
+import { AgentTable } from "./AgentTable"
 const TABS = [
   { key: "support_workflow", label: "Support Workflow" },
   { key: "customer_insights", label: "Customer Insights" },
   { key: "email_rply", label: "Email Reply" },
   { key: "task_agent", label: "Task Agent" },
+  { key: "agent", label: "Agent" },
 ]
 
 export const Configuration = () => {
@@ -381,6 +383,7 @@ export const Configuration = () => {
             handleTaskAgent={saveOrUpdateTaskAgent}
           />
         )}
+        {activeTab === "agent" && <AgentTable />}
       </div>
     </div>
   )
