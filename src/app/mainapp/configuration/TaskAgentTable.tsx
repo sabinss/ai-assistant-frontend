@@ -17,7 +17,11 @@ import {
 } from "@/components/ui/dialog"
 import { FaRegSave } from "react-icons/fa"
 import { MdOutlineCancel } from "react-icons/md"
-import e from "express"
+import { toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+import useAuth from "@/store/user"
+import axios from "axios"
+import http from "@/config/http"
 
 const tableHeader = [
   { name: "Name", sortable: false },
@@ -25,42 +29,59 @@ const tableHeader = [
   { name: "Objective", sortable: false },
   { name: "Active", sortable: false },
   { name: "Frequency", sortable: true, sortKey: "last_seen" },
+  { name: "", sortable: true, sortKey: "last_seen" },
   { name: "" },
 ]
-const MemoizedTableRow = React.memo(({ item, index, handleEdit }: any) => {
-  return (
-    <TableRow
-      key={item._id}
-      className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} cursor-pointer hover:bg-gray-100`}
-    >
-      <TableCell className="max-w-20 break-words py-3">{item.name}</TableCell>
-      <TableCell className="max-w-20 break-words py-3">{item.action}</TableCell>
-
-      <TableCell className="max-w-20 break-words py-3">
-        {item.objective}
-      </TableCell>
-      <TableCell className="max-w-20 break-words py-3">
-        {item.active ? "Y" : "N"}
-      </TableCell>
-      <TableCell className="max-w-20 break-words py-3">
-        {item.frequency}
-      </TableCell>
-      <TableCell
-        className="max-w-10 break-words py-3"
-        onClick={(e) => {
-          console.log("clicked")
-          e.stopPropagation()
-          handleEdit()
-        }}
+const MemoizedTableRow = React.memo(
+  ({ item, index, handleEdit, handleManualTrigger }: any) => {
+    return (
+      <TableRow
+        key={item._id}
+        className={`${index % 2 === 0 ? "bg-white" : "bg-gray-200"} cursor-pointer hover:bg-gray-100`}
       >
-        <FaEdit size={20} />
-      </TableCell>
-    </TableRow>
-  )
-})
+        <TableCell className="max-w-20 break-words py-3">{item.name}</TableCell>
+        <TableCell className="max-w-20 break-words py-3">
+          {item.action}
+        </TableCell>
+
+        <TableCell className="max-w-20 break-words py-3">
+          {item.objective}
+        </TableCell>
+        <TableCell className="max-w-20 break-words py-3">
+          {item.active ? "Y" : "N"}
+        </TableCell>
+        <TableCell className="max-w-20 break-words py-3">
+          {item.frequency}
+        </TableCell>
+        <TableCell className="max-w-20 break-words py-3">
+          <button
+            className="ml-3 rounded bg-blue-500 p-2 font-semibold text-white hover:bg-blue-600"
+            onClick={() => {
+              handleManualTrigger(item.name)
+            }}
+          >
+            Trigger Now
+          </button>
+        </TableCell>
+        <TableCell
+          className="max-w-10 break-words py-3"
+          onClick={(e) => {
+            console.log("clicked")
+            e.stopPropagation()
+            handleEdit()
+          }}
+        >
+          <FaEdit size={20} />
+        </TableCell>
+      </TableRow>
+    )
+  }
+)
 export const TaskAgentTable = ({ orgTaskAgents, handleTaskAgent }: any) => {
   const [isOpen, setIsOpen] = useState(false)
-  console.log("Table", orgTaskAgents)
+  const { access_token, user_data } = useAuth() // Call useAuth here
+  console.log("Task Agent table", access_token)
+  console.log(user_data)
   const [formData, setFormData] = useState<any>({
     name: "",
     action: "Draft Email",
@@ -91,6 +112,21 @@ export const TaskAgentTable = ({ orgTaskAgents, handleTaskAgent }: any) => {
   }
   const closeForm = () => {
     setIsOpen(false)
+  }
+
+  const callTaskAgent = async (taskName: string) => {
+    try {
+      const response = await http.post(
+        "/organization/task-agent/trigger",
+        { task_name: taskName, org_id: user_data?.organization },
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      )
+      console.log("response", response)
+      toast.success("Success")
+    } catch (err: any) {
+      console.log(err)
+      toast.error(err?.message || "Failed to call task agent api")
+    }
   }
 
   return (
@@ -144,6 +180,9 @@ export const TaskAgentTable = ({ orgTaskAgents, handleTaskAgent }: any) => {
                   handleEdit={() => {
                     console.log("On edit called", item)
                     openForm(item)
+                  }}
+                  handleManualTrigger={(agentName: string) => {
+                    callTaskAgent(agentName)
                   }}
                 />
               ))
