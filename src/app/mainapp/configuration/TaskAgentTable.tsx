@@ -33,7 +33,7 @@ const tableHeader = [
   { name: "" },
 ]
 const MemoizedTableRow = React.memo(
-  ({ item, index, handleEdit, handleManualTrigger }: any) => {
+  ({ item, index, handleEdit, handleManualTrigger, triggerLoading }: any) => {
     return (
       <TableRow
         key={item._id}
@@ -54,13 +54,24 @@ const MemoizedTableRow = React.memo(
           {item.frequency}
         </TableCell>
         <TableCell className="max-w-20 break-words py-3">
-          <button
+          {/* <button
+            disabled={triggerLoading}
             className="ml-3 rounded bg-blue-500 p-2 font-semibold text-white hover:bg-blue-600"
             onClick={() => {
               handleManualTrigger(item.name)
             }}
           >
+            Trigger Now {triggerLoading ? "loading" : ""}
+          </button> */}
+          <button
+            disabled={triggerLoading}
+            className="ml-3 flex items-center gap-2 rounded bg-blue-500 p-2 font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
+            onClick={() => handleManualTrigger(item.name)}
+          >
             Trigger Now
+            {triggerLoading && (
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+            )}
           </button>
         </TableCell>
         <TableCell
@@ -80,8 +91,9 @@ const MemoizedTableRow = React.memo(
 export const TaskAgentTable = ({ orgTaskAgents, handleTaskAgent }: any) => {
   const [isOpen, setIsOpen] = useState(false)
   const { access_token, user_data } = useAuth() // Call useAuth here
-  console.log("Task Agent table", access_token)
-  console.log(user_data)
+  const [isManualTriggering, setManualTrigger] = useState(false)
+  const [loadingItem, setLoadingItem] = useState<any>(null)
+
   const [formData, setFormData] = useState<any>({
     name: "",
     action: "Draft Email",
@@ -122,9 +134,11 @@ export const TaskAgentTable = ({ orgTaskAgents, handleTaskAgent }: any) => {
         { headers: { Authorization: `Bearer ${access_token}` } }
       )
       console.log("response", response)
+      setLoadingItem(null)
       toast.success("Success")
     } catch (err: any) {
       console.log(err)
+      setLoadingItem(null)
       toast.error(err?.message || "Failed to call task agent api")
     }
   }
@@ -172,16 +186,18 @@ export const TaskAgentTable = ({ orgTaskAgents, handleTaskAgent }: any) => {
                 </td>
               </tr>
             ) : (
-              orgTaskAgents?.map((item: any, index) => (
+              orgTaskAgents?.map((item: any, index: any) => (
                 <MemoizedTableRow
                   key={item?._id}
                   item={item}
                   index={index}
+                  triggerLoading={loadingItem?.name === item.name} // Only show loading for clicked button
                   handleEdit={() => {
                     console.log("On edit called", item)
                     openForm(item)
                   }}
                   handleManualTrigger={(agentName: string) => {
+                    setLoadingItem(item)
                     callTaskAgent(agentName)
                   }}
                 />
