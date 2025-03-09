@@ -34,19 +34,7 @@ export const AgentTable = () => {
     }
     getOrgAgentList()
   }, [])
-
-  // const [formData, setFormData] = useState<any>({
-  //   name: "",
-  //   action: "Draft Email",
-  //   objective: "",
-  //   active: true,
-  //   frequency: "",
-  //   output: "",
-  //   trigger: "",
-  //   who: "",
-  //   instructions: [], // Array to store instructions dynamically
-  // })
-
+  console.log("agentList", agentList)
   const [formData, setFormData] = useState<any>({
     name: "",
     routing_instruction: "Draft Email",
@@ -55,15 +43,15 @@ export const AgentTable = () => {
     objective: "",
     tools_used: "",
     primary_instruction: "",
-    instructions: [], // Array to store instructions dynamically
+    tasks: [], // Array to store instructions dynamically
   })
   const [isAgentLoading, setAgentLoading] = useState(false)
   const addInstruction = () => {
     setFormData((prev: any) => ({
       ...prev,
-      instructions: [
-        ...(prev.instructions || []),
-        { id: Date.now(), instruction: "", tools: "", name: "" },
+      tasks: [
+        ...(prev.tasks || []),
+        { id: Date.now(), tasks: "", tools: "", name: "" },
       ],
     }))
   }
@@ -71,14 +59,14 @@ export const AgentTable = () => {
   const removeInstruction = (id: number) => {
     setFormData((prev: any) => ({
       ...prev,
-      instructions: prev.instructions.filter((item) => item._id != id),
+      tasks: prev.tasks.filter((item) => item._id != id),
     }))
   }
 
   const updateInstruction = (id: number, field: any, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
-      instructions: prev.instructions.map((item) =>
+      tasks: prev.tasks.map((item) =>
         item.id === id ? { ...item, [field]: value } : item
       ),
     }))
@@ -103,9 +91,9 @@ export const AgentTable = () => {
       toast.error(err?.message || "Failed to fetch Agent")
     }
   }
+  console.log("formData--,formData", formData)
 
   const handleSave = async () => {
-    console.log("form data", formData)
     setAgentLoading(true)
 
     try {
@@ -251,9 +239,9 @@ export const AgentTable = () => {
             </div>
 
             {/* Instructions List */}
-            {formData?.instructions && formData?.instructions.length > 0 && (
+            {formData?.tasks && formData?.tasks.length > 0 && (
               <div className="mt-4 space-y-4">
-                {formData.instructions.map((item) => (
+                {formData.tasks.map((item) => (
                   <div
                     key={item.id}
                     className="flex flex-col gap-2 rounded-lg border p-4 shadow"
