@@ -68,7 +68,7 @@ const MemoizedTableRow = React.memo(
             className="ml-3 flex items-center gap-2 rounded bg-blue-500 p-2 font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
             onClick={() => handleManualTrigger(item.name)}
           >
-            Trigger Now
+            Start Task
             {triggerLoading && (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
             )}
