@@ -54,15 +54,6 @@ const MemoizedTableRow = React.memo(
           {item.frequency}
         </TableCell>
         <TableCell className="max-w-20 break-words py-3">
-          {/* <button
-            disabled={triggerLoading}
-            className="ml-3 rounded bg-blue-500 p-2 font-semibold text-white hover:bg-blue-600"
-            onClick={() => {
-              handleManualTrigger(item.name)
-            }}
-          >
-            Trigger Now {triggerLoading ? "loading" : ""}
-          </button> */}
           <button
             disabled={triggerLoading}
             className="ml-3 flex items-center gap-2 rounded bg-blue-500 p-2 font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
