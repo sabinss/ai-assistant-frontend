@@ -45,13 +45,15 @@ export const AgentTable = () => {
     primary_instruction: "",
     tasks: [], // Array to store instructions dynamically
   })
+
+  const [isAddNew, setAddNew] = useState(false)
   const [isAgentLoading, setAgentLoading] = useState(false)
   const addInstruction = () => {
     setFormData((prev: any) => ({
       ...prev,
       tasks: [
         ...(prev.tasks || []),
-        { id: Date.now(), tasks: "", tools: "", name: "" },
+        { _id: Date.now(), tasks: "", tools: "", name: "" },
       ],
     }))
   }
@@ -67,16 +69,19 @@ export const AgentTable = () => {
     setFormData((prev: any) => ({
       ...prev,
       tasks: prev.tasks.map((item) =>
-        item.id === id ? { ...item, [field]: value } : item
+        item._id === id ? { ...item, [field]: value } : item
       ),
     }))
   }
+
   const handleAddNew = () => {
+    setAddNew(true)
     setFormData({ id: null, name: "", objective: "" })
     setIsEditing(true)
   }
 
   const handleEdit = (agent: any) => {
+    setAddNew(false)
     setFormData(agent)
     setIsEditing(true)
   }
@@ -136,7 +141,7 @@ export const AgentTable = () => {
       {isEditing ? (
         <div className="rounded-lg bg-gray-100 p-4">
           <h2 className="text-lg font-semibold">
-            {formData.id ? "Edit Agent" : "Add New Agent"}
+            {!isAddNew ? "Edit Agent" : "Add New Agent"}
           </h2>
           <div className="flex flex-col gap-4">
             <div>
@@ -247,7 +252,7 @@ export const AgentTable = () => {
                     className="flex flex-col gap-2 rounded-lg border p-4 shadow"
                   >
                     <label
-                      htmlFor={`name-${item.id}`}
+                      htmlFor={`name-${item._id}`}
                       className="font-semibold"
                     >
                       Task Name
@@ -257,12 +262,12 @@ export const AgentTable = () => {
                       placeholder="Name"
                       value={item.name}
                       onChange={(e) =>
-                        updateInstruction(item.id, "name", e.target.value)
+                        updateInstruction(item._id, "name", e.target.value)
                       }
                       className="w-full rounded border p-2"
                     />
                     <label
-                      htmlFor={`tools-${item.id}`}
+                      htmlFor={`tools-${item._id}`}
                       className="font-semibold"
                     >
                       Tools
@@ -272,12 +277,12 @@ export const AgentTable = () => {
                       placeholder="Tools"
                       value={item.tools}
                       onChange={(e) =>
-                        updateInstruction(item.id, "tools", e.target.value)
+                        updateInstruction(item._id, "tools", e.target.value)
                       }
                       className="w-full rounded border p-2"
                     />
                     <label
-                      htmlFor={`instruction-${item.id}`}
+                      htmlFor={`instruction-${item._id}`}
                       className="font-semibold"
                     >
                       Instruction
@@ -288,7 +293,7 @@ export const AgentTable = () => {
                       value={item.instruction}
                       onChange={(e) =>
                         updateInstruction(
-                          item.id,
+                          item._id,
                           "instruction",
                           e.target.value
                         )
