@@ -182,7 +182,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
 
 export default ChatInput
 
-//get clock time like 2:30 in js
+//get clock time like 2:30 in js.
 function getClockTime() {
   return new Date().toLocaleTimeString("en-US", {
     hour: "numeric",
