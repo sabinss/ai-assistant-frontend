@@ -16,6 +16,7 @@ import useAuth from "@/store/user"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { ImSpinner2 } from "react-icons/im" // Import spinner icon
+import useOrgCustomer from "@/store/organization_customer"
 
 const tableHeader = [
   { name: "Name", sortable: false },
@@ -34,7 +35,6 @@ export const AgentTable = () => {
     }
     getOrgAgentList()
   }, [])
-  console.log("agentList", agentList)
   const [formData, setFormData] = useState<any>({
     name: "",
     routing_instruction: "Draft Email",
@@ -91,6 +91,7 @@ export const AgentTable = () => {
       const response = await http.get("/organization/agent/instruction", {
         headers: { Authorization: `Bearer ${access_token}` },
       })
+      console.log("Agent List", response?.data?.data)
       setAgentList(response?.data?.data)
     } catch (err: any) {
       toast.error(err?.message || "Failed to fetch Agent")

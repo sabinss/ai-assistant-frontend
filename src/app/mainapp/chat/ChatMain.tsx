@@ -5,6 +5,7 @@ import http from "@/config/http"
 import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
 import usePublicChat from "@/store/public_chat"
+import useOrgCustomer from "@/store/organization_customer"
 export interface MessageObject {
   id: string
   sender: string
@@ -20,6 +21,9 @@ const ChatMain: React.FC = () => {
   const { greeting, botName, setBotName, setGreeting } = useNavBarStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { setOrgAgents } = useOrgCustomer()
+  const [agentList, setAgentList] = useState<any>([])
+
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
 
@@ -43,6 +47,12 @@ const ChatMain: React.FC = () => {
 
     fetchBotNameAndMessages()
   }, [user_data, access_token, chatSession, publicChat, publicChatHeaders])
+  useEffect(() => {
+    async function getOrgAgentList() {
+      await fetchOrgAgentInstructions()
+    }
+    getOrgAgentList()
+  }, [])
 
   const fetchBotData = async () => {
     let org_id
@@ -58,6 +68,19 @@ const ChatMain: React.FC = () => {
     console.log("we are setting organization here", org_data)
     setBotName(org_data?.assistant_name)
     setGreeting(org_data?.greeting)
+  }
+  const fetchOrgAgentInstructions = async () => {
+    try {
+      const response = await http.get("/organization/agent/instruction", {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
+      console.log("Agent List Chat Input", response?.data?.data)
+      const agentsRecords: any = response?.data?.data ?? []
+      if (agentsRecords.length > 0) {
+        setOrgAgents(response?.data?.data)
+      }
+      setAgentList(response?.data?.data)
+    } catch (err: any) {}
   }
 
   const getUserMessages = async () => {
@@ -118,7 +141,7 @@ const ChatMain: React.FC = () => {
         <div className="mb-2 bg-gray-200 p-2 text-gray-700">Loading...</div>
       )}
       <ChatList messages={messages} />
-      <ChatInput appendMessage={appendMessage} />
+      <ChatInput appendMessage={appendMessage} agentList={agentList} />
     </div>
   )
 }
