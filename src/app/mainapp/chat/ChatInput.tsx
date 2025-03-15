@@ -12,11 +12,14 @@ import { MOCK_DATA } from "@/constants"
 import useApiType from "@/store/apiType"
 import { FaRegLightbulb } from "react-icons/fa"
 import CHAT_PROMPTS from "./chat-prompt"
+import useOrgCustomer from "@/store/organization_customer"
+import { X } from "lucide-react"
+
 interface ChildProps {
   appendMessage: (newMessage: any) => void
 }
 
-const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
+const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const { botName } = useNavBarStore()
   const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } =
     useChatConfig()
@@ -27,16 +30,19 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
+  const [showDropdown, setShowDropdown] = useState(false)
+
   const [publicChatReponsePayload, setPublicChatResponse] = useState({
     user_email: null,
     customer_id: null,
   })
-  const [selectedPrompt, setSelectedPrompt] = useState("")
+  const [selectedAgents, setSelectedAgents] = useState<any>([])
+
+  const [selectedPrompt, setSelectedPrompt] = useState<any>("")
 
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
-  console.log("CHAT_PROMPTS", CHAT_PROMPTS)
   // Sample list of text options
-
+  console.log("showDropdown", showDropdown)
   useEffect(() => {
     async function getOrgDetails() {
       try {
@@ -54,6 +60,23 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
     }
     getOrgDetails()
   }, [access_token])
+
+  const handleAgentSelect = (agentName: string, fromDropDown = false) => {
+    setSelectedAgents([agentName])
+    // if (fromDropDown) {
+    //   setShowDropdown(false)
+    //   // Remove the last agent from selectedAgents and add the new one
+    //   setSelectedAgents((prevSelectedAgents: any) => {
+    //     const updatedAgents = prevSelectedAgents.slice(0, -1) // Remove the last agent
+    //     updatedAgents.push(agentName) // Add the new agent
+    //     console.log("updatedAgents", updatedAgents)
+    //     return updatedAgents // Update the state with the modified agents array
+    //   })
+    // } else {
+    //   // If not from dropdown, just set the selected agent (overwrite the state)
+    //   setSelectedAgents([agentName])
+    // }
+  }
 
   const sendMessage = async () => {
     if (message.trim() !== "") {
@@ -111,6 +134,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
             workflowFlag,
             sessionId,
             apiType,
+            agentName: selectedAgents,
           },
           { headers: { Authorization: `Bearer ${access_token}` } }
         )
@@ -181,6 +205,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
     }
   }
 
+  const handleAgentRemove = (agentName: string) => {
+    setSelectedAgents([agentName]) // Always keeps only the selected agent
+  }
+  console.log("setSelectedAgents", selectedAgents)
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
       <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
@@ -202,7 +230,43 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
           className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
         />
         {/* Lightbulb Icon Button to Open Popup */}
-
+        <div className="absolute bottom-2 left-5 right-2 mb-2 flex items-center gap-3">
+          {agentList.slice(0, 3).map((agent: any, index: number) => (
+            <div
+              onClick={() => handleAgentRemove(agent.name)}
+              key={index}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
+                selectedAgents.includes(agent.name)
+                  ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+              }`}
+            >
+              {agent.name}
+            </div>
+          ))}
+          {/* {agentList.length > 3 && (
+            <button
+              onClick={() => setShowDropdown(!showDropdown)}
+              className="rounded-full border bg-gray-200 px-3 py-1 text-sm font-medium hover:bg-gray-300"
+            >
+              ...
+            </button>
+          )} */}
+          {/* Dropdown for Remaining Agents */}
+          {/* {showDropdown && (
+            <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-40 overflow-visible rounded-md border bg-white shadow-md">
+              {agentList.slice(3).map((agent: any, index: number) => (
+                <div
+                  key={index}
+                  onClick={() => handleAgentSelect(agent.name, true)}
+                  className="cursor-pointer px-3 py-2 text-sm hover:bg-gray-100"
+                >
+                  {agent.name}
+                </div>
+              ))}
+            </div>
+          )} */}
+        </div>
         <button
           type="button"
           onClick={togglePopup}
