@@ -209,7 +209,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       prevAgents.includes(agentName) ? [] : [agentName]
     )
   }
-  console.log("setSelectedAgents", selectedAgents)
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
       <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
