@@ -204,9 +204,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       )}px`
     }
   }
-
   const handleAgentRemove = (agentName: string) => {
-    setSelectedAgents([agentName]) // Always keeps only the selected agent
+    setSelectedAgents((prevAgents) =>
+      prevAgents.includes(agentName) ? [] : [agentName]
+    )
   }
   console.log("setSelectedAgents", selectedAgents)
   return (
