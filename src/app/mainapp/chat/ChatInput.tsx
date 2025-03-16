@@ -224,9 +224,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           //   textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`
           // }}
           // disabled={isMessageLoading}
-          placeholder={
-            isMessageLoading ? "......" : "Type your message here..."
-          }
+          placeholder={isMessageLoading ? "....." : "Type your message here..."}
           className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
         />
         {/* Lightbulb Icon Button to Open Popup */}
