@@ -25,7 +25,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { access_token, user_data, chatSession } = useAuth() // Call useAuth here
+  const { access_token, user_data, chatSession, setChatSession } = useAuth() // Call useAuth here
   const { isMessageLoading, updateMessageLoading } = useFormStore()
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { apiType } = useApiType()
@@ -205,6 +205,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     }
   }
   const handleAgentRemove = (agentName: string) => {
+    const newSession = Math.floor(Math.random() * 1000).toString()
+    setChatSession(newSession)
     setSelectedAgents((prevAgents) =>
       prevAgents.includes(agentName) ? [] : [agentName]
     )
