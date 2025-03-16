@@ -206,7 +206,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   }
   const handleAgentRemove = (agentName: string) => {
     const newSession = Math.floor(Math.random() * 1000).toString()
-    setChatSession(newSession)
+    setSessionId(newSession)
     setSelectedAgents((prevAgents) =>
       prevAgents.includes(agentName) ? [] : [agentName]
     )
