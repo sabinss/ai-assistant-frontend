@@ -25,7 +25,9 @@ export default function AuthLayout({
       <div className="flex h-[100vh] items-center justify-center">
         <div className="mx-10 flex h-[580px] w-full overflow-hidden rounded-xl border-2 border-slate-100 shadow-lg lg:w-[60%]">
           <div className="hidden w-1/2 flex-col justify-center bg-gradient-to-b from-[#174894] to-[#242866] md:flex">
-            <h1 className="text-center text-lg text-white">AI Support Agent</h1>
+            <h1 className="text-center text-lg text-white">
+              AI Co-worker, Ready to Assist.
+            </h1>
             <Image
               className="mx-auto mt-4 w-[80%] rounded-md"
               src={robotImage}
