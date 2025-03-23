@@ -230,8 +230,9 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
         />
         {/* Lightbulb Icon Button to Open Popup */}
+        {/* publicChat */}
         <div className="absolute bottom-2 left-5 right-2 mb-2 flex items-center gap-3">
-          {agentList.slice(0, 3).map((agent: any, index: number) => (
+          {agentList.slice(0, 4).map((agent: any, index: number) => (
             <div
               onClick={() => handleAgentRemove(agent.name)}
               key={index}
@@ -267,13 +268,16 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             </div>
           )} */}
         </div>
-        <button
-          type="button"
-          onClick={togglePopup}
-          className="mx-2 rounded-md bg-gray-200 p-2 hover:bg-gray-300"
-        >
-          <FaRegLightbulb size={18} />
-        </button>
+        {!publicChat && (
+          <button
+            type="button"
+            onClick={togglePopup}
+            className="mx-2 rounded-md bg-gray-200 p-2 hover:bg-gray-300"
+          >
+            <FaRegLightbulb size={18} />
+          </button>
+        )}
+
         <div className="m-2 flex w-20 items-center justify-center">
           <span className="text-sm text-[#838383]">{message?.length}/4000</span>
           <button

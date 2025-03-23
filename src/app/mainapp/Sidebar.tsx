@@ -21,7 +21,7 @@ import { usePathname } from "next/navigation"
 import QuickLinks from "@/components/ui/quick-links"
 import { useEffect, useRef } from "react"
 
-function getNavLinks(rolePermission) {
+function getNavLinks(rolePermission, hideList = ["Dashboard", "Customers"]) {
   const mainLinks = [
     {
       name: "Notifications",
@@ -98,9 +98,11 @@ function getNavLinks(rolePermission) {
     },
   ]
 
-  const filteredMainLinks = mainLinks.filter((link) => {
-    return rolePermission.includes(link.path.split("/mainapp/")[1])
-  })
+  const filteredMainLinks = mainLinks
+    .filter((link) => {
+      return rolePermission.includes(link.path.split("/mainapp/")[1])
+    })
+    .filter((x) => !hideList.includes(x.name))
 
   const filteredOtherLinks = otherLinks.filter((link) => {
     return rolePermission.includes(link.path.split("/mainapp/")[1])

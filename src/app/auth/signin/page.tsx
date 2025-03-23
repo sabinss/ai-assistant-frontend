@@ -157,17 +157,15 @@ export default function page() {
         <Link href="/auth/forgot-password">Forgot Password?</Link>
       </p>
 
-      <div className="mt-3">
-        {/* <div className="rounded-sm border-2 border-slate-200 p-1 text-center">
-          Google Signin
-        </div> */}
+      {/* <div className="mt-3">
+     
         <p className="mt-3 text-center text-xs">
           Don't have an account?{" "}
           <Link href="/auth/signup" className="text-blue-500">
             Sign up
           </Link>
         </p>
-      </div>
+      </div> */}
     </div>
   )
 }
