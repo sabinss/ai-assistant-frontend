@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
+import axios from "axios"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { IoMdSend } from "react-icons/io"
@@ -17,6 +18,7 @@ import { X } from "lucide-react"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
+  agentList: [any]
 }
 
 const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
@@ -90,79 +92,190 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   }
 
   const sendMessagetoBackend = async (query: string) => {
+    updateMessageLoading(true)
+    appendMessage({
+      sender: "user",
+      message: query,
+      time: getClockTime(),
+      id: "",
+    })
+
     try {
-      console.log("send message 1", sessionId, publicChatReponsePayload)
-      let res: any
-      updateMessageLoading(true)
-      appendMessage({ sender: "user", message, time: getClockTime(), id: "" }) // Add the message to the chat
-      let start_time = Date.now()
-      // const res = await http.sendMessage(user_data?.organization || publicChatHeaders?.org_id, query, chatSession || publicChatHeaders?.chat_session); //getting answer from api
-      let end_time = Date.now()
-      let totalTimeTookInSeconds = (end_time - start_time) / 1000
       if (publicChat) {
-        res = await http.post(
-          `/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
-          {
-            //adding to our backend question and answer
-            question: query,
-            user_email: publicChatReponsePayload.user_email,
-            customer_id: publicChatReponsePayload.customer_id,
-            // answer
-          },
-          { headers: publicChatHeaders }
-        )
-        console.log(
-          "public chat response",
-          res.data.user_email,
-          res.data.customer_id
-        )
-        if (res.data) {
-          setPublicChatResponse((prevState) => ({
-            ...prevState,
-            user_email: res.data.user_email || null,
-            customer_id: res.data.customer_id || null,
-          }))
-        }
+        // ...existing code...
       } else {
-        res = await http.post(
-          "/conversation/add",
-          {
-            //adding to our backend question and answer
+        if (apiType === "Customer Information") {
+          await handleStreamingResponse(query)
+        } else {
+          await handleNonStreamingResponse(query)
+        }
+      }
+    } catch (error) {
+      console.error("Error sending message:", error)
+      appendMessage({
+        sender: botName,
+        message: "!!Error Occurred!!",
+        time: getClockTime(),
+        id: "error",
+      })
+    } finally {
+      updateMessageLoading(false)
+    }
+  }
+
+  const handleStreamingResponse = async (query: string) => {
+    const messageId = `stream_${Date.now()}`
+
+    // Add initial message with loading status
+    appendMessage({
+      sender: botName,
+      message: "",
+      time: getClockTime(),
+      id: messageId,
+      isStreaming: true,
+      status: "Analyzing your request...",
+    })
+
+    try {
+      // Configure fetch for streaming SSE response instead of axios
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify({
             question: query,
-            // answer,
             chatSession,
             workflowFlag,
             sessionId,
             apiType,
             agentName: selectedAgents,
-          },
-          { headers: { Authorization: `Bearer ${access_token}` } }
-        )
-        console.log("conversation response", res)
-        if (res?.data?.session_id) {
-          setSessionId(res?.data?.session_id)
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Get the response as a ReadableStream
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("Response body is not readable")
+      }
+
+      let fullMessage = ""
+      let sessionIdFromResponse = null
+
+      // Read the stream
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        // Decode the chunk and add it to our buffer
+        buffer += decoder.decode(value, { stream: true })
+
+        // Process complete SSE messages
+        const lines = buffer.split("\n\n")
+        buffer = lines.pop() || "" // Keep the last incomplete chunk
+
+        for (const line of lines) {
+          if (line.trim() && line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.substring(6))
+
+              // Handle completion
+              if (data.done) {
+                // Update session ID if provided
+                if (data.session_id) {
+                  sessionIdFromResponse = data.session_id
+                  setSessionId(data.session_id)
+                } else {
+                  console.warn("Session ID not found in response.")
+                }
+                continue
+              }
+
+              // Handle status updates (like "Analyzing query...")
+              if (data.status) {
+                appendMessage({
+                  sender: botName,
+                  message: fullMessage,
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: true,
+                  status: data.status,
+                })
+              }
+
+              // Handle actual message content
+              if (data.message) {
+                fullMessage += data.message
+                appendMessage({
+                  sender: botName,
+                  message: fullMessage,
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: true,
+                })
+              }
+            } catch (e) {
+              console.error("Error parsing stream data:", e)
+            }
+          }
         }
       }
 
-      // let answer = res_.results.answer
-      const data = res?.data
+      // Final message update after stream completes
       appendMessage({
         sender: botName,
-        message: res?.data?.answer,
+        message: fullMessage,
         time: getClockTime(),
-        id: "ANS_" + data._id,
-      }) // add to frontend
-      updateMessageLoading(false)
+        id: messageId,
+        isStreaming: false,
+      })
     } catch (error) {
-      updateMessageLoading(false)
+      console.error("Stream error:", error)
       appendMessage({
         sender: botName,
-        message: "!!Error Occured!!",
+        message: "Error occurred while streaming the response.",
         time: getClockTime(),
-        id: "error",
-      }) // add to frontend
-      console.log("error", error)
+        id: messageId,
+        isStreaming: false,
+      })
     }
+  }
+
+  const handleNonStreamingResponse = async (query: string) => {
+    const res = await http.post(
+      "/conversation/add",
+      {
+        question: query,
+        chatSession,
+        workflowFlag,
+        sessionId,
+        apiType,
+        agentName: selectedAgents,
+      },
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    )
+
+    if (res?.data?.session_id) {
+      setSessionId(res?.data?.session_id)
+    }
+
+    appendMessage({
+      sender: botName,
+      message: res?.data?.answer,
+      time: getClockTime(),
+      id: "ANS_" + res?.data?._id,
+    })
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -207,10 +320,11 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const handleAgentRemove = (agentName: string) => {
     const newSession = Math.floor(Math.random() * 1000).toString()
     setSessionId(newSession)
-    setSelectedAgents((prevAgents) =>
+    setSelectedAgents((prevAgents: any) =>
       prevAgents.includes(agentName) ? [] : [agentName]
     )
   }
+
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
       <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
@@ -283,6 +397,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           <button
             type="button"
             onClick={sendMessage}
+            disabled={isMessageLoading || message.length === 0}
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon" }),
               "h-9 w-9",
