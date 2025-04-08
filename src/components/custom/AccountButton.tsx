@@ -44,7 +44,9 @@ export function AccountButton() {
         <DropdownMenuLabel>Accounts</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup>
-          <DropdownMenuRadioItem value="top">  <Link href={"/mainapp/profile"}>  Profile  </Link>     </DropdownMenuRadioItem>
+          <DropdownMenuRadioItem value="top">
+            <Link href={"/mainapp/profile"}> Profile </Link>{" "}
+          </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="right" onClick={() => handleLogout()}>
             Logout
           </DropdownMenuRadioItem>
