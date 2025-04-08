@@ -10,11 +10,9 @@ export interface MessageObject {
   id: string
   sender: string
   message: string
-  status?: string
-  liked?: boolean
+  liked: boolean
   time: string
-  disliked?: boolean
-  isStreaming?: boolean
+  disliked: boolean
 }
 
 const ChatMain: React.FC = () => {
@@ -71,7 +69,6 @@ const ChatMain: React.FC = () => {
     setBotName(org_data?.assistant_name)
     setGreeting(org_data?.greeting)
   }
-
   const fetchOrgAgentInstructions = async () => {
     try {
       const response = await http.get("/organization/agent/instruction", {
@@ -131,18 +128,7 @@ const ChatMain: React.FC = () => {
   }
 
   const appendMessage = (message: MessageObject) => {
-    setMessages((prevMessages) => {
-      // Check if this is an update to an existing streaming message
-      if (message.id && message.id.startsWith("stream_")) {
-        const existingIndex = prevMessages.findIndex((m) => m.id === message.id)
-        if (existingIndex !== -1) {
-          const updatedMessages = [...prevMessages]
-          updatedMessages[existingIndex] = message
-          return updatedMessages
-        }
-      }
-      return [...prevMessages, message]
-    })
+    setMessages((prevMessages) => [...prevMessages, message])
   }
 
   return (
