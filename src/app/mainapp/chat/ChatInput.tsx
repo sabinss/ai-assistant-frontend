@@ -231,21 +231,22 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         />
         {/* Lightbulb Icon Button to Open Popup */}
         {/* publicChat */}
-        <div className="absolute bottom-2 left-5 right-2 mb-2 flex items-center gap-3">
-          {agentList.slice(0, 4).map((agent: any, index: number) => (
-            <div
-              onClick={() => handleAgentRemove(agent.name)}
-              key={index}
-              className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
-                selectedAgents.includes(agent.name)
-                  ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-              }`}
-            >
-              {agent.name}
-            </div>
-          ))}
-          {/* {agentList.length > 3 && (
+        {!publicChat && (
+          <div className="absolute bottom-2 left-5 right-2 mb-2 flex items-center gap-3">
+            {agentList.slice(0, 5).map((agent: any, index: number) => (
+              <div
+                onClick={() => handleAgentRemove(agent.name)}
+                key={index}
+                className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
+                  selectedAgents.includes(agent.name)
+                    ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+                }`}
+              >
+                {agent.name}
+              </div>
+            ))}
+            {/* {agentList.length > 3 && (
             <button
               onClick={() => setShowDropdown(!showDropdown)}
               className="rounded-full border bg-gray-200 px-3 py-1 text-sm font-medium hover:bg-gray-300"
@@ -253,8 +254,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
               ...
             </button>
           )} */}
-          {/* Dropdown for Remaining Agents */}
-          {/* {showDropdown && (
+            {/* Dropdown for Remaining Agents */}
+            {/* {showDropdown && (
             <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-40 overflow-visible rounded-md border bg-white shadow-md">
               {agentList.slice(3).map((agent: any, index: number) => (
                 <div
@@ -267,7 +268,9 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
               ))}
             </div>
           )} */}
-        </div>
+          </div>
+        )}
+
         {!publicChat && (
           <button
             type="button"
