@@ -17,7 +17,8 @@ export const SampleQuerySetup = () => {
   const { user_data, access_token } = useAuth() // Call useAuth here
   const [organizationPrompts, setOrganizationPrompts] = useState([])
   const [editingIndex, setEditingIndex] = useState<number | null>(null) // To track which prompt is being edited
-  const [editedCategory, setEditedCategory] = useState<string>("") // To track the edited category text
+  const [editedCategory, setEditedCategory] = useState<string>("")
+  const [orgPromptId, setOrgPromptId] = useState<any>(null) // To track the edited category text
   const [deletePromptIds, setDeletePromptIds] = useState<any>([])
 
   useEffect(() => {
@@ -54,11 +55,31 @@ export const SampleQuerySetup = () => {
     setEditingIndex(index)
     setEditedCategory(category)
   }
-  const handleInputChange = () => {}
+  const handleInputChange = (category: string, orgPromptId: any) => {
+    setEditedCategory(category)
+    setOrgPromptId(orgPromptId)
+  }
 
-  const handleCategoryNameSave = (index: number, action = "save") => {
-    if (action == "cancel") {
-      setEditingIndex(null)
+  const handleCategoryNameSave = async (index: number, action = "save") => {
+    try {
+      if (action == "cancel") {
+        setEditingIndex(null)
+      }
+      console.log("editCateogyr", editedCategory)
+      console.log("orgPrmptId", orgPromptId)
+
+      if (editedCategory && orgPromptId) {
+        const res = await http.post(
+          "/organization/prompts/category",
+          { category: editedCategory, orgPromptId },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        toast.success("Category updated successfully")
+      }
+    } catch (err) {
+      toast.error("Failed to update")
     }
   }
   const handleDeletePrompt = (
@@ -143,7 +164,9 @@ export const SampleQuerySetup = () => {
                     <input
                       type="text"
                       value={editedCategory}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        handleInputChange(e.target.value, orgPrompts._id)
+                      }}
                       className="w-full rounded border p-2"
                     />
                     <button
