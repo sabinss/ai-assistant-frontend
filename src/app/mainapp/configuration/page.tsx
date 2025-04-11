@@ -181,7 +181,6 @@ export const Configuration = () => {
 
   const saveOrUpdateTaskAgent = async (data: any) => {
     try {
-      console.log("Task Agent data", data._id, access_token)
       let toasMsg = "sfdsf"
       if (data?._id) {
         const res = await http.put(
