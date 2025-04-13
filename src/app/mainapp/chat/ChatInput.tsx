@@ -8,12 +8,9 @@ import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
-import { MOCK_DATA } from "@/constants"
 import useApiType from "@/store/apiType"
 import { FaRegLightbulb } from "react-icons/fa"
 import CHAT_PROMPTS from "./chat-prompt"
-import useOrgCustomer from "@/store/organization_customer"
-import { X } from "lucide-react"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
@@ -31,11 +28,13 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [chatPrompts, setChatPrompts] = useState([])
 
   const [publicChatReponsePayload, setPublicChatResponse] = useState({
     user_email: null,
     customer_id: null,
   })
+  console.log("chatPrompts", chatPrompts)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
 
   const [selectedPrompt, setSelectedPrompt] = useState<any>("")
@@ -60,6 +59,16 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     }
     getOrgDetails()
   }, [access_token])
+  useEffect(() => {
+    async function fetchOrganizationQuery() {
+      const res = await http.get("/organization/prompts", {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
+      console.log("res", res)
+      setChatPrompts(res.data.organizationPrompts)
+    }
+    fetchOrganizationQuery()
+  }, [user_data])
 
   const handleAgentSelect = (agentName: string, fromDropDown = false) => {
     setSelectedAgents([agentName])
@@ -309,25 +318,28 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
 
               {/* Columns for Categories */}
               <div className="grid grid-cols-3 gap-6">
-                {CHAT_PROMPTS.map((categoryData, index) => (
+                {chatPrompts?.map((categoryData: any, index) => (
                   <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
                     <h3 className="text-xl font-semibold">
                       {categoryData.category}
                     </h3>
                     <ul className="mt-2 space-y-2">
-                      {categoryData.prompts.map((prompt, promptIndex) => (
-                        <React.Fragment key={promptIndex}>
-                          <li
-                            className="cursor-pointer text-gray-700 hover:text-blue-500"
-                            onClick={() => handlePromptClick(prompt)} // Handle prompt click
-                          >
-                            {prompt}
-                          </li>
-                          {promptIndex !== categoryData.prompts.length - 1 && (
-                            <hr className="border-gray-300" />
-                          )}
-                        </React.Fragment>
-                      ))}
+                      {categoryData.prompts.map(
+                        (prompt: any, promptIndex: number) => (
+                          <React.Fragment key={promptIndex}>
+                            <li
+                              className="cursor-pointer text-gray-700 hover:text-blue-500"
+                              onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
+                            >
+                              {prompt.text}
+                            </li>
+                            {promptIndex !==
+                              categoryData.prompts.length - 1 && (
+                              <hr className="border-gray-300" />
+                            )}
+                          </React.Fragment>
+                        )
+                      )}
                     </ul>
                   </div>
                 ))}
