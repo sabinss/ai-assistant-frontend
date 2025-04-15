@@ -32,7 +32,8 @@ const GmailLoginButton = ({ onClick, isLoggedIn, disabled, email }: any) => {
   return (
     <button
       onClick={onClick}
-      className={`flex items-center rounded-lg bg-red-500 p-2 pr-2 text-white`}
+      // className={`flex items-center rounded-lg bg-red-500 p-2 pr-2 text-white`}
+      className={`flex rounded-lg bg-[#174894] p-2.5 font-medium text-white hover:bg-[#173094]`}
     >
       {isLoggedIn ? (
         <>
