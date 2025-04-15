@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react"
-import axios from "axios"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { IoMdSend } from "react-icons/io"
@@ -9,12 +8,9 @@ import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
-import { MOCK_DATA } from "@/constants"
 import useApiType from "@/store/apiType"
 import { FaRegLightbulb } from "react-icons/fa"
 import CHAT_PROMPTS from "./chat-prompt"
-import useOrgCustomer from "@/store/organization_customer"
-import { X } from "lucide-react"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
@@ -43,16 +39,19 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const [selectedPrompt, setSelectedPrompt] = useState<any>("")
 
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
+
   // Sample list of text options
-  console.log("showDropdown", showDropdown)
   useEffect(() => {
     async function getOrgDetails() {
       try {
         setIsLoading(true)
+
         const res = await http.get("/organization/", {
           headers: { Authorization: `Bearer ${access_token}` },
         })
+
         const orgData = res?.data?.org
+
         setWorkFlowFlag(orgData?.workflow_engine_enabled)
       } catch (e) {
         console.log(e)
@@ -83,8 +82,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const sendMessage = async () => {
     if (message.trim() !== "") {
       let msg = message
+
       setMessage("") // Clear the textarea after sending the message
       await sendMessagetoBackend(msg) // Send the message to the backend
+
       if (textareaRef.current) {
         textareaRef.current.focus() // Focus back on the textarea
       }
@@ -102,7 +103,28 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
 
     try {
       if (publicChat) {
-        // ...existing code...
+        await handlePublicChatStreamingResponse(query)
+        // const res = await http.post(
+        //   `/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
+        //  {
+        //     question: query,
+        //     user_email: publicChatReponsePayload.user_email,
+        //     customer_id: publicChatReponsePayload.customer_id,
+        //   },
+        //   { headers: publicChatHeaders }
+        // )
+        // console.log(
+        //   "public chat response",
+        //   res.data.user_email,
+        //   res.data.customer_id
+        // )
+        // if (res.data) {
+        //   setPublicChatResponse((prevState) => ({
+        //     ...prevState,
+        //     user_email: res.data.user_email || null,
+        //     customer_id: res.data.customer_id || null,
+        //   }))
+        // }
       } else {
         if (apiType === "Customer Information") {
           await handleStreamingResponse(query)
@@ -251,7 +273,146 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       })
     }
   }
+  // Add this function after handleNonStreamingResponse
 
+  const handlePublicChatStreamingResponse = async (query: string) => {
+    const messageId = `stream_${Date.now()}`
+
+    // Add initial message with loading status
+    appendMessage({
+      sender: botName,
+      message: "",
+      time: getClockTime(),
+      id: messageId,
+      isStreaming: true,
+      status: "Analyzing your request...",
+    })
+
+    try {
+      // Configure fetch for streaming SSE response
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...publicChatHeaders,
+          },
+          body: JSON.stringify({
+            question: query,
+            user_email: publicChatReponsePayload.user_email,
+            customer_id: publicChatReponsePayload.customer_id,
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      // Get the response as a ReadableStream
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("Response body is not readable")
+      }
+
+      let fullMessage = ""
+      let sessionIdFromResponse = null
+      let userEmail = publicChatReponsePayload.user_email
+      let customerId = publicChatReponsePayload.customer_id
+
+      // Read the stream
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        // Decode the chunk and add it to our buffer
+        buffer += decoder.decode(value, { stream: true })
+
+        // Process complete SSE messages
+        const lines = buffer.split("\n\n")
+        buffer = lines.pop() || "" // Keep the last incomplete chunk
+
+        for (const line of lines) {
+          if (line.trim() && line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.substring(6))
+
+              // Handle completion
+              if (data.done) {
+                // Update session ID if provided
+                if (data.session_id) {
+                  sessionIdFromResponse = data.session_id
+                }
+                continue
+              }
+
+              // Update user_email and customer_id if they change
+              if (data.user_email && !userEmail) {
+                userEmail = data.user_email
+              }
+              if (data.customer_id && !customerId) {
+                customerId = data.customer_id
+              }
+
+              // Handle status updates
+              if (data.status) {
+                appendMessage({
+                  sender: botName,
+                  message: fullMessage,
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: true,
+                  status: data.status,
+                })
+              }
+
+              // Handle actual message content
+              if (data.message) {
+                fullMessage += data.message
+                appendMessage({
+                  sender: botName,
+                  message: fullMessage,
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: true,
+                })
+              }
+            } catch (e) {
+              console.error("Error parsing stream data:", e)
+            }
+          }
+        }
+      }
+
+      // Update the public chat response payload with any new information
+      setPublicChatResponse({
+        user_email: userEmail,
+        customer_id: customerId,
+      })
+
+      // Final message update after stream completes
+      appendMessage({
+        sender: botName,
+        message: fullMessage,
+        time: getClockTime(),
+        id: messageId,
+        isStreaming: false,
+      })
+    } catch (error) {
+      console.error("Stream error:", error)
+      appendMessage({
+        sender: botName,
+        message: "Error occurred while streaming the response.",
+        time: getClockTime(),
+        id: messageId,
+        isStreaming: false,
+      })
+    }
+  }
   const handleNonStreamingResponse = async (query: string) => {
     const res = await http.post(
       "/conversation/add",
@@ -279,7 +440,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    console.log("onchange")
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault() // Prevent default behavior of adding new line
       sendMessage()
