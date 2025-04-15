@@ -132,7 +132,7 @@ export default function SourcesTable() {
     totalPages,
     status,
   } = sourceTable
-  const { user_data } = useAuth()
+  const { user_data, access_token } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSort = useCallback(
@@ -176,14 +176,32 @@ export default function SourcesTable() {
     const fetchSources = async () => {
       try {
         setIsLoading(true)
-        const response = await http.getPdfList(user_data?.organization, {
-          page,
-          limit,
-          sortColumn,
-          sortOrder,
-          search,
-          status,
-        })
+
+        const params = {
+          company_id: user_data?.organization || 0,
+          page: page || 1,
+          search: search || "",
+          sortField: sortColumn || "",
+          sortDirection: sortOrder || "",
+          limit: limit || 10,
+        }
+        // const response = await http.getPdfList(user_data?.organization, {
+        //   page,
+        //   limit,
+        //   sortColumn,
+        //   sortOrder,
+        //   search,
+        //   status,
+        // })
+
+        const result = await http.get(
+          `/organization/source/file/list?company_id=${params.company_id}&page=${params.page}&search=${params.search}&sortField=${params.sortField}&sortDirection=${params.sortDirection}&limit=${params.limit}`,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+
+        const response = result?.data
 
         updateSourceTable("sources", response?.results?.files)
         updateSourceTable("totalPages", response?.totalPages)
