@@ -128,7 +128,19 @@ const ChatMain: React.FC = () => {
   }
 
   const appendMessage = (message: MessageObject) => {
-    setMessages((prevMessages) => [...prevMessages, message])
+    setMessages((prevMessages) => {
+      // Check if this is an update to an existing streaming message
+      if (message.id && message.id.startsWith("stream_")) {
+        const existingIndex = prevMessages.findIndex((m) => m.id === message.id)
+        if (existingIndex !== -1) {
+          const updatedMessages = [...prevMessages]
+          updatedMessages[existingIndex] = message
+          return updatedMessages
+        }
+      }
+      return [...prevMessages, message]
+    })
+    
   }
 
   return (
