@@ -139,6 +139,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           }))
         }
         const data = res?.data
+
         appendMessage({
           sender: botName,
           message: res?.data?.answer,
