@@ -78,10 +78,12 @@ const ChatMain: React.FC = () => {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       console.log("Agent List Chat Input", response?.data?.data)
+
       const agentsRecords: any = response?.data?.data ?? []
       if (agentsRecords.length > 0) {
         setOrgAgents(response?.data?.data)
       }
+
       setAgentList(response?.data?.data)
     } catch (err: any) {}
   }
