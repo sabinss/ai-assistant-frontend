@@ -19,7 +19,6 @@ const TABS = [
   { key: "agent", label: "Agent" },
   { key: "sample_query", label: "Sample Query" },
 ]
-
 export const Configuration = () => {
   const [selectedModel, setSelectedModel] = useState("")
   const [greeting, setGreeting] = useState("")
