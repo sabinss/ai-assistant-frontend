@@ -10,9 +10,11 @@ export interface MessageObject {
   id: string
   sender: string
   message: string
-  liked: boolean
+  status?: string
+  liked?: boolean
   time: string
-  disliked: boolean
+  disliked?: boolean
+  isStreaming?: boolean
 }
 
 const ChatMain: React.FC = () => {
@@ -69,6 +71,7 @@ const ChatMain: React.FC = () => {
     setBotName(org_data?.assistant_name)
     setGreeting(org_data?.greeting)
   }
+
   const fetchOrgAgentInstructions = async () => {
     try {
       const response = await http.get("/organization/agent/instruction", {
@@ -140,7 +143,6 @@ const ChatMain: React.FC = () => {
       }
       return [...prevMessages, message]
     })
-    
   }
 
   return (
