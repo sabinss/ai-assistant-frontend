@@ -114,16 +114,23 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
 
     try {
       if (publicChat) {
+        // ...existing code...
         const res = await http.post(
           `/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
           {
+            //adding to our backend question and answer
             question: query,
             user_email: publicChatReponsePayload.user_email,
             customer_id: publicChatReponsePayload.customer_id,
+            // answer
           },
           { headers: publicChatHeaders }
         )
-
+        console.log(
+          "public chat response",
+          res.data.user_email,
+          res.data.customer_id
+        )
         if (res.data) {
           setPublicChatResponse((prevState) => ({
             ...prevState,
@@ -131,13 +138,14 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             customer_id: res.data.customer_id || null,
           }))
         }
-
+        const data = res?.data
         appendMessage({
           sender: botName,
           message: res?.data?.answer,
           time: getClockTime(),
-          id: "ANS_" + res?.data?._id,
-        })
+          id: "ANS_" + data._id,
+        }) // add to frontend
+        updateMessageLoading(false)
       } else {
         if (apiType === "Customer Information") {
           await handleStreamingResponse(query)
