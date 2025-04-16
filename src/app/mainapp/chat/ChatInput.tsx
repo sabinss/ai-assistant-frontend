@@ -14,6 +14,7 @@ import CHAT_PROMPTS from "./chat-prompt"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
+  agentList: any[]
 }
 
 const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
@@ -27,18 +28,12 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
-  const [showDropdown, setShowDropdown] = useState(false)
   const [chatPrompts, setChatPrompts] = useState([])
-
   const [publicChatReponsePayload, setPublicChatResponse] = useState({
     user_email: null,
     customer_id: null,
   })
-  console.log("chatPrompts", chatPrompts)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
-
-  const [selectedPrompt, setSelectedPrompt] = useState<any>("")
-
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
 
   // Sample list of text options
@@ -95,7 +90,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       let msg = message
 
       setMessage("") // Clear the textarea after sending the message
-      await sendMessagetoBackend(msg) // Send the message to the backend
+      await sendMessageToBackend(msg) // Send the message to the backend
 
       if (textareaRef.current) {
         textareaRef.current.focus() // Focus back on the textarea
@@ -103,7 +98,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     }
   }
 
-  const sendMessagetoBackend = async (query: string) => {
+  const sendMessageToBackend = async (query: string) => {
+    // Add user message to Chat list
     updateMessageLoading(true)
     appendMessage({
       sender: "user",
@@ -114,23 +110,16 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
 
     try {
       if (publicChat) {
-        // ...existing code...
         const res = await http.post(
           `/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
           {
-            //adding to our backend question and answer
             question: query,
             user_email: publicChatReponsePayload.user_email,
             customer_id: publicChatReponsePayload.customer_id,
-            // answer
           },
           { headers: publicChatHeaders }
         )
-        console.log(
-          "public chat response",
-          res.data.user_email,
-          res.data.customer_id
-        )
+
         if (res.data) {
           setPublicChatResponse((prevState) => ({
             ...prevState,
@@ -138,6 +127,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             customer_id: res.data.customer_id || null,
           }))
         }
+
         const data = res?.data
 
         appendMessage({
@@ -145,10 +135,15 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           message: res?.data?.answer,
           time: getClockTime(),
           id: "ANS_" + data._id,
-        }) // add to frontend
+        })
+
         updateMessageLoading(false)
       } else {
-        if (apiType === "Customer Information") {
+        // Prioritize agent selection
+        if (selectedAgents.length > 0) {
+          // Always use non-streaming for agent for now
+          await handleCustomAgent(query)
+        } else if (apiType === "Customer Information") {
           await handleStreamingResponse(query)
         } else {
           await handleNonStreamingResponse(query)
@@ -167,6 +162,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     }
   }
 
+  // For insights chat
   const handleStreamingResponse = async (query: string) => {
     const messageId = `stream_${Date.now()}`
 
@@ -196,7 +192,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             workflowFlag,
             sessionId,
             apiType,
-            agentName: selectedAgents,
           }),
         }
       )
@@ -295,8 +290,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       })
     }
   }
-
-  // Add this function after handleNonStreamingResponse
 
   const handlePublicChatStreamingResponse = async (query: string) => {
     const messageId = `stream_${Date.now()}`
@@ -437,9 +430,37 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     }
   }
 
+  // For RAG chat
   const handleNonStreamingResponse = async (query: string) => {
     const res = await http.post(
       "/conversation/add",
+      {
+        question: query,
+        chatSession,
+        workflowFlag,
+        sessionId,
+        apiType,
+        agentName: selectedAgents,
+      },
+      { headers: { Authorization: `Bearer ${access_token}` } }
+    )
+
+    if (res?.data?.session_id) {
+      setSessionId(res?.data?.session_id)
+    }
+
+    appendMessage({
+      sender: botName,
+      message: res?.data?.answer,
+      time: getClockTime(),
+      id: "ANS_" + res?.data?._id,
+    })
+  }
+
+  // Handle custom agent query
+  const handleCustomAgent = async (query: string) => {
+    const res = await http.post(
+      "/conversation/agent/add",
       {
         question: query,
         chatSession,
@@ -469,6 +490,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       sendMessage()
     }
   }
+
   const togglePopup = () => {
     setShowPopup(!showPopup) // Toggle popup on button click
   }
@@ -485,12 +507,14 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       setShowPopup(false)
     }
   }
+
   // Handle prompt selection
   const handlePromptClick = (prompt: string) => {
     // setSelectedPrompt(prompt)
     setMessage(prompt)
     setShowPopup(false) // Close the popup when a prompt is selected.
   }
+
   // Handle textarea input resizing
   const handleInput = () => {
     if (textareaRef.current) {
@@ -501,13 +525,16 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       )}px`
     }
   }
+
   const handleAgentRemove = (agentName: string) => {
     const newSession = Math.floor(Math.random() * 1000).toString()
     setSessionId(newSession)
+
     setSelectedAgents((prevAgents: any) =>
       prevAgents.includes(agentName) ? [] : [agentName]
     )
   }
+
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
       <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
@@ -518,16 +545,12 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyPress}
           onInput={handleInput}
-          // onInput={() => {
-          //   textareaRef.current.style.height = "auto"
-          //   textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`
-          // }}
           disabled={isMessageLoading}
           placeholder={isMessageLoading ? "....." : "Type your message here..."}
           className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
         />
-        {/* Lightbulb Icon Button to Open Popup */}
-        {/* publicChat */}
+
+        {/* Custom agent list */}
         {!publicChat && (
           <div className="absolute bottom-2 left-5 right-2 mb-2 flex items-center gap-3">
             {agentList.slice(0, 5).map((agent: any, index: number) => (
@@ -543,28 +566,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
                 {agent.name}
               </div>
             ))}
-            {/* {agentList.length > 3 && (
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="rounded-full border bg-gray-200 px-3 py-1 text-sm font-medium hover:bg-gray-300"
-            >
-              ...
-            </button>
-          )} */}
-            {/* Dropdown for Remaining Agents */}
-            {/* {showDropdown && (
-            <div className="absolute bottom-[calc(100%+8px)] left-0 z-50 w-40 overflow-visible rounded-md border bg-white shadow-md">
-              {agentList.slice(3).map((agent: any, index: number) => (
-                <div
-                  key={index}
-                  onClick={() => handleAgentSelect(agent.name, true)}
-                  className="cursor-pointer px-3 py-2 text-sm hover:bg-gray-100"
-                >
-                  {agent.name}
-                </div>
-              ))}
-            </div>
-          )} */}
           </div>
         )}
 
@@ -578,6 +579,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           </button>
         )}
 
+        {/* Send message button */}
         <div className="m-2 flex w-20 items-center justify-center">
           <span className="text-sm text-[#838383]">{message?.length}/4000</span>
           <button
@@ -592,8 +594,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             <IoMdSend size={20} className=" text-[#174894]" />
           </button>
         </div>
-        {/* Popup - Show only when 'showPopup' is true */}
-        {/* Popup Modal */}
+
+        {/* Prompts Modal */}
         {showPopup && (
           <div
             className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50"
