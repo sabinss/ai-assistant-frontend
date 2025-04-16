@@ -32,10 +32,32 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const [status, setStatus] = useState<{ id: string; name: string }[]>([])
   const [isGoogleLogin, setGoogleLogin] = useState(false)
   const [checkingGoogleUser, setCheckingGoogleUser] = useState(false)
+  const [googleLoggedInUser, setGoogleLoginUser] = useState<null>(null)
 
   useEffect(() => {
     checkGoogleLoggedInUser()
   }, [])
+
+  const disconnectGoogleUser = async () => {
+    try {
+      if (user_data?.email) {
+        const res = await http.post(
+          "/auth/google-login/disconnect",
+          { email: user_data.email },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        console.log("disconnect", res)
+        if (res?.data?.success) {
+          setGoogleLoginUser(null)
+          setGoogleLogin(false)
+        }
+      }
+    } catch (err) {
+      toast.error("Something went wrong")
+    }
+  }
 
   const checkGoogleLoggedInUser = async () => {
     try {
@@ -50,6 +72,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         )
         console.log("res", res.data)
         if (res?.data?.success) {
+          setGoogleLoginUser(res.data.data.email)
           setGoogleLogin(true)
         }
         setCheckingGoogleUser(false)
@@ -371,12 +394,18 @@ export default function EditProfile({ params }: { params: { id: string } }) {
           Authorize access to your email box
         </a> */}
         <GmailLoginButton
-          disabled={checkingGoogleUser}
           isLoggedIn={isGoogleLogin}
+          email={googleLoggedInUser}
           onClick={() => {
-            const url = getGoogleOAuthURL(user_data?.organization)
-            console.log("url", url)
-            window.location.href = url
+            if (isGoogleLogin) {
+              // disconnect current logged in user
+              console.log("disconnect")
+              disconnectGoogleUser()
+            } else {
+              const url = getGoogleOAuthURL(user_data?.organization)
+              console.log("url", url)
+              window.location.href = url
+            }
           }}
         />
       </div>

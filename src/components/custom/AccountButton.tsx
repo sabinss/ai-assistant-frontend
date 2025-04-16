@@ -22,6 +22,12 @@ export function AccountButton() {
     router.push("/auth/signin")
   }
 
+  const handleNavigateToProfile = () => {
+    setTimeout(() => {
+      router.push("/mainapp/profile")
+    }, 100) // 100ms delay lets the dropdown close smoothly
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -44,7 +50,12 @@ export function AccountButton() {
         <DropdownMenuLabel>Accounts</DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuRadioGroup>
-          <DropdownMenuRadioItem value="top">  <Link href={"/mainapp/profile"}>  Profile  </Link>     </DropdownMenuRadioItem>
+          {/* <DropdownMenuRadioItem value="top" asChild>
+            <Link href={"/mainapp/profile"}> Profile </Link>
+          </DropdownMenuRadioItem> */}
+          <DropdownMenuRadioItem value="top" onClick={handleNavigateToProfile}>
+            <Link href="/mainapp/profile">Profile</Link>
+          </DropdownMenuRadioItem>
           <DropdownMenuRadioItem value="right" onClick={() => handleLogout()}>
             Logout
           </DropdownMenuRadioItem>

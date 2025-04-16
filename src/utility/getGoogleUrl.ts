@@ -10,10 +10,14 @@ function getGoogleOAuthURL(orgId: any) {
     // state: "auth_flow",
     state: JSON.stringify({ auth_flow: "auth_flow", orgId }),
     scope: [
+      "openid",
+      "profile",
+      "email",
       "https://www.googleapis.com/auth/userinfo.profile",
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.modify",
+      "https://www.googleapis.com/auth/gmail.compose",
     ].join(" "),
   }
 
@@ -24,3 +28,13 @@ function getGoogleOAuthURL(orgId: any) {
 }
 
 export { getGoogleOAuthURL }
+// let params = {
+//   client_id: CLIENT_ID,
+//   redirect_uri: `${DEPLOYMENT_ENVIRONMENT === "dev" ? "http://localhost:4321" : "https://demo.instwise.app"}/oauthcallback`,
+//   scope: "openid profile email https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.compose",
+//   include_granted_scopes: "true",
+//   response_type: "code",
+//   state: "auth_flow",
+//   access_type: "offline",
+//   prompt: "consent",
+// };
