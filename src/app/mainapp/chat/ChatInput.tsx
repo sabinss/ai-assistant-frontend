@@ -468,7 +468,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       time: getClockTime(),
       id: messageId,
       isStreaming: true,
-      status: `Querying agent: ${selectedAgents[0]}...`, // Show agent name
+      status: `Querying  ${selectedAgents[0]}...`, // Show agent name
     })
 
     try {
