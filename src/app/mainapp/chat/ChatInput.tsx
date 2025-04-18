@@ -142,7 +142,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         // Prioritize agent selection
         if (selectedAgents.length > 0) {
           // Always use non-streaming for agent for now
-          await handleCustomAgent(query)
+          await handleCustomAgentStreaming(query)
         } else if (apiType === "Customer Information") {
           await handleStreamingResponse(query)
         } else {
@@ -457,31 +457,178 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     })
   }
 
-  // Handle custom agent query
-  const handleCustomAgent = async (query: string) => {
-    const res = await http.post(
-      "/conversation/agent/add",
-      {
-        question: query,
-        chatSession,
-        workflowFlag,
-        sessionId,
-        apiType,
-        agentName: selectedAgents,
-      },
-      { headers: { Authorization: `Bearer ${access_token}` } }
-    )
+  // Handle custom agent query with streaming
+  const handleCustomAgentStreaming = async (query: string) => {
+    const messageId = `stream_agent_${Date.now()}`
 
-    if (res?.data?.session_id) {
-      setSessionId(res?.data?.session_id)
-    }
-
+    // Add initial message with loading status
     appendMessage({
       sender: botName,
-      message: res?.data?.answer,
+      message: "",
       time: getClockTime(),
-      id: "ANS_" + res?.data?._id,
+      id: messageId,
+      isStreaming: true,
+      status: `Querying  ${selectedAgents[0]}...`, // Show agent name
     })
+
+    try {
+      // Configure fetch for streaming SSE response
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/agent/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify({
+            question: query,
+            chatSession,
+            // workflowFlag, // Removed as it might not be needed for agents, adjust if necessary
+            sessionId,
+            // apiType, // Removed as it might not be needed for agents, adjust if necessary
+            agentName: selectedAgents[0], // Send only the first selected agent
+          }),
+        }
+      )
+
+      if (!response.ok) {
+        // Attempt to read error message from response body
+        let errorBody = "Unknown error"
+        try {
+          const errorData = await response.json()
+          errorBody = errorData.error || JSON.stringify(errorData)
+        } catch (e) {
+          // Ignore if response body is not JSON
+        }
+        throw new Error(
+          `HTTP error! status: ${response.status}, message: ${errorBody}`
+        )
+      }
+
+      // Get the response as a ReadableStream
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("Response body is not readable")
+      }
+
+      let fullMessage = ""
+      let sessionIdFromResponse = sessionId // Start with current session ID
+
+      // Read the stream
+      const decoder = new TextDecoder()
+      let buffer = ""
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        // Decode the chunk and add it to our buffer
+        buffer += decoder.decode(value, { stream: true })
+
+        // Process complete SSE messages
+        const lines = buffer.split("\n\n")
+        buffer = lines.pop() || "" // Keep the last incomplete chunk
+
+        for (const line of lines) {
+          if (line.trim() && line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.substring(6))
+
+              // Handle completion
+              if (data.done) {
+                // Update session ID if provided and different
+                if (data.session_id && data.session_id !== sessionId) {
+                  sessionIdFromResponse = data.session_id
+                  setSessionId(data.session_id)
+                  console.log(
+                    "Agent stream updated session ID:",
+                    data.session_id
+                  )
+                }
+                continue // Stop processing this message
+              }
+
+              // Handle status updates
+              if (data.status) {
+                appendMessage({
+                  sender: botName,
+                  message: fullMessage, // Keep showing accumulated message
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: true,
+                  status: data.status, // Update status from agent stream
+                })
+              }
+
+              // Handle actual message content
+              if (data.message) {
+                fullMessage += data.message
+                appendMessage({
+                  sender: botName,
+                  message: fullMessage,
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: true, // Still streaming until 'done'
+                })
+              }
+
+              // Handle potential errors from the stream
+              if (data.error) {
+                console.error("Error from agent stream:", data.error)
+                // Optionally update the message to show the error
+                appendMessage({
+                  sender: botName,
+                  message: `${fullMessage}\n\nError: ${data.error}`,
+                  time: getClockTime(),
+                  id: messageId,
+                  isStreaming: false, // Stop streaming on error
+                })
+                // Potentially break or return here depending on desired behavior
+                return
+              }
+
+              // Handle raw chunks if backend sends them
+              if (data.chunk) {
+                console.warn(
+                  "Received raw chunk from agent stream:",
+                  data.chunk
+                )
+                // Decide how to handle raw chunks, e.g., append to message or ignore
+                // fullMessage += data.chunk; // Example: append if it's text
+              }
+            } catch (e) {
+              console.error(
+                "Error parsing agent stream data:",
+                e,
+                "Raw line:",
+                line
+              )
+            }
+          }
+        }
+      }
+
+      // Final message update after stream completes successfully
+      appendMessage({
+        sender: botName,
+        message: fullMessage,
+        time: getClockTime(),
+        id: messageId,
+        isStreaming: false, // Mark as complete
+      })
+    } catch (error) {
+      console.error("Agent stream fetch error:", error)
+      appendMessage({
+        sender: botName,
+        message: `Error occurred while querying agent ${selectedAgents[0]}. ${error.message || ""}`,
+        time: getClockTime(),
+        id: messageId,
+        isStreaming: false, // Mark as complete even on error
+      })
+    } finally {
+      updateMessageLoading(false) // Ensure loading state is reset
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
