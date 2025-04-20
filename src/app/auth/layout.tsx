@@ -16,7 +16,7 @@ export default function AuthLayout({
 
   const { is_logged_in } = useAuth()
   useEffect(() => {
-    if (is_logged_in === true) router.push("/mainapp/admin")
+    if (is_logged_in === true) router.push("/mainapp/chat")
   }, [is_logged_in])
 
   return (

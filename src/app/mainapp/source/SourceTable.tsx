@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import http, { HTTPCHAT } from "@/config/http"
+import http from "@/config/http"
 import TableFilter from "../commoncompnents/TableFilter"
 import TablePagination from "../commoncompnents/TablePagination"
 import { toast } from "react-toastify"
@@ -50,11 +50,22 @@ interface Source {
 
 const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const { updateSourceTable } = useFormStore()
-  const { user_data } = useAuth()
+  const { user_data, access_token } = useAuth()
   const handleDelete = async (name: string) => {
     try {
-      const res = await http.deletePdf(user_data?.organization, [name])
+      const company_id = user_data?.organization
+      const file_names = [name]
+      console.log({
+        company_id,
+        file_names,
+      })
       // await http.delete(`/sources/${id}`);
+      const res = await http.delete(
+        `/organization/source?company_id=${company_id}&file_names=${file_names.join("&file_names=")}`,
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      )
       updateSourceTable("status", "delete")
       toast.success("Source Deleted Successfully")
       // updateSourceTable('sources', prevSources => prevSources.filter(source => source._id !== id));

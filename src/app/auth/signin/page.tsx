@@ -32,7 +32,7 @@ export default function page() {
           res.data?.rolePermission,
           res.data?.chatSession
         )
-        router.push("/mainapp/admin")
+        router.push("/mainapp/chat")
         toast.success("Logged in successfully", { autoClose: 100 })
       }
     } catch (error: any) {
