@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form"
 import useAuth from "@/store/user"
 import { getGoogleOAuthURL } from "@/utility/getGoogleUrl"
 import GmailLoginButton from "@/components/ui/googleLoginButton"
+import DeleteModal from "./GmailDisconnectModal"
 
 interface FormData {
   first_name: string
@@ -33,6 +34,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const [isGoogleLogin, setGoogleLogin] = useState(false)
   const [checkingGoogleUser, setCheckingGoogleUser] = useState(false)
   const [googleLoggedInUser, setGoogleLoginUser] = useState<null>(null)
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
 
   useEffect(() => {
     checkGoogleLoggedInUser()
@@ -149,6 +151,19 @@ export default function EditProfile({ params }: { params: { id: string } }) {
     } catch (error) {
       console.error("Failed to update profile", error)
       toast.error("Failed to update profile. Please try again.")
+    }
+  }
+
+  const handleDisconnect = () => {
+    console.log("handle Disconnect called")
+    if (isGoogleLogin) {
+      // disconnect current logged in user
+      console.log("disconnect")
+      disconnectGoogleUser()
+    } else {
+      const url = getGoogleOAuthURL(user_data?.organization)
+      console.log("url", url)
+      window.location.href = url
     }
   }
 
@@ -393,19 +408,16 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         >
           Authorize access to your email box
         </a> */}
+        <DeleteModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setDeleteModalOpen(false)} // Close the modal
+          onDelete={handleDisconnect} // Handle the delete action
+        />
         <GmailLoginButton
           isLoggedIn={isGoogleLogin}
           email={googleLoggedInUser}
           onClick={() => {
-            if (isGoogleLogin) {
-              // disconnect current logged in user
-              console.log("disconnect")
-              disconnectGoogleUser()
-            } else {
-              const url = getGoogleOAuthURL(user_data?.organization)
-              console.log("url", url)
-              window.location.href = url
-            }
+            setDeleteModalOpen(true)
           }}
         />
       </div>

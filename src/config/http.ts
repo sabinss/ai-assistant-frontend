@@ -151,6 +151,7 @@ http.deleteFeedback = async (company_id, feedback_ids) => {
 http.deletePdf = async (company_id, file_names) => {
   const url = `${process.env.NEXT_PUBLIC_OPEN_API_FOR_CHAT}/assistant/delete-pdfs?company_id=${company_id}&file_names=${file_names.join("&file_names=")}`
   console.log("deleting url is ", url)
+  return
   const headers = {
     accept: "application/json",
     "X-API-KEY": process.env.NEXT_PUBLIC_OPEN_API_KEY_FOR_CHAT,

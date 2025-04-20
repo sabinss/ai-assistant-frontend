@@ -6,6 +6,8 @@ import { FaGlobe, FaGoogleDrive, FaQuestionCircle } from "react-icons/fa"
 import http from "@/config/http"
 import { useRouter } from "next/navigation"
 import useAuth from "@/store/user"
+import { toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 export default function page() {
   const { user_data, access_token } = useAuth() // Call useAuth here
@@ -91,9 +93,10 @@ export default function page() {
         // await http.pdfUpload(user_data?.organization, pdfFiles)
         // setIsLoading(false)
         // router.push("/mainapp/source")
-      } catch (error) {
-        console.error(error)
+      } catch (error: any) {
+        console.error("source upload error", error)
         setIsLoading(false)
+        toast.error(error?.response?.data?.error ?? "Failed to upload file")
       } finally {
         setIsLoading(false)
         router.push("/mainapp/source")
