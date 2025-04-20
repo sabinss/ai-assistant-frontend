@@ -154,17 +154,15 @@ export default function EditProfile({ params }: { params: { id: string } }) {
     }
   }
 
-  const handleDisconnect = () => {
-    console.log("handle Disconnect called")
-    if (isGoogleLogin) {
-      // disconnect current logged in user
-      console.log("disconnect")
-      disconnectGoogleUser()
-    } else {
-      const url = getGoogleOAuthURL(user_data?.organization)
-      console.log("url", url)
-      window.location.href = url
-    }
+  const handleDisconnect = async () => {
+    setDeleteModalOpen(() => false)
+    await disconnectGoogleUser()
+  }
+
+  const connectToGmail = () => {
+    const url = getGoogleOAuthURL(user_data?.organization)
+    console.log("url", url)
+    window.location.href = url
   }
 
   return (
@@ -417,7 +415,11 @@ export default function EditProfile({ params }: { params: { id: string } }) {
           isLoggedIn={isGoogleLogin}
           email={googleLoggedInUser}
           onClick={() => {
-            setDeleteModalOpen(true)
+            if (isGoogleLogin) {
+              setDeleteModalOpen(true)
+            } else {
+              connectToGmail()
+            }
           }}
         />
       </div>
