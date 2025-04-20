@@ -97,18 +97,18 @@ export default function Page() {
     getOrgDetails()
   }, [access_token])
 
-  // useEffect(() => {
-  //   async function getOrgToken() {
-  //     try {
-  //       const res = await http.get("/generate/token", {
-  //         headers: { Authorization: `Bearer ${access_token}` },
-  //       })
-  //       setOrgToken(res.data.token)
-  //       setSettingData(res.data.settings)
-  //     } catch (err) {}
-  //   }
-  //   getOrgToken()
-  // }, [])
+  useEffect(() => {
+    async function getOrgToken() {
+      try {
+        const res = await http.get("/generate/token", {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        setOrgToken(res.data.token)
+        setSettingData(res.data.settings)
+      } catch (err) {}
+    }
+    getOrgToken()
+  }, [])
 
   const handleChangeAdditionalPrompt = (field: any) => (event: any) => {
     setAdditionalPrompt((prev) => ({
