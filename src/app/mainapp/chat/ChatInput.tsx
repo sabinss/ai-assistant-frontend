@@ -117,7 +117,12 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             user_email: publicChatReponsePayload.user_email,
             customer_id: publicChatReponsePayload.customer_id,
           },
-          { headers: publicChatHeaders }
+          {
+            headers: {
+              ...publicChatHeaders,
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
         )
 
         if (res.data) {
@@ -313,6 +318,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           headers: {
             "Content-Type": "application/json",
             ...publicChatHeaders,
+            Authorization: `Bearer ${access_token}`,
           },
           body: JSON.stringify({
             question: query,
