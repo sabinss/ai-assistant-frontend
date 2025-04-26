@@ -155,7 +155,12 @@ export const MessageDiv = ({ msg }: any) => {
             id: conversationId,
             liked_disliked: feedbackType,
           },
-          { headers: publicChatHeaders }
+          {
+            headers: {
+              ...publicChatHeaders,
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
         )
       } else {
         //update in our converstaion backend

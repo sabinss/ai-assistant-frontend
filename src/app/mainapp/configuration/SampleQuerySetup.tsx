@@ -21,13 +21,13 @@ export const SampleQuerySetup = () => {
   const [orgPromptId, setOrgPromptId] = useState<any>(null) // To track the edited category text
   const [deletePromptIds, setDeletePromptIds] = useState<any>([])
 
+  async function fetchOrganizationQuery() {
+    const res = await http.get("/organization/prompts", {
+      headers: { Authorization: `Bearer ${access_token}` },
+    })
+    setOrganizationPrompts(res.data?.organizationPrompts ?? sampleData)
+  }
   useEffect(() => {
-    async function fetchOrganizationQuery() {
-      const res = await http.get("/organization/prompts", {
-        headers: { Authorization: `Bearer ${access_token}` },
-      })
-      setOrganizationPrompts(res.data?.organizationPrompts ?? sampleData)
-    }
     fetchOrganizationQuery()
   }, [user_data])
   console.log("organizationPrompts", organizationPrompts)
@@ -42,8 +42,9 @@ export const SampleQuerySetup = () => {
           headers: { Authorization: `Bearer ${access_token}` },
         }
       )
+      await fetchOrganizationQuery()
+      setDeletePromptIds(() => [])
       toast.success("Updated successfully")
-      setDeletePromptIds([])
 
       console.log("res", res)
     } catch (err) {
@@ -108,7 +109,6 @@ export const SampleQuerySetup = () => {
     let deletePayload = { orgPromptId, promptId }
     setDeletePromptIds((prev: any) => [...prev, deletePayload])
   }
-  console.log("deletePromptIds", deletePromptIds)
   const handleAddPrompt = (orgPromptId: number) => {
     const updatePrompts: any = organizationPrompts.map((orgPrompt: any) =>
       orgPrompt._id == orgPromptId

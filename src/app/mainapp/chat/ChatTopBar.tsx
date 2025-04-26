@@ -58,7 +58,8 @@ export default function ChatTopbar() {
     }
   }
   const { botName } = useNavBarStore()
-  console.log("publicChat", publicChat)
+
+  console.log("botName", botName)
   return (
     <div className="flex  w-full flex-col rounded-md bg-muted p-3 ">
       <div className="flex items-center justify-between">
@@ -70,30 +71,31 @@ export default function ChatTopbar() {
             height={30}
             width={30}
           />
-          {/* <h2 className="inline text-xl font-bold">Chat with ss{botName}</h2> */}
-          <span className="inline text-xl font-bold">
+          <h2 className="inline text-xl font-bold">
+            Chat with {botName ? botName : "Gabby"}
+          </h2>
+          {/* <span className="inline text-xl font-bold">
             Chat about {publicChat && "Product Knowledge"}
-          </span>
-          <div className="ml-1.5 flex pb-1">
+          </span> */}
+          {/* <div className="ml-1.5 flex pb-1">
             {!publicChat && (
               <DropdownMenu>
                 <DropdownMenuTrigger>
                   <div className="flex items-center space-x-2">
                     <span className="text-xl font-bold">{selectedOption}</span>{" "}
-                    {/* Display the currently selected option */}
                     {!publicChat && <IoIosArrowDropdown size={25} />}
                   </div>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent>
-                  <DropdownMenuSeparator />
-                  {/* Selecting Product Knowledge */}
-                  <DropdownMenuItem
+                  <DropdownMenuSeparator /> */}
+          {/* Selecting Product Knowledge */}
+          {/* <DropdownMenuItem
                     onClick={() => handleSelect("Product Knowledge")}
                   >
                     Product Knowledge
-                  </DropdownMenuItem>
-                  {/* Selecting Customer Information */}
-                  <DropdownMenuItem
+                  </DropdownMenuItem> */}
+          {/* Selecting Customer Information */}
+          {/* <DropdownMenuItem
                     onClick={() => handleSelect("Customer Information")}
                   >
                     Customer Information
@@ -101,7 +103,7 @@ export default function ChatTopbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-          </div>
+          </div> */}
         </div>
         <div
           className=" flex cursor-pointer gap-2  rounded-md border p-2 hover:text-black"

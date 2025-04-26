@@ -42,7 +42,7 @@ const useNavBarStore = create<NavBarStore>((set) => ({
       return { greeting }
     })
   },
-  botName: "Bot X",
+  botName: "Gabby",
   setBotName(botName: string) {
     set((state) => {
       return { botName }

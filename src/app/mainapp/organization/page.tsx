@@ -7,6 +7,7 @@ import http from "@/config/http"
 import useAuth from "@/store/user"
 import { getGoogleOAuthURL } from "@/utility/getGoogleUrl"
 import GmailLoginButton from "@/components/ui/googleLoginButton"
+import useNavBarStore from "@/store/store"
 
 export default function Edit() {
   const { access_token, user_data } = useAuth() // Call useAuth here
@@ -18,6 +19,7 @@ export default function Edit() {
   const [isVisible, setIsVisible] = useState(true) // Added state for visibility
   const organizationInputRef = useRef(null)
   const assistantNameInputRef = useRef(null)
+  const { setBotName } = useNavBarStore()
 
   useEffect(() => {
     if (isEditable) {
@@ -35,6 +37,7 @@ export default function Edit() {
       console.log({ org_data })
       setOrganizationId(org_data._id)
       setAssistantName(org_data.assistant_name)
+      setBotName(org_data.assistant_name)
       setOrganizationName(org_data.name)
       0
     } catch (err) {
@@ -69,7 +72,7 @@ export default function Edit() {
     try {
       await http.patch(
         "/organization",
-        { name: organizationName },
+        { name: organizationName, singleUpdate: true },
         {
           headers: { Authorization: `Bearer ${access_token}` },
         }
@@ -84,7 +87,7 @@ export default function Edit() {
     try {
       await http.patch(
         "/organization",
-        { assistant_name: assistantName },
+        { assistant_name: assistantName, singleUpdate: true },
         {
           headers: { Authorization: `Bearer ${access_token}` },
         }
@@ -120,7 +123,7 @@ export default function Edit() {
             ) : (
               <>
                 <p className="inline text-xl">
-                  {isVisible ? assistantName : "******"}
+                  {isVisible ? assistantName ?? "Gabby" : "******"}
                 </p>
                 <TiEdit
                   onClick={() => {
