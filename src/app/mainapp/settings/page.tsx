@@ -31,6 +31,10 @@ export default function Page() {
     database_name: "",
     redshit_work_space: "",
     redshift_db: "",
+    zendesk_token: "",
+    zendesk_user: "",
+    zendesk_subdomain: "",
+    hubspot_bearer_token: "",
   })
 
   const [supportWorkflowFlag, setSupportWorkflowFlag] = useState(false)
@@ -75,6 +79,10 @@ export default function Page() {
           database_name: orgData?.database_name ?? "",
           redshit_work_space: orgData?.redshit_work_space ?? "",
           redshift_db: orgData?.redshift_db ?? "",
+          zendesk_token: orgData?.zendesk_token ?? "",
+          zendesk_user: orgData?.zendesk_user ?? "",
+          zendesk_subdomain: orgData?.zendesk_subdomain ?? "",
+          hubspot_bearer_token: orgData?.hubspot_bearer_token ?? "",
         })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
@@ -266,6 +274,46 @@ export default function Page() {
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
             placeholder="REDSHIFT_DB"
             value={orgSetting?.redshift_db}
+            onChange={handleOrgSettingDb}
+          />
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Zendesk Token</h3>
+          <Input
+            name="zendesk_token"
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="Zendesk Token"
+            value={orgSetting?.zendesk_token}
+            onChange={handleOrgSettingDb}
+          />
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Zendesk User</h3>
+          <Input
+            name="zendesk_user"
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="Zendesk User"
+            value={orgSetting?.zendesk_user}
+            onChange={handleOrgSettingDb}
+          />
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Zendesk Subdomain</h3>
+          <Input
+            name="zendesk_subdomain"
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="Subdomain"
+            value={orgSetting?.zendesk_subdomain}
+            onChange={handleOrgSettingDb}
+          />
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Hubspot Bearer Token</h3>
+          <Input
+            name="hubspot_bearer_token"
+            className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
+            placeholder="Bearer token"
+            value={orgSetting?.hubspot_bearer_token}
             onChange={handleOrgSettingDb}
           />
         </div>
