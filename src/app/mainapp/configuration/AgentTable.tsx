@@ -289,7 +289,7 @@ export const AgentTable = () => {
                       Instruction
                     </label>
                     <textarea
-                      className="h- w-full rounded border p-2"
+                      className="h-80 w-full rounded border p-2"
                       placeholder="Instruction"
                       value={item.instruction}
                       onChange={(e) =>
