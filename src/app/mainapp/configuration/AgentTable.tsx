@@ -222,7 +222,7 @@ export const AgentTable = () => {
             <div className="mb-4">
               <label className="block font-medium">Primary Instructions</label>
               <textarea
-                className="h-40 w-full rounded border p-2"
+                className="h-96 w-full rounded border p-2"
                 value={formData.primary_instruction}
                 onChange={(e) => {
                   setFormData({
@@ -289,7 +289,7 @@ export const AgentTable = () => {
                       Instruction
                     </label>
                     <textarea
-                      className="h-20 w-full rounded border p-2"
+                      className="h- w-full rounded border p-2"
                       placeholder="Instruction"
                       value={item.instruction}
                       onChange={(e) =>
@@ -299,7 +299,6 @@ export const AgentTable = () => {
                           e.target.value
                         )
                       }
-                      className="w-full rounded border p-2"
                     />
                     <div className="w-400[x]">
                       {" "}
