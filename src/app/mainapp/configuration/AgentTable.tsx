@@ -28,7 +28,9 @@ export const AgentTable = () => {
   const [agentList, setAgentList] = useState<any>([])
   const [isEditing, setIsEditing] = useState(false)
   const { access_token } = useAuth() // Call useAuth here
-
+  const [isAgent, setIsAgent] = useState(false)
+  const [frequency, setFrequency] = useState("")
+  const [dayTime, setDayTime] = useState("")
   useEffect(() => {
     async function getOrgAgentList() {
       await fetchOrgAgentInstructions()
@@ -43,6 +45,9 @@ export const AgentTable = () => {
     objective: "",
     tools_used: "",
     primary_instruction: "",
+    frequency: null,
+    dayTime: null,
+    isAgent: null,
     tasks: [], // Array to store instructions dynamically
   })
 
@@ -56,6 +61,20 @@ export const AgentTable = () => {
         { _id: Date.now(), tasks: "", tools: "", name: "" },
       ],
     }))
+  }
+  const getDayTimeOptions = () => {
+    switch (frequency) {
+      case "Daily":
+        return Array.from({ length: 24 }, (_, i) => `${i + 1}`)
+      case "Weekly":
+        return Array.from({ length: 7 }, (_, i) => `W-${i + 1}`)
+      case "Monthly":
+        return Array.from({ length: 32 }, (_, i) => `M-${i + 1}`)
+      case "Quarterly":
+        return ["1", "2", "3", "4"]
+      default:
+        return []
+    }
   }
 
   const removeInstruction = (id: number) => {
@@ -76,13 +95,20 @@ export const AgentTable = () => {
 
   const handleAddNew = () => {
     setAddNew(true)
-    setFormData({ id: null, name: "", objective: "" })
+    setFormData({
+      id: null,
+      name: "",
+      objective: "",
+      dayTime,
+      frequency,
+      isAgent,
+    })
     setIsEditing(true)
   }
 
   const handleEdit = (agent: any) => {
     setAddNew(false)
-    setFormData(agent)
+    setFormData({ ...agent, dayTime, frequency, isAgent })
     setIsEditing(true)
   }
 
@@ -101,23 +127,23 @@ export const AgentTable = () => {
 
   const handleSave = async () => {
     setAgentLoading(true)
-
+    let data = { ...formData, isAgent, frequency, dayTime }
     try {
-      if (formData._id) {
-        await http.put("/organization/agent", formData, {
+      if (data._id) {
+        await http.put("/organization/agent", data, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         // Update the agent list without re-fetching from API
         setAgentList((prevList: any) =>
           prevList.map((agent: any) =>
-            agent._id === formData._id ? { ...agent, ...formData } : agent
+            agent._id === data._id ? { ...agent, ...data } : agent
           )
         )
         setAgentLoading(false)
         setIsEditing(false)
         toast.success("Agent updated successfully")
       } else {
-        const response = await http.post("/organization/agent", formData, {
+        const response = await http.post("/organization/agent", data, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         await fetchOrgAgentInstructions()
@@ -169,6 +195,67 @@ export const AgentTable = () => {
                 }}
               />
             </div>
+            <div className="mb-4 flex items-center">
+              <input
+                type="checkbox"
+                id="nonAgent"
+                checked={isAgent}
+                onChange={() => setIsAgent(!isAgent)}
+                className="h-4 w-4"
+              />
+              <label htmlFor="nonAgent" className=" ml-2 text-sm font-medium">
+                Non Interactive Agent?
+              </label>
+            </div>
+
+            {isAgent && (
+              <>
+                <div>
+                  <label
+                    htmlFor="frequency"
+                    className="mb-1 block text-sm font-semibold"
+                  >
+                    Frequency
+                  </label>
+                  <select
+                    id="frequency"
+                    value={frequency}
+                    onChange={(e) => setFrequency(e.target.value)}
+                    className="w-full rounded border p-2"
+                  >
+                    <option value="">Select Frequency</option>
+                    <option value="Quarterly">Quarterly</option>
+                    <option value="Monthly">Monthly</option>
+                    <option value="Weekly">Weekly</option>
+                    <option value="Daily">Daily</option>
+                  </select>
+                </div>
+                {frequency && (
+                  <div>
+                    <label
+                      htmlFor="dayTime"
+                      className="mb-1 block text-sm font-semibold"
+                    >
+                      Day/Time
+                    </label>
+                    <select
+                      id="dayTime"
+                      value={dayTime}
+                      onChange={(e) => setDayTime(e.target.value)}
+                      className="w-full rounded border p-2"
+                    >
+                      <option value="">Select Option</option>
+                      {getDayTimeOptions().map((opt) => (
+                        <option key={opt} value={opt}>
+                          {opt}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </>
+            )}
+
             <div className="mb-4">
               <label className="block font-medium">Objective</label>
               <textarea

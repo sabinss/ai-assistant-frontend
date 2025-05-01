@@ -107,7 +107,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       time: getClockTime(),
       id: "",
     })
-
+    console.log("*******", apiType)
     try {
       if (publicChat) {
         const res = await http.post(
@@ -148,11 +148,14 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         if (selectedAgents.length > 0) {
           // Always use non-streaming for agent for now
           await handleCustomAgentStreaming(query)
-        } else if (apiType === "Customer Information") {
-          await handleStreamingResponse(query)
         } else {
-          await handleNonStreamingResponse(query)
+          await handleStreamingResponse(query)
         }
+        //  if (apiType === "Customer Information") {
+        //   await handleStreamingResponse(query)
+        // } else {
+        //   await handleNonStreamingResponse(query)
+        // }
       }
     } catch (error) {
       console.error("Error sending message:", error)
@@ -200,6 +203,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           }),
         }
       )
+
+      console.log("Conversation response", response)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
