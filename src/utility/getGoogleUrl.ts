@@ -7,7 +7,7 @@ function getGoogleOAuthURL(orgId: any) {
     access_type: "offline",
     response_type: "code",
     prompt: "consent",
-    // state: "auth_flow",
+    // state: "auth_flow",,
     state: JSON.stringify({ auth_flow: "auth_flow", orgId }),
     scope: [
       "openid",
