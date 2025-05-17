@@ -77,14 +77,17 @@ const ChatMain: React.FC = () => {
       const response = await http.get("/organization/agent/instruction", {
         headers: { Authorization: `Bearer ${access_token}` },
       })
-      console.log("Agent List Chat Input", response?.data?.data)
 
-      const agentsRecords: any = response?.data?.data ?? []
+      const agentsRecords: any = response?.data?.data
+        ? response?.data?.data.filter((x: any) => x?.active == true)
+        : []
+      console.log("Agent List Chat Input", agentsRecords)
+
       if (agentsRecords.length > 0) {
-        setOrgAgents(response?.data?.data)
+        setOrgAgents(agentsRecords)
       }
 
-      setAgentList(response?.data?.data)
+      setAgentList(agentsRecords)
     } catch (err: any) {}
   }
 
