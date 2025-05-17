@@ -109,7 +109,7 @@ export const AgentTable = () => {
 
   const handleEdit = (agent: any) => {
     setAddNew(false)
-    setFormData({ ...agent, dayTime, frequency, isAgent, isActive: "Y" })
+    setFormData({ ...agent, dayTime, frequency, isAgent })
     setIsEditing(true)
   }
 
