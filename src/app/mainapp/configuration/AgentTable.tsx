@@ -188,7 +188,7 @@ export const AgentTable = () => {
 
             <div>
               {" "}
-              <label className="block font-medium">Actives</label>{" "}
+              <label className="block font-medium">Active</label>{" "}
               <select
                 id="active"
                 value={formData.isActive}
