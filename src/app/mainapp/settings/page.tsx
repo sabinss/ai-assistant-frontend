@@ -338,7 +338,7 @@ export default function Page() {
             value={orgToken}
           />
         </div>
-        {/* WhatsApp Token Section */}
+        {/* WhatsApp Token Section --*/}
         <div className="mt-6">
           <div className="mt-2 flex items-center">
             <label className="mr-5 text-sm font-medium text-gray-700">
