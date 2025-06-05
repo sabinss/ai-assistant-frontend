@@ -49,6 +49,7 @@ export const AgentTable = () => {
     dayTime: null,
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
+    isActive: "Y", // default to Y
   })
 
   const [isAddNew, setAddNew] = useState(false)
@@ -69,9 +70,9 @@ export const AgentTable = () => {
       case "Weekly":
         return Array.from({ length: 7 }, (_, i) => `W-${i + 1}`)
       case "Monthly":
-        return Array.from({ length: 32 }, (_, i) => `M-${i + 1}`)
+        return Array.from({ length: 28 }, (_, i) => `M-${i + 1}`)
       case "Quarterly":
-        return ["1", "2", "3", "4"]
+        return ["1", "2", "3"]
       default:
         return []
     }
@@ -183,6 +184,26 @@ export const AgentTable = () => {
                 }
                 className="w-full rounded border p-2"
               />
+            </div>
+
+            <div>
+              {" "}
+              <label className="block font-medium">Active</label>{" "}
+              <select
+                id="active"
+                value={formData.isActive}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isActive: e.target.value,
+                  }))
+                }
+                className="w-full rounded border p-2"
+              >
+                <option value="">Select</option>
+                <option value="Y">Y</option>
+                <option value="N">N</option>
+              </select>
             </div>
 
             <div className="mb-4">
