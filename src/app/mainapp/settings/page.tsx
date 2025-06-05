@@ -10,7 +10,7 @@ import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import useAuth from "@/store/user"
 import useChatConfig from "@/store/useChatSetting"
-import { parseMarkup } from "@/utility"
+import { Eye, EyeOff } from "lucide-react"
 
 import useOrgCustomer from "@/store/organization_customer"
 export default function Page() {
@@ -26,6 +26,14 @@ export default function Page() {
   const [isLoading, setIsLoading] = useState(false)
   const [updatingWorkflow, setUpdatingWorkflow] = useState(false)
   const [settingData, setSettingData] = useState<any>(null)
+  const [showFields, setShowFields] = useState(false)
+  const toggleShowFields = () => setShowFields((prev) => !prev)
+
+  const [whatsappConfig, setWhatsappConfig] = useState<any>({
+    whatsappPhoneNumber: null,
+    whatsappToken: null,
+    whatsAppPhoneNumberId: null,
+  })
 
   const [orgSetting, setOrgSetting] = useState({
     database_name: "",
@@ -84,6 +92,7 @@ export default function Page() {
           zendesk_subdomain: orgData?.zendesk_subdomain ?? "",
           hubspot_bearer_token: orgData?.hubspot_bearer_token ?? "",
         })
+        setWhatsappConfig(orgData.whatsappConfig)
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -126,6 +135,7 @@ export default function Page() {
   }
   const handleSubmit = async () => {
     try {
+      console.log("whatsappConfig", whatsappConfig)
       setIsLoading(true)
       // let hasError = false
       // // Reset errors
@@ -159,6 +169,7 @@ export default function Page() {
         apiKey,
         configuration: "setting",
         orgDbSetting: { ...orgSetting },
+        whatsappConfig,
       }
       await http.patch("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
@@ -248,7 +259,7 @@ export default function Page() {
         </div>
 
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
-          <h3 className="text-sm text-primary">Database Name</h3>
+          <h3 className="text-sm text-primary">Database Name.</h3>
           <Input
             name="database_name"
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}
@@ -317,7 +328,73 @@ export default function Page() {
             onChange={handleOrgSettingDb}
           />
         </div>
+        <div className="apikeyflex mt-4 flex-col">
+          <h3 className="text-sm text-primary">Organization Token</h3>
 
+          <Textarea
+            className={`mt-2 border-[#CCCCCC] bg-[#F7f7f7]`}
+            rows={4}
+            placeholder="Type your Greeting..."
+            value={orgToken}
+          />
+        </div>
+        {/* WhatsApp Token Section --*/}
+        <div className="mt-6">
+          <div className="mt-2 flex items-center">
+            <label className="mr-5 text-sm font-medium text-gray-700">
+              WhatsApp Token
+            </label>
+            <div
+              className="cursor-pointer text-gray-500"
+              onClick={toggleShowFields}
+            >
+              {showFields ? <EyeOff size={18} /> : <Eye size={18} />}
+            </div>
+          </div>
+          <input
+            type={showFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your WhatsApp Token"
+            value={whatsappConfig.whatsappToken}
+            onChange={(e) =>
+              setWhatsappConfig({
+                ...whatsappConfig,
+                whatsappToken: e.target.value,
+              })
+            }
+          />
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            WhatsApp Phone Number Id
+          </label>
+          <input
+            type={showFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your WhatsApp Phone Number"
+            value={whatsappConfig.whatsAppPhoneNumberId}
+            onChange={(e) =>
+              setWhatsappConfig({
+                ...whatsappConfig,
+                whatsAppPhoneNumberId: e.target.value,
+              })
+            }
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            WhatsApp Phone Number
+          </label>
+          <input
+            type={showFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your WhatsApp Phone Number"
+            value={whatsappConfig.whatsappPhoneNumber}
+            onChange={(e) =>
+              setWhatsappConfig({
+                ...whatsappConfig,
+                whatsappPhoneNumber: e.target.value,
+              })
+            }
+          />
+        </div>
         {/* <div className="prompt mt-4">
           <h3 className="text-sm">Enter your Greeting</h3>
           <Textarea
