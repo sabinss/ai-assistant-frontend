@@ -259,7 +259,7 @@ export default function Page() {
         </div>
 
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
-          <h3 className="text-sm text-primary">Database Name</h3>
+          <h3 className="text-sm text-primary">Database Name.</h3>
           <Input
             name="database_name"
             className={`mt-2 ${errors.apiKey ? "border-red-500" : ""}`}

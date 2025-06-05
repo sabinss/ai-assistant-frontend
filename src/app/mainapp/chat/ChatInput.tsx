@@ -35,7 +35,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   })
   const [selectedAgents, setSelectedAgents] = useState<any>([])
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
-
   // Sample list of text options
   useEffect(() => {
     async function getOrgDetails() {
@@ -683,7 +682,24 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       )}px`
     }
   }
-
+  console.log("agentList", agentList)
+  useEffect(() => {
+    console.log("called again")
+    const agent: any = agentList.find((x: any) => {
+      if (x.name == selectedAgents[0]) {
+        return x
+      }
+    })
+    if (agent?.greeting && agent.greeting != "NA") {
+      appendMessage({
+        sender: botName,
+        message: agent?.greeting,
+        time: getClockTime(),
+        id: "ANS_",
+      })
+    }
+    console.log("agent", agent)
+  }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
     const newSession = Math.floor(Math.random() * 1000).toString()
     setSessionId(newSession)
@@ -692,7 +708,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       prevAgents.includes(agentName) ? [] : [agentName]
     )
   }
-
+  console.log("selectedAgents", selectedAgents)
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
       <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
