@@ -49,9 +49,9 @@ export const AgentTable = () => {
     dayTime: null,
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
-    isActive: "Y", // default to Y
+    active: false,
   })
-
+  console.log("formData---", formData)
   const [isAddNew, setAddNew] = useState(false)
   const [isAgentLoading, setAgentLoading] = useState(false)
   const addInstruction = () => {
@@ -108,8 +108,15 @@ export const AgentTable = () => {
   }
 
   const handleEdit = (agent: any) => {
+    console.log("Edit", agent)
     setAddNew(false)
-    setFormData({ ...agent, dayTime, frequency, isAgent })
+    setFormData({
+      ...agent,
+      dayTime,
+      frequency,
+      isAgent,
+      active: agent.active,
+    })
     setIsEditing(true)
   }
 
@@ -143,6 +150,7 @@ export const AgentTable = () => {
         setAgentLoading(false)
         setIsEditing(false)
         toast.success("Agent updated successfully")
+        await fetchOrgAgentInstructions()
       } else {
         const response = await http.post("/organization/agent", data, {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -191,18 +199,18 @@ export const AgentTable = () => {
               <label className="block font-medium">Active</label>{" "}
               <select
                 id="active"
-                value={formData.isActive}
+                value={formData.active}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    isActive: e.target.value,
+                    active: e.target.value,
                   }))
                 }
                 className="w-full rounded border p-2"
               >
                 <option value="">Select</option>
-                <option value="Y">Y</option>
-                <option value="N">N</option>
+                <option value={true}>Y</option>
+                <option value={false}>N</option>
               </select>
             </div>
 
