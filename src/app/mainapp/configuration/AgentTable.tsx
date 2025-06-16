@@ -64,7 +64,7 @@ export const AgentTable = () => {
     }))
   }
   const getDayTimeOptions = () => {
-    switch (frequency) {
+    switch (formData.frequency) {
       case "Daily":
         return Array.from({ length: 24 }, (_, i) => `${i + 1}`)
       case "Weekly":
@@ -112,9 +112,6 @@ export const AgentTable = () => {
     setAddNew(false)
     setFormData({
       ...agent,
-      dayTime,
-      frequency,
-      isAgent,
       active: agent.active,
     })
     setIsEditing(true)
@@ -135,7 +132,7 @@ export const AgentTable = () => {
 
   const handleSave = async () => {
     setAgentLoading(true)
-    let data = { ...formData, isAgent, frequency, dayTime }
+    let data = { ...formData }
     try {
       if (data._id) {
         await http.put("/organization/agent", data, {
@@ -228,8 +225,13 @@ export const AgentTable = () => {
               <input
                 type="checkbox"
                 id="nonAgent"
-                checked={isAgent}
-                onChange={() => setIsAgent(!isAgent)}
+                checked={formData.isAgent}
+                onChange={(event) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    isAgent: event?.target.checked,
+                  }))
+                }
                 className="h-4 w-4"
               />
               <label htmlFor="nonAgent" className=" ml-2 text-sm font-medium">
@@ -237,7 +239,7 @@ export const AgentTable = () => {
               </label>
             </div>
 
-            {isAgent && (
+            {formData.isAgent && (
               <>
                 <div>
                   <label
@@ -248,8 +250,13 @@ export const AgentTable = () => {
                   </label>
                   <select
                     id="frequency"
-                    value={frequency}
-                    onChange={(e) => setFrequency(e.target.value)}
+                    value={formData.frequency}
+                    onChange={(e) => {
+                      setFormData((prev) => ({
+                        ...prev,
+                        frequency: e.target.value,
+                      }))
+                    }}
                     className="w-full rounded border p-2"
                   >
                     <option value="">Select Frequency</option>
@@ -259,7 +266,7 @@ export const AgentTable = () => {
                     <option value="Daily">Daily</option>
                   </select>
                 </div>
-                {frequency && (
+                {formData.frequency && (
                   <div>
                     <label
                       htmlFor="dayTime"
@@ -269,8 +276,13 @@ export const AgentTable = () => {
                     </label>
                     <select
                       id="dayTime"
-                      value={dayTime}
-                      onChange={(e) => setDayTime(e.target.value)}
+                      value={formData.dayTime}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          dayTime: e.target.value,
+                        }))
+                      }
                       className="w-full rounded border p-2"
                     >
                       <option value="">Select Option</option>

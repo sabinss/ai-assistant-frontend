@@ -74,7 +74,11 @@ const ChatMain: React.FC = () => {
 
   const fetchOrgAgentInstructions = async () => {
     try {
+      // const response = await http.get("/organization/agent/instruction", {
+      //   headers: { Authorization: `Bearer ${access_token}` },
+      // })
       const response = await http.get("/organization/agent/instruction", {
+        params: { from: "chat" },
         headers: { Authorization: `Bearer ${access_token}` },
       })
 

@@ -19,25 +19,57 @@ export const MessageDiv = ({ msg }: any) => {
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { botName } = useNavBarStore()
+  const [showFeedbackModal, setFeedbackModal] = useState(false)
+  const [feedbackMsg, setFeedbackMsg] = useState("")
+  const [feedbackId, setFeedbackId] = useState(null)
   //get feedback fr  om msg.liked or msg.disliked and set accordingly\
+  const [selectedFeedback, setSelectedFeedback] = useState<
+    "liked" | "disliked" | null
+  >(null)
 
   const [feedback, setFeedback] = useState(
     msg.liked ? "liked" : msg.disliked ? "disliked" : null
   )
-  const handleLike = async (id) => {
-    console.log("liked id is ", id)
-    if (feedback === null) {
+
+  const submitFeedback = async () => {
+    console.log("submit feedback", selectedFeedback)
+    if (selectedFeedback == "liked") {
       setFeedback("liked")
-      await sendFeedbackToBackend("liked", id)
+      await sendFeedbackToBackend("liked", feedbackId)
+    } else if (selectedFeedback == "disliked") {
+      setFeedback("disliked")
+      await sendFeedbackToBackend("disliked", feedbackId)
     }
+    setFeedbackModal(false)
+  }
+  const closeModal = () => {
+    setFeedbackModal(false)
+    setFeedbackMsg("")
+    setFeedback(null)
+  }
+  const openFeedbackModal = () => {
+    console.log("feedback modal")
+    setFeedbackModal(!showFeedbackModal)
+  }
+  const handleLike = async (id) => {
+    setFeedbackId(id)
+    console.log("liked id is ", id)
+    setSelectedFeedback("liked")
+    openFeedbackModal()
+    // if (feedback === null) {
+    //   setFeedback("liked")
+    //   await sendFeedbackToBackend("liked", id)
+    // }
   }
   const handleDislike = async (id) => {
+    setFeedbackId(id)
+    setSelectedFeedback("disliked")
+    openFeedbackModal()
     console.log("disliked id is ", id)
-
-    if (feedback === null) {
-      setFeedback("disliked")
-      await sendFeedbackToBackend("disliked", id)
-    }
+    // if (feedback === null) {
+    //   setFeedback("disliked")
+    //   await sendFeedbackToBackend("disliked", id)
+    // }
   }
   function convertToHTMLList(paragraph: any) {
     const regex = /(\d+\.\s)([^.]+\.\s?)/g // Regular expression to match numbered items and text until the next period
@@ -121,7 +153,7 @@ export const MessageDiv = ({ msg }: any) => {
   }
   const sendFeedbackToBackend = async (
     feedbackType: "liked" | "disliked",
-    id: string
+    id: any
   ) => {
     try {
       //sent to our backend feedback
@@ -136,12 +168,17 @@ export const MessageDiv = ({ msg }: any) => {
             conversation: conversationId,
             org_id: publicChatHeaders?.org_id,
             user_id: publicChatHeaders?.user_id,
+            feedbackMsg,
           }
         )
       } else {
         res = await http.post(
           "/feedback/add",
-          { feedback: feedbackType, conversation: conversationId },
+          {
+            feedback: feedbackType,
+            conversation: conversationId,
+            feedbackMsg,
+          },
           { headers: { Authorization: `Bearer ${access_token}` } }
         )
       }
@@ -268,6 +305,40 @@ export const MessageDiv = ({ msg }: any) => {
               </ReactMarkdown>
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Feedback Modal */}
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-96 rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-2 text-lg font-medium">
+              {feedback === "liked"
+                ? "What did you like?"
+                : "What can we improve?"}
+            </h2>
+            <textarea
+              className="mb-4 h-24 w-full rounded border p-2"
+              placeholder="Add your comment..."
+              value={feedbackMsg}
+              onChange={(e) => setFeedbackMsg(e.target.value)}
+            ></textarea>
+            <div className="flex justify-end gap-2">
+              <button
+                className="rounded bg-gray-200 px-4 py-2 hover:bg-gray-300"
+                onClick={closeModal}
+              >
+                Cancel
+              </button>
+              <button
+                className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+                onClick={submitFeedback}
+              >
+                Submit
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

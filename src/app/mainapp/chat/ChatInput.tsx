@@ -19,6 +19,8 @@ interface ChildProps {
 
 const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const { botName } = useNavBarStore()
+  const [agents, setAgents] = useState(agentList) // internal reorderable list
+
   const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } =
     useChatConfig()
   const [message, setMessage] = useState("")
@@ -33,9 +35,25 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     user_email: null,
     customer_id: null,
   })
+  const [showDropdown, setShowDropdown] = useState(false)
+  console.log("agentList-------", agentList)
+  const visibleAgents = agentList.slice(0, 3)
+  const remainingAgents = agentList.slice(3)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
   // Sample list of text options
+
+  const handleDropdownSelect = (agent: any) => {
+    console.log("1111", agent, selectedAgents)
+    setSelectedAgents((prevAgents: any) =>
+      prevAgents.includes(agent) ? [] : [agent]
+    )
+    // Move selected agent to front
+    const reordered = [agent, ...agents.filter((a) => a.name !== agent.name)]
+    setAgents(reordered)
+    setShowDropdown(false)
+  }
+
   useEffect(() => {
     async function getOrgDetails() {
       try {
@@ -711,23 +729,59 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   console.log("selectedAgents", selectedAgents)
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
-      <div className="w-8/10 flex items-center rounded-md border border-[#D7D7D7] bg-background p-2 ">
-        <textarea
-          rows={3}
-          ref={textareaRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          onKeyDown={handleKeyPress}
-          onInput={handleInput}
-          disabled={isMessageLoading}
-          placeholder={isMessageLoading ? "....." : "Type your message here..."}
-          className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
-        />
+      <div className="w-8/10 flex flex-col rounded-md border border-[#D7D7D7] bg-background p-2">
+        <div className="flex flex-row justify-between">
+          <div className="flex-grow">
+            {" "}
+            <textarea
+              rows={3}
+              ref={textareaRef}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              onInput={handleInput}
+              disabled={isMessageLoading}
+              placeholder={
+                isMessageLoading ? "....." : "Type your message here..."
+              }
+              className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
+            />
+          </div>
+          <div>
+            {!publicChat && (
+              <button
+                type="button"
+                onClick={togglePopup}
+                className="mx-2 rounded-md bg-gray-200 p-2 hover:bg-gray-300"
+              >
+                <FaRegLightbulb size={18} />
+              </button>
+            )}
+
+            {/* Send message button */}
+            <div className="m-2 flex w-20 items-center justify-center">
+              <span className="text-sm text-[#838383]">
+                {message?.length}/4000
+              </span>
+              <button
+                type="button"
+                onClick={sendMessage}
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon" }),
+                  "h-9 w-9",
+                  "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                )}
+              >
+                <IoMdSend size={20} className=" text-[#174894]" />
+              </button>
+            </div>
+          </div>
+        </div>
 
         {/* Custom agent list */}
         {!publicChat && (
-          <div className="absolute bottom-2 left-5 right-2 mb-2 flex items-center gap-3">
-            {agentList.slice(0, 5).map((agent: any, index: number) => (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {visibleAgents.map((agent: any, index: number) => (
               <div
                 onClick={() => handleAgentRemove(agent.name)}
                 key={index}
@@ -740,34 +794,40 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
                 {agent.name}
               </div>
             ))}
+            {/* Show ellipsis if more agents */}
+            {remainingAgents.length > 0 && (
+              <div className="relative">
+                <div
+                  onClick={() => setShowDropdown((prev) => !prev)}
+                  className="flex cursor-pointer items-center gap-2 rounded-full border bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
+                >
+                  +{remainingAgents.length}
+                </div>
+                {showDropdown && (
+                  <div className="absolute z-10 mt-2 w-40 rounded-md border bg-white p-2 shadow-lg">
+                    {remainingAgents.map((agent, index) => (
+                      <div
+                        key={index}
+                        onClick={() => {
+                          handleDropdownSelect(agent)
+                          handleAgentRemove(agent.name)
+                          // setShowDropdown(false)
+                        }}
+                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${
+                          selectedAgents.includes(agent.name)
+                            ? "font-semibold text-blue-600"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {agent.name}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
-
-        {!publicChat && (
-          <button
-            type="button"
-            onClick={togglePopup}
-            className="mx-2 rounded-md bg-gray-200 p-2 hover:bg-gray-300"
-          >
-            <FaRegLightbulb size={18} />
-          </button>
-        )}
-
-        {/* Send message button */}
-        <div className="m-2 flex w-20 items-center justify-center">
-          <span className="text-sm text-[#838383]">{message?.length}/4000</span>
-          <button
-            type="button"
-            onClick={sendMessage}
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon" }),
-              "h-9 w-9",
-              "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-            )}
-          >
-            <IoMdSend size={20} className=" text-[#174894]" />
-          </button>
-        </div>
 
         {/* Prompts Modal */}
         {showPopup && (
