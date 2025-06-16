@@ -12,7 +12,7 @@ import useNavBarStore from "@/store/store"
 export default function Edit() {
   const { access_token, user_data } = useAuth() // Call useAuth here
   const [organizationName, setOrganizationName] = useState("Agile move")
-  const [organizationId, setOrganizationId] = useState(12)
+  const [organizationId, setOrganizationId] = useState<any>(null)
   const [isEditable, setIsEditable] = useState(false)
   const [assistantName, setAssistantName] = useState("Assistant Name")
   const [isEditingAssistantName, setIsEditingAssistantName] = useState(false)
