@@ -36,7 +36,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     customer_id: null,
   })
   const [showDropdown, setShowDropdown] = useState(false)
-  console.log("agentList-------", agentList)
   const visibleAgents = agentList.slice(0, 3)
   const remainingAgents = agentList.slice(3)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
