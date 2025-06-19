@@ -16,7 +16,6 @@ import useAuth from "@/store/user"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { ImSpinner2 } from "react-icons/im" // Import spinner icon
-import useOrgCustomer from "@/store/organization_customer"
 
 const tableHeader = [
   { name: "Name", sortable: false },
@@ -51,7 +50,6 @@ export const AgentTable = () => {
     tasks: [], // Array to store instructions dynamically
     active: false,
   })
-  console.log("formData---", formData)
   const [isAddNew, setAddNew] = useState(false)
   const [isAgentLoading, setAgentLoading] = useState(false)
   const addInstruction = () => {
@@ -108,13 +106,25 @@ export const AgentTable = () => {
   }
 
   const handleEdit = (agent: any) => {
-    console.log("Edit", agent)
     setAddNew(false)
     setFormData({
       ...agent,
       active: agent.active,
     })
     setIsEditing(true)
+  }
+
+  const handleDelete = async (agent: any) => {
+    try {
+      console.log("Delete agent", agent)
+      await http.delete(`/organization/agent/${agent._id}/instruction`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
+      await fetchOrgAgentInstructions()
+      toast.success("Agent deleted successfully")
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete Agent")
+    }
   }
 
   const fetchOrgAgentInstructions = async () => {
@@ -128,6 +138,7 @@ export const AgentTable = () => {
       toast.error(err?.message || "Failed to fetch Agent")
     }
   }
+
   console.log("formData--,formData", formData)
 
   const handleSave = async () => {
@@ -498,6 +509,9 @@ export const AgentTable = () => {
                     <TableCell className="py-3">
                       <button onClick={() => handleEdit(agent)}>
                         <FaEdit size={20} />
+                      </button>
+                      <button onClick={() => handleDelete(agent)}>
+                        <MdDelete size={20} />
                       </button>
                     </TableCell>
                   </TableRow>
