@@ -699,9 +699,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       )}px`
     }
   }
-  console.log("agentList", agentList)
   useEffect(() => {
-    console.log("called again")
     const agent: any = agentList.find((x: any) => {
       if (x.name == selectedAgents[0]) {
         return x
