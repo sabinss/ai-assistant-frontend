@@ -26,13 +26,14 @@ export const MessageDiv = ({ msg }: any) => {
   const [selectedFeedback, setSelectedFeedback] = useState<
     "liked" | "disliked" | null
   >(null)
+  const [feedbackLoading, setFeedbackLoading] = useState(false)
 
   const [feedback, setFeedback] = useState(
     msg.liked ? "liked" : msg.disliked ? "disliked" : null
   )
 
   const submitFeedback = async () => {
-    console.log("submit feedback", selectedFeedback)
+    setFeedbackLoading(true)
     if (selectedFeedback == "liked") {
       setFeedback("liked")
       await sendFeedbackToBackend("liked", feedbackId)
@@ -40,6 +41,7 @@ export const MessageDiv = ({ msg }: any) => {
       setFeedback("disliked")
       await sendFeedbackToBackend("disliked", feedbackId)
     }
+    setFeedbackLoading(false)
     setFeedbackModal(false)
   }
   const closeModal = () => {
@@ -311,12 +313,13 @@ export const MessageDiv = ({ msg }: any) => {
       {/* Feedback Modal */}
       {/* Feedback Modal */}
       {showFeedbackModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="w-96 rounded-lg bg-white p-6 shadow-md">
+        <div className=" fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="w-[650px] rounded-lg bg-white p-6 shadow-md">
             <h2 className="mb-2 text-lg font-medium">
-              {feedback === "liked"
-                ? "What did you like?"
-                : "What can we improve?"}
+              How was this response?
+              {/* {feedback === "liked"
+                ? "How was this response?"
+                : "How was this response??"} */}
             </h2>
             <textarea
               className="mb-4 h-24 w-full rounded border p-2"
@@ -332,10 +335,11 @@ export const MessageDiv = ({ msg }: any) => {
                 Cancel
               </button>
               <button
+                disabled={feedbackLoading}
                 className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
                 onClick={submitFeedback}
               >
-                Submit
+                {feedbackLoading ? "saving.." : "Submit"}
               </button>
             </div>
           </div>
