@@ -6,6 +6,7 @@ import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
 import usePublicChat from "@/store/public_chat"
 import useOrgCustomer from "@/store/organization_customer"
+import useChatConfig from "@/store/useChatSetting"
 export interface MessageObject {
   id: string
   sender: string
@@ -28,8 +29,10 @@ const ChatMain: React.FC = () => {
 
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
+  const { sessionId } = useChatConfig()
 
   useEffect(() => {
+    console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
       setIsLoading(true)
       try {
@@ -55,6 +58,11 @@ const ChatMain: React.FC = () => {
     }
     getOrgAgentList()
   }, [])
+
+  useEffect(() => {
+    console.log("Sesion Id changed", sessionId)
+    setMessages([])
+  }, [sessionId])
 
   const fetchBotData = async () => {
     let org_id

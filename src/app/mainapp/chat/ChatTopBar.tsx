@@ -56,6 +56,7 @@ export default function ChatTopbar() {
       )
       setChatSession(res?.data?.newSession)
     }
+    setSessionId(newSession)
   }
   const { botName } = useNavBarStore()
 
