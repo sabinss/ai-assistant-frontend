@@ -273,7 +273,7 @@ export const MessageDiv = ({ msg }: any) => {
           <div className="likebuttons absolute  left-2 py-1 pl-2">
             {msg.id !== "greeting" &&
               msg.id !== "loading" &&
-              !msg.id.startsWith("stream") && (
+              msg.id?.startsWith("ANS_") && (
                 <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
                   {feedback === null && (
                     <>
