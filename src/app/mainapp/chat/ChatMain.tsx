@@ -62,7 +62,6 @@ const ChatMain: React.FC = () => {
 
   useEffect(() => {
     console.log("Sesion Id changed", sessionId)
-    setChatSession(sessionId)
     setMessages([])
   }, [sessionId])
 
