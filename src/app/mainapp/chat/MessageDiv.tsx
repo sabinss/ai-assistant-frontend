@@ -17,7 +17,6 @@ import rehypeRaw from "rehype-raw" // Allows rendering inline HTML inside Markdo
 import remarkGfm from "remark-gfm"
 
 export const MessageDiv = ({ msg }: any) => {
-  console.log("****msg****", msg)
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { botName } = useNavBarStore()
