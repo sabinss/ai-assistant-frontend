@@ -24,7 +24,6 @@ export default function page() {
       if (res.status === 201) {
         setError(res?.data?.message)
       }
-      console.log("res.data", res.data)
       if (res.status === 200) {
         loginUser(
           res.data?.user_details,

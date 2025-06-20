@@ -16,7 +16,6 @@ const ConvoGraph = ({ customerId }: any) => {
   const { access_token, user_data } = useAuth()
   const [fromDate, setFromDate] = useState("2023-1-1")
   const [toDate, setToDate] = useState("2024-12-12")
-  console.log("customerId==", fromDate, toDate, customerId)
   useEffect(() => {
     const fetchConversations = async () => {
       try {
@@ -29,7 +28,6 @@ const ConvoGraph = ({ customerId }: any) => {
           }
         )
         const conversationData = response?.data
-        console.log({ conversationData })
         processData(conversationData)
       } catch (error) {
         console.error(error)
@@ -90,7 +88,6 @@ const ConvoGraph = ({ customerId }: any) => {
           // },
         ],
       }
-      console.log("chartData", chartData)
       const options = {
         scales: {
           x: {

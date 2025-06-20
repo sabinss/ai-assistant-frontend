@@ -43,7 +43,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   // Sample list of text options
 
   const handleDropdownSelect = (agent: any) => {
-    console.log("1111", agent, selectedAgents)
     setSelectedAgents((prevAgents: any) =>
       prevAgents.includes(agent) ? [] : [agent]
     )
@@ -78,7 +77,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       const res = await http.get("/organization/prompts", {
         headers: { Authorization: `Bearer ${access_token}` },
       })
-      console.log("res", res)
       setChatPrompts(res.data.organizationPrompts)
     }
     fetchOrganizationQuery()
@@ -123,7 +121,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       time: getClockTime(),
       id: "",
     })
-    console.log("*******", apiType)
     try {
       if (publicChat) {
         const res = await http.post(
@@ -713,7 +710,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         id: "ANS_",
       })
     }
-    console.log("agent", agent)
   }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
     const newSession = Math.floor(Math.random() * 1000).toString()
