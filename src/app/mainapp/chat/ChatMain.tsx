@@ -20,7 +20,7 @@ export interface MessageObject {
 
 const ChatMain: React.FC = () => {
   const [messages, setMessages] = useState<MessageObject[]>([])
-  const { user_data, access_token, chatSession } = useAuth()
+  const { user_data, access_token, chatSession, setChatSession } = useAuth()
   const { greeting, botName, setBotName, setGreeting } = useNavBarStore()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -52,6 +52,7 @@ const ChatMain: React.FC = () => {
 
     fetchBotNameAndMessages()
   }, [user_data, access_token, chatSession, publicChat, publicChatHeaders])
+
   useEffect(() => {
     async function getOrgAgentList() {
       await fetchOrgAgentInstructions()
@@ -61,6 +62,7 @@ const ChatMain: React.FC = () => {
 
   useEffect(() => {
     console.log("Sesion Id changed", sessionId)
+    setChatSession(sessionId)
     setMessages([])
   }, [sessionId])
 
