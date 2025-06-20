@@ -15,7 +15,9 @@ import DOMPurify from "dompurify"
 import ReactMarkdown from "react-markdown"
 import rehypeRaw from "rehype-raw" // Allows rendering inline HTML inside Markdown
 import remarkGfm from "remark-gfm"
+
 export const MessageDiv = ({ msg }: any) => {
+  console.log("****msg****", msg)
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
   const { botName } = useNavBarStore()
@@ -270,28 +272,30 @@ export const MessageDiv = ({ msg }: any) => {
             </div>
           </motion.div>
           <div className="likebuttons absolute  left-2 py-1 pl-2">
-            {msg.id !== "greeting" && msg.id !== "loading" && (
-              <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
-                {feedback === null && (
-                  <>
-                    <div
-                      className="likeholder cursor-pointer"
-                      onClick={() => handleLike(msg.id)}
-                    >
-                      <BiLike size={20} />
-                    </div>
-                    <div
-                      className="dislikeholder cursor-pointer"
-                      onClick={() => handleDislike(msg.id)}
-                    >
-                      <BiDislike size={20} />
-                    </div>
-                  </>
-                )}
-                {feedback === "liked" && <BiSolidLike size={20} />}
-                {feedback === "disliked" && <BiSolidDislike size={20} />}
-              </span>
-            )}
+            {msg.id !== "greeting" &&
+              msg.id !== "loading" &&
+              !msg.id.startsWith("stream") && (
+                <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
+                  {feedback === null && (
+                    <>
+                      <div
+                        className="likeholder cursor-pointer"
+                        onClick={() => handleLike(msg.id)}
+                      >
+                        <BiLike size={20} />
+                      </div>
+                      <div
+                        className="dislikeholder cursor-pointer"
+                        onClick={() => handleDislike(msg.id)}
+                      >
+                        <BiDislike size={20} />
+                      </div>
+                    </>
+                  )}
+                  {feedback === "liked" && <BiSolidLike size={20} />}
+                  {feedback === "disliked" && <BiSolidDislike size={20} />}
+                </span>
+              )}
           </div>
         </div>
       ) : (

@@ -61,7 +61,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage }) => {
 
   const sendMessagetoBackend = async (query: string) => {
     try {
-      console.log("send message 1", sessionId, publicChatReponsePayload)
       let res: any
       updateMessageLoading(true)
       appendMessage({ sender: "user", message, time: getClockTime(), id: "" }) // Add the message to the chat

@@ -19,8 +19,6 @@ export default function GoogleCallback() {
     const parsedState = state
       ? JSON.parse(decodeURIComponent(state as string))
       : {}
-    console.log("parsedState", parsedState)
-    console.log("code", code)
     // Call backend to exchange code for tokens
     const exchangeCode = async () => {
       try {
