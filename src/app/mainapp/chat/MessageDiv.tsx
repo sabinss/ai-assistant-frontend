@@ -34,6 +34,7 @@ export const MessageDiv = ({ msg }: any) => {
 
   const submitFeedback = async () => {
     setFeedbackLoading(true)
+    console.log("Submit Feedback", selectedFeedback)
     if (selectedFeedback == "liked") {
       setFeedback("liked")
       await sendFeedbackToBackend("liked", feedbackId)
@@ -50,7 +51,6 @@ export const MessageDiv = ({ msg }: any) => {
     setFeedback(null)
   }
   const openFeedbackModal = () => {
-    console.log("feedback modal")
     setFeedbackModal(!showFeedbackModal)
   }
   const handleLike = async (id) => {
@@ -153,13 +153,21 @@ export const MessageDiv = ({ msg }: any) => {
       return "Error parsing content."
     }
   }
+  const extractConversationId = (id) => {
+    if (id.startsWith("ANS_")) {
+      return id.split("ANS_")[1]
+    } else if (id.startsWith("stream_")) {
+      return id.split("stream_")[1]
+    }
+    return id // fallback if no prefix
+  }
   const sendFeedbackToBackend = async (
     feedbackType: "liked" | "disliked",
     id: any
   ) => {
     try {
       //sent to our backend feedback
-      const conversationId = id.split("ANS_")[1]
+      const conversationId = extractConversationId(id)
 
       let res
       if (publicChat) {
