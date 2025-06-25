@@ -31,6 +31,8 @@ const ChatMain: React.FC = () => {
     usePublicChat()
   const { sessionId } = useChatConfig()
 
+  console.log("Message list", messages)
+
   useEffect(() => {
     console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
@@ -61,7 +63,6 @@ const ChatMain: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    console.log("Sesion Id changed", sessionId)
     setMessages([])
   }, [sessionId])
 

@@ -234,6 +234,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
 
       // Read the stream
       const decoder = new TextDecoder()
+      console.log("decoder", decoder)
       let buffer = ""
 
       while (true) {
@@ -246,11 +247,13 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         // Process complete SSE messages
         const lines = buffer.split("\n\n")
         buffer = lines.pop() || "" // Keep the last incomplete chunk
-
+        console.log("lines", lines)
         for (const line of lines) {
           if (line.trim() && line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.substring(6))
+
+              console.log("11111", data)
 
               // Handle completion
               if (data.done) {
@@ -719,7 +722,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       prevAgents.includes(agentName) ? [] : [agentName]
     )
   }
-  console.log("selectedAgents", selectedAgents)
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
       <div className="w-8/10 flex flex-col rounded-md border border-[#D7D7D7] bg-background p-2">
