@@ -271,6 +271,7 @@ export const MessageDiv = ({ msg }: any) => {
             </div>
           </motion.div>
           <div className="likebuttons absolute  left-2 py-1 pl-2">
+            <p>Message Id {msg.id}</p>
             {msg.id !== "greeting" &&
               msg.id !== "loading" &&
               msg.id?.startsWith("ANS_") && (
