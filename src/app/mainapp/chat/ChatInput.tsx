@@ -213,6 +213,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   // For insights chat
   const handleStreamingResponse = async (query: string) => {
     const messageId = `stream_${Date.now()}`
+    let conversationId: any = ""
 
     // Add initial message with loading status
     appendMessage({
@@ -244,8 +245,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         }
       )
 
-      console.log("Conversation response", response)
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -274,16 +273,14 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         // Process complete SSE messages
         const lines = buffer.split("\n\n")
         buffer = lines.pop() || "" // Keep the last incomplete chunk
-        console.log("lines", lines)
         for (const line of lines) {
           if (line.trim() && line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.substring(6))
 
-              console.log("11111", data)
-
               // Handle completion
               if (data.done) {
+                conversationId = "ANS_" + data.id
                 // Update session ID if provided
                 if (data.session_id) {
                   sessionIdFromResponse = data.session_id
@@ -295,7 +292,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
               }
 
               // Handle status updates (like "Analyzing query...")
-              if (data.status) {
+              if (data.status && !conversationId) {
                 appendMessage({
                   sender: botName,
                   message: fullMessage,
@@ -330,6 +327,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         message: fullMessage,
         time: getClockTime(),
         id: messageId,
+        conversationId: conversationId,
         isStreaming: false,
       })
     } catch (error) {
@@ -514,6 +512,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   // Handle custom agent query with streaming
   const handleCustomAgentStreaming = async (query: string) => {
     const messageId = `stream_agent_${Date.now()}`
+    let conversationId: any = ""
 
     // Add initial message with loading status
     appendMessage({
@@ -588,9 +587,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
           if (line.trim() && line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.substring(6))
-
+              console.log("Customer agent", data)
               // Handle completion
               if (data.done) {
+                conversationId = "ANS_" + data.id
                 // Update session ID if provided and different
                 if (data.session_id && data.session_id !== sessionId) {
                   sessionIdFromResponse = data.session_id
@@ -604,7 +604,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
               }
 
               // Handle status updates
-              if (data.status) {
+              if (data.status && !conversationId) {
                 appendMessage({
                   sender: botName,
                   message: fullMessage, // Keep showing accumulated message
@@ -667,6 +667,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       appendMessage({
         sender: botName,
         message: fullMessage,
+        conversationId: conversationId,
         time: getClockTime(),
         id: messageId,
         isStreaming: false, // Mark as complete
