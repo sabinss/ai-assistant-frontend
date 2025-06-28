@@ -273,19 +273,40 @@ export const MessageDiv = ({ msg }: any) => {
           <div className="likebuttons absolute  left-2 py-1 pl-2">
             {msg.id !== "greeting" &&
               msg.id !== "loading" &&
-              msg.id?.startsWith("ANS_") && (
+              (msg.id?.startsWith("ANS_") ||
+                msg.conversationId?.startsWith("ANS_")) && (
                 <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
                   {feedback === null && (
                     <>
                       <div
                         className="likeholder cursor-pointer"
-                        onClick={() => handleLike(msg.id)}
+                        onClick={
+                          () =>
+                            handleLike(
+                              msg.conversationId
+                                ? msg.conversationId.replace(/^ANS_/, "")
+                                : msg.id?.startsWith("ANS_")
+                                  ? msg.id.replace(/^ANS_/, "")
+                                  : msg.id
+                            )
+                          // handleLike(
+                          //   msg.conversationId?.replace(/^ANS_/, "") || msg.id
+                          // )
+                        }
                       >
                         <BiLike size={20} />
                       </div>
                       <div
                         className="dislikeholder cursor-pointer"
-                        onClick={() => handleDislike(msg.id)}
+                        onClick={() =>
+                          handleDislike(
+                            msg.conversationId
+                              ? msg.conversationId.replace(/^ANS_/, "")
+                              : msg.id?.startsWith("ANS_")
+                                ? msg.id.replace(/^ANS_/, "")
+                                : msg.id
+                          )
+                        }
                       >
                         <BiDislike size={20} />
                       </div>
