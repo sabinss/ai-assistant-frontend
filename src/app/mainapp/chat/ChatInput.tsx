@@ -21,6 +21,9 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const { botName } = useNavBarStore()
   const [agents, setAgents] = useState(agentList) // internal reorderable list
 
+  const dropdownRef = useRef<any>(null)
+  const [openUpwards, setOpenUpwards] = useState(false)
+
   const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } =
     useChatConfig()
   const [message, setMessage] = useState("")
@@ -36,19 +39,43 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     customer_id: null,
   })
   const [showDropdown, setShowDropdown] = useState(false)
-  const visibleAgents = agentList.slice(0, 3)
-  const remainingAgents = agentList.slice(3)
+  const visibleAgents = agentList.slice(0, 5)
+  const remainingAgents = agentList.slice(5)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
   // Sample list of text options
 
+  useEffect(() => {
+    if (showDropdown && dropdownRef.current) {
+      const rect = dropdownRef.current.getBoundingClientRect()
+      const spaceBelow = window.innerHeight - rect.top
+      const dropdownHeight = 200 // Approx. max height
+
+      if (spaceBelow < dropdownHeight) {
+        setOpenUpwards(true) // Not enough space below, open upwards
+      } else {
+        setOpenUpwards(false) // Enough space, open normally
+      }
+    }
+  }, [showDropdown])
+
   const handleDropdownSelect = (agent: any) => {
+    // Add to selectedAgents if not already selected
     setSelectedAgents((prevAgents: any) =>
-      prevAgents.includes(agent) ? [] : [agent]
+      prevAgents.some((a: any) => a.name === agent.name)
+        ? prevAgents
+        : [...prevAgents, agent]
     )
-    // Move selected agent to front
+
+    // Add to visibleAgents if not already there
+    setAgents((prev: any) =>
+      prev.some((a: any) => a.name === agent.name) ? prev : [...prev, agent]
+    )
+
+    // Reorder agents: move selected one to front
     const reordered = [agent, ...agents.filter((a) => a.name !== agent.name)]
     setAgents(reordered)
+
     setShowDropdown(false)
   }
 
@@ -799,14 +826,16 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
                   +{remainingAgents.length}
                 </div>
                 {showDropdown && (
-                  <div className="absolute z-10 mt-2 w-40 rounded-md border bg-white p-2 shadow-lg">
+                  <div
+                    ref={dropdownRef}
+                    className="absolute bottom-full z-10 mb-2 max-h-60 w-40 overflow-y-auto rounded-md border bg-white p-2 shadow-lg"
+                  >
                     {remainingAgents.map((agent, index) => (
                       <div
                         key={index}
                         onClick={() => {
                           handleDropdownSelect(agent)
                           handleAgentRemove(agent.name)
-                          // setShowDropdown(false)
                         }}
                         className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${
                           selectedAgents.includes(agent.name)
