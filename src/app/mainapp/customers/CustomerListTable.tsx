@@ -17,16 +17,25 @@ import useNavBarStore from "@/store/store"
 import useOrgCustomer from "@/store/organization_customer"
 import { timeAgo } from "@/utility"
 
+// const tableHeader = [
+//   { name: "Name", sortable: false },
+//   { name: "Health Score", sortable: false },
+//   { name: "CSM Score", sortable: false },
+//   { name: "ARR (k)", sortable: false },
+//   { name: "Last Seen", sortable: true, sortKey: "last_seen" },
+//   { name: "Last Comm", sortable: true, sortKey: "status" },
+//   { name: "Stage", sortable: true, sortKey: "createdAt" },
+//   // { name: "Analytics", sortable: false },
+//   // { name: "Reporting", sortable: false },
+// ]
 const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Health Score", sortable: false },
-  { name: "CSM Score", sortable: false },
+  { name: "Churn Risk", sortable: false },
   { name: "ARR (k)", sortable: false },
-  { name: "Last Seen", sortable: true, sortKey: "last_seen" },
-  { name: "Last Comm", sortable: true, sortKey: "status" },
+  { name: "Expansion Opp", sortable: true, sortKey: "last_seen" },
+  { name: "Renewal Time", sortable: true, sortKey: "status" },
   { name: "Stage", sortable: true, sortKey: "createdAt" },
-  // { name: "Analytics", sortable: false },
-  // { name: "Reporting", sortable: false },
 ]
 
 const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
