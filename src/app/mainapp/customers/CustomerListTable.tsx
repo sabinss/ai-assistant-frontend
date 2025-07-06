@@ -32,8 +32,8 @@ const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Health Score", sortable: false },
   { name: "Churn Risk", sortable: false },
-  { name: "ARR (k)", sortable: false },
   { name: "Expansion Opp", sortable: true, sortKey: "last_seen" },
+  { name: "ARR (k)", sortable: false },
   { name: "Renewal Time", sortable: true, sortKey: "status" },
   { name: "Stage", sortable: true, sortKey: "createdAt" },
 ]
@@ -63,13 +63,18 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
         />
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        <Score score={item.health_score} otherClasses="" color={color} />
+        {/* <Score score={item.health_score} otherClasses="" color={color} />
+         */}
+        <Chip
+          value={item.health_score}
+          otherClasses="bg-green-500 text-white font-bold"
+        />
       </TableCell>
-      <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
-
       <TableCell className="max-w-20 break-words py-3">
         {timeAgo(item.createdAt)}
       </TableCell>
+      <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
+
       <TableCell className="max-w-20 break-words py-3">
         {timeAgo(item.updatedAt)}
       </TableCell>
