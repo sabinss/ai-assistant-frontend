@@ -1,5 +1,5 @@
 "use client"
-import React, { useEffect } from "react"
+import React, { useEffect, useState } from "react"
 import CustomerListTable from "./CustomerListTable"
 import { CiUser } from "react-icons/ci"
 import GlobalSearch from "@/components/shared/GlobalSearch"
@@ -9,7 +9,27 @@ import useOrgCustomer from "@/store/organization_customer"
 
 const Customers = () => {
   const { user_data, access_token } = useAuth()
-  const { setLoading, loading, setOrgCustomers } = useOrgCustomer()
+  const { setLoading, loading, setOrgCustomers, setRedshiftCustomers } =
+    useOrgCustomer()
+  const [fetchingCustomer, setFetchingCustomer] = useState(false)
+
+  // useEffect(() => {
+  //   async function fetchCustomerDetailFromRedshift() {
+  //     try {
+  //       setFetchingCustomer(true)
+  //       let res = await http.get(`/customer/redshift`, {
+  //         headers: { Authorization: `Bearer ${access_token}` },
+  //       })
+  //       console.log("Response--", res?.data?.data)
+  //       setRedshiftCustomers(res?.data?.data)
+  //     } catch (err) {
+  //     } finally {
+  //       setFetchingCustomer(false)
+  //     }
+  //   }
+  //   fetchCustomerDetailFromRedshift()
+
+  // }, [])
 
   useEffect(() => {
     async function getOrgCustomers() {
@@ -21,7 +41,22 @@ const Customers = () => {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
-        setOrgCustomers(res.data)
+        let response: any = await http.get(`/customer/redshift`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        let redshiftCustomerDetails = response?.data?.data
+        let customerDetails
+
+        if (redshiftCustomerDetails?.length > 0) {
+          customerDetails = res.data?.customers.map((x: any) => {
+            const detail = redshiftCustomerDetails.find(
+              (y: any) => x._id == y.company_id
+            )
+            x.redShiftCustomer = detail
+            return x
+          })
+        }
+        setOrgCustomers({ ...res.data, customers: customerDetails })
       } catch (err) {
       } finally {
         setLoading(false)
