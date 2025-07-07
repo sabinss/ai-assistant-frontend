@@ -44,7 +44,6 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const router = useRouter()
   const [selectStage, setStage] = useState("")
   const { handleSideBar } = useNavBarStore()
-
   const color = circleColors[Math.floor(Math.random() * circleColors.length)]
   return (
     <TableRow
@@ -65,13 +64,25 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
       <TableCell className="max-w-20 break-words py-3">
         {/* <Score score={item.health_score} otherClasses="" color={color} />
          */}
-        <Chip
-          value={item.health_score}
-          otherClasses="bg-green-500 text-white font-bold"
-        />
+        {item.redShiftCustomer?.churn_risk_score ? (
+          <Chip
+            value={item?.redShiftCustomer?.churn_risk_score}
+            otherClasses="bg-green-500 text-white font-bold"
+          />
+        ) : (
+          "N/A"
+        )}
       </TableCell>
+
       <TableCell className="max-w-20 break-words py-3">
-        {timeAgo(item.createdAt)}
+        {item.redShiftCustomer?.expansion_opp_score ? (
+          <Chip
+            value={item?.redShiftCustomer?.expansion_opp_score}
+            otherClasses="bg-green-500 text-white font-bold"
+          />
+        ) : (
+          "N/A"
+        )}
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
 
@@ -91,6 +102,7 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
 export default function CustomerListTable() {
   const { orgCustomers } = useOrgCustomer()
   const handleSort = (item: any) => {}
+  console.log("OrgCustomers table list", orgCustomers)
 
   return (
     <div className="relative mb-10 w-full overflow-y-auto rounded-md bg-white p-4 text-[#333333]">
