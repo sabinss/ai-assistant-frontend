@@ -9,8 +9,7 @@ import useOrgCustomer from "@/store/organization_customer"
 
 const Customers = () => {
   const { user_data, access_token } = useAuth()
-  const { setLoading, loading, setOrgCustomers, setRedshiftCustomers } =
-    useOrgCustomer()
+  const { setLoading, loading, setOrgCustomers } = useOrgCustomer()
   const [fetchingCustomer, setFetchingCustomer] = useState(false)
 
   // useEffect(() => {
