@@ -56,9 +56,9 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
     >
       <TableCell className="max-w-20 break-words py-3">{item.name}</TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        {item.health_score ? (
+        {item?.redShiftCustomer?.health_score ? (
           <Chip
-            value={item.health_score}
+            value={item.redShiftCustomer.health_score}
             otherClasses="bg-green-500 text-white font-bold"
           />
         ) : (
