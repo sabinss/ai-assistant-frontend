@@ -21,7 +21,7 @@ import { usePathname } from "next/navigation"
 import QuickLinks from "@/components/ui/quick-links"
 import { useEffect, useRef } from "react"
 
-function getNavLinks(rolePermission, hideList = ["Dashboard", "Customers"]) {
+function getNavLinks(rolePermission, hideList = ["Dashboard"]) {
   const mainLinks = [
     {
       name: "Notifications",
@@ -43,6 +43,9 @@ function getNavLinks(rolePermission, hideList = ["Dashboard", "Customers"]) {
       path: "/mainapp/customers",
       icon: UserRound,
     },
+  ]
+
+  const otherLinks = [
     {
       name: "Feedbacks",
       path: "/mainapp/feedbacks",
@@ -53,9 +56,6 @@ function getNavLinks(rolePermission, hideList = ["Dashboard", "Customers"]) {
       path: "/mainapp/source",
       icon: FolderClockIcon,
     },
-  ]
-
-  const otherLinks = [
     {
       name: "User Management",
       path: "/mainapp/users",
