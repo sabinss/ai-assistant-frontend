@@ -16,6 +16,10 @@ import { useRouter } from "next/navigation"
 import useNavBarStore from "@/store/store"
 import useOrgCustomer from "@/store/organization_customer"
 import { timeAgo } from "@/utility"
+import http from "@/config/http"
+import useAuth from "@/store/user"
+import { toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 
 // const tableHeader = [
 //   { name: "Name", sortable: false },
@@ -55,6 +59,8 @@ const getScoreColorClass = (score: number, type: "health" | "risk"): string => {
 const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
 
 const MemoizedTableRow = React.memo(({ item, index }: any) => {
+  const { access_token } = useAuth()
+
   const router = useRouter()
   const [selectStage, setStage] = useState("")
   const { handleSideBar } = useNavBarStore()
@@ -126,8 +132,22 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
       <TableCell className="max-w-21 break-words py-3">
         <Dropdown
           options={CUSTOMER_LIST_STAGES}
-          value={item?.stage ?? "Adopted"}
-          onChange={(value) => setStage(value)}
+          value={selectStage || item?.stage || "Adopted"}
+          onChange={async (value) => {
+            setStage(value)
+            try {
+              await http.put(
+                `/customer/${item._id}`,
+                { stage: value },
+                {
+                  headers: { Authorization: `Bearer ${access_token}` },
+                }
+              )
+              toast.success("Stage updated successfully")
+            } catch (err: any) {
+              toast.error(err?.message || "Failed to save stage")
+            }
+          }}
         />
       </TableCell>
     </TableRow>
