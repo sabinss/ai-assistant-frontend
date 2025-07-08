@@ -38,7 +38,7 @@ const tableHeader = [
   { name: "Churn Risk", sortable: false },
   { name: "Expansion Opp", sortable: true, sortKey: "last_seen" },
   { name: "ARR (k)", sortable: false },
-  { name: "Renewal Time", sortable: true, sortKey: "status" },
+  // { name: "Renewal Time", sortable: true, sortKey: "status" },
   { name: "Renewal Duration", sortable: true, sortKey: "status" },
   { name: "Stage", sortable: true, sortKey: "createdAt" },
 ]
@@ -126,9 +126,9 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">{item.arr}</TableCell>
 
-      <TableCell className="max-w-20 break-words py-3">
+      {/* <TableCell className="max-w-20 break-words py-3">
         {timeAgo(item.updatedAt)}
-      </TableCell>
+      </TableCell> */}
       <TableCell className="max-w-20 break-words py-3">
         {/* {timeAgo(item.updatedAt)} */}
         12 months

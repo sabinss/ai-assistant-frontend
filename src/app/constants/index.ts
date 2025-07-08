@@ -110,11 +110,14 @@ const CUSTOMER_LIST = [
 ]
 
 const CUSTOMER_LIST_STAGES = [
+  "Trial",
+  "Subscribed",
   "Onboarding",
-  "Adopted",
+  "Activated",
   "Renewed",
-  "Adopted",
-  "Select Stage",
+  "Matured",
+  "Churned",
 ]
+// Trial, Subscribed, Onboarding, Activated,  Renewal, Matured, Churned
 
 export { CUSTOMER_LIST, CUSTOMER_LIST_STAGES }
