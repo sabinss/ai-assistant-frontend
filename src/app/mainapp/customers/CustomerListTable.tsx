@@ -92,18 +92,22 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
     >
       <TableCell className="max-w-20 break-words py-3">{item.name}</TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        <Chip
-          value={healthScore}
-          otherClasses={`text-white font-bold w-8 h-8 rounded-full text-white flex items-center justify-center ${healthColorClass}`}
-        />
+        {healthScore ? (
+          <Chip
+            value={healthScore}
+            otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${healthColorClass}`}
+          />
+        ) : (
+          "N/A"
+        )}
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
         {/* <Score score={item.health_score} otherClasses="" color={color} />
          */}
-        {riskColor ? (
+        {riskScore ? (
           <Chip
-            value={healthScore}
-            otherClasses={`text-white font-bold w-8 h-8 rounded-full text-white flex items-center justify-center ${healthColorClass}`}
+            value={riskScore}
+            otherClasses={`text-white w-9 h-9  font-bold  text-white flex items-center justify-center ${healthColorClass}`}
           />
         ) : (
           "N/A"
@@ -114,7 +118,7 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
         {oppScore ? (
           <Chip
             value={oppScore}
-            otherClasses={`text-white font-bold w-8 h-8 rounded-full text-white flex items-center justify-center ${oppColor}`}
+            otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}
           />
         ) : (
           "N/A"
