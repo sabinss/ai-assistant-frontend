@@ -1,5 +1,5 @@
 "use client"
-import React, { Suspense, useState } from "react"
+import React, { Suspense, useState, useMemo } from "react"
 import {
   Table,
   TableBody,
@@ -35,20 +35,50 @@ const tableHeader = [
   { name: "Expansion Opp", sortable: true, sortKey: "last_seen" },
   { name: "ARR (k)", sortable: false },
   { name: "Renewal Time", sortable: true, sortKey: "status" },
+  { name: "Renewal Duration", sortable: true, sortKey: "status" },
   { name: "Stage", sortable: true, sortKey: "createdAt" },
 ]
+// Color mappings based on score
+const getScoreColorClass = (score: number, type: "health" | "risk"): string => {
+  const riskLevels = [
+    { min: 0, max: 20, className: "bg-red-600" },
+    { min: 21, max: 40, className: "bg-orange-500" },
+    { min: 41, max: 60, className: "bg-yellow-400" },
+    { min: 61, max: 80, className: "bg-blue-500" },
+    { min: 81, max: 100, className: "bg-green-600" },
+  ]
 
+  const levels = type === "health" ? [...riskLevels].reverse() : riskLevels
+  const match = levels.find(({ min, max }) => score >= min && score <= max)
+  return match?.className ?? "bg-gray-400"
+}
 const circleColors = ["bg-yellow-500", "bg-red-500", "bg-green-500"]
 
 const MemoizedTableRow = React.memo(({ item, index }: any) => {
   const router = useRouter()
   const [selectStage, setStage] = useState("")
   const { handleSideBar } = useNavBarStore()
+  const healthScore = item?.redShiftCustomer?.health_score
+  const riskScore = item?.redShiftCustomer?.churn_risk_score
+  const oppScore = item?.redShiftCustomer?.expansion_opp_score
+
+  const healthColorClass = useMemo(
+    () => getScoreColorClass(healthScore ?? 0, "health"),
+    [healthScore]
+  )
+  const riskColor = useMemo(
+    () => getScoreColorClass(riskScore ?? 0, "risk"),
+    [riskScore]
+  )
+  const oppColor = useMemo(
+    () => getScoreColorClass(oppScore ?? 0, "health"),
+    [oppScore]
+  ) // same as health scale
   const color = circleColors[Math.floor(Math.random() * circleColors.length)]
   return (
     <TableRow
       onClick={() => {
-        router.push(`/mainapp/customers/details?name=${item.name}`)
+        // router.push(`/mainapp/customers/details?name=${item.name}`)
         // handleSideBar(true)
       }}
       key={item._id}
@@ -56,22 +86,18 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
     >
       <TableCell className="max-w-20 break-words py-3">{item.name}</TableCell>
       <TableCell className="max-w-20 break-words py-3">
-        {item?.redShiftCustomer?.health_score ? (
-          <Chip
-            value={item.redShiftCustomer.health_score}
-            otherClasses="bg-green-500 text-white font-bold"
-          />
-        ) : (
-          "N/A"
-        )}
+        <Chip
+          value={healthScore}
+          otherClasses={`text-white font-bold w-8 h-8 rounded-full text-white flex items-center justify-center ${healthColorClass}`}
+        />
       </TableCell>
       <TableCell className="max-w-20 break-words py-3">
         {/* <Score score={item.health_score} otherClasses="" color={color} />
          */}
-        {item.redShiftCustomer?.churn_risk_score ? (
+        {riskColor ? (
           <Chip
-            value={item?.redShiftCustomer?.churn_risk_score}
-            otherClasses="bg-green-500 text-white font-bold"
+            value={healthScore}
+            otherClasses={`text-white font-bold w-8 h-8 rounded-full text-white flex items-center justify-center ${healthColorClass}`}
           />
         ) : (
           "N/A"
@@ -79,10 +105,10 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
       </TableCell>
 
       <TableCell className="max-w-20 break-words py-3">
-        {item.redShiftCustomer?.expansion_opp_score ? (
+        {oppScore ? (
           <Chip
-            value={item?.redShiftCustomer?.expansion_opp_score}
-            otherClasses="bg-green-500 text-white font-bold"
+            value={oppScore}
+            otherClasses={`text-white font-bold w-8 h-8 rounded-full text-white flex items-center justify-center ${oppColor}`}
           />
         ) : (
           "N/A"
@@ -92,6 +118,10 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
 
       <TableCell className="max-w-20 break-words py-3">
         {timeAgo(item.updatedAt)}
+      </TableCell>
+      <TableCell className="max-w-20 break-words py-3">
+        {/* {timeAgo(item.updatedAt)} */}
+        12 months
       </TableCell>
       <TableCell className="max-w-21 break-words py-3">
         <Dropdown
