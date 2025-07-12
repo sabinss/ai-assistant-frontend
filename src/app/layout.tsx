@@ -4,6 +4,7 @@ import "./globals.css"
 import { ToastContainer } from "react-toastify"
 import Hydration from "./Hydration"
 const poppins = Poppins({ subsets: ["latin"], weight: "400" })
+import Script from "next/script" // ✅ import Script
 
 export const metadata: Metadata = {
   title: "CoWrkr- Customer Success CoWorker",
@@ -19,6 +20,8 @@ export default function RootLayout({
     <html lang="en">
       <body className={poppins.className}>
         <ToastContainer />
+        {/* ✅ Load tracker script after page becomes interactive */}
+        <Script src="/tracker.js" strategy="afterInteractive" />
         {children}
       </body>
     </html>

@@ -31,6 +31,18 @@ export default function page() {
           res.data?.rolePermission,
           res.data?.chatSession
         )
+        const { email, organization, user_id, ...rest } = res.data.user_details
+
+        window.trackEvent("login_event", {
+          feature_id: "login_event",
+          email,
+          organization,
+          feature_date: new Date().toISOString(),
+          device: "web",
+          url: window.location.href,
+          timestamp: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+        })
         router.push("/mainapp/chat")
         toast.success("Logged in successfully", { autoClose: 100 })
       }
