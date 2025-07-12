@@ -21,18 +21,24 @@ import { usePathname } from "next/navigation"
 import QuickLinks from "@/components/ui/quick-links"
 import { useEffect, useRef } from "react"
 
-function getNavLinks(rolePermission, hideList = ["Dashboard"]) {
+function getNavLinks(rolePermission: any, hideList = []) {
   const mainLinks = [
+    {
+      name: "Dashboard",
+      path: "/mainapp/dashboard",
+      icon: LayoutDashboard,
+    },
     {
       name: "Notifications",
       path: "/mainapp/notification",
       icon: Bell,
     },
-    {
-      name: "Dashboard",
-      path: "/mainapp/admin",
-      icon: LayoutDashboard,
-    },
+
+    // {
+    //   name: "Dashboard",
+    //   path: "/mainapp/admin",
+    //   icon: LayoutDashboard,
+    // },
     {
       name: "Chat",
       path: "/mainapp/chat",
@@ -137,7 +143,12 @@ function Navbar() {
 
   const divRef = useRef<HTMLDivElement>(null)
   const path = usePathname()
-  const navLinks = getNavLinks([...rolePermission, "customers", "notification"])
+  const navLinks = getNavLinks([
+    ...rolePermission,
+    "customers",
+    "notification",
+    "dashboard",
+  ])
 
   if (isCollapsed && divRef.current) {
     divRef.current.classList.add("translate-x-[-100%]")
