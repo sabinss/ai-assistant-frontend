@@ -1,0 +1,235 @@
+"use client"
+
+import Chip from "@/components/ui/customerlist-ui/chip"
+import http from "@/config/http"
+import useAuth from "@/store/user"
+import { useEffect, useState, useMemo } from "react"
+import { MdKeyboardArrowRight } from "react-icons/md"
+
+export default function Dashboard() {
+  const [loading, setLoading] = useState(false)
+  const { user_data, access_token } = useAuth()
+  const [orgCustomerData, setOrgCustomerData] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const filteredCustomers = useMemo(() => {
+    if (!orgCustomerData?.customers) return []
+
+    return orgCustomerData?.customers.filter((customer: any) =>
+      customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [orgCustomerData?.customers, searchTerm])
+
+  const getScoreColorClass = (
+    score: number,
+    type: "health" | "risk"
+  ): string => {
+    const riskLevels = [
+      { min: 0, max: 20, className: "bg-red-600" },
+      { min: 21, max: 40, className: "bg-orange-500" },
+      { min: 41, max: 60, className: "bg-yellow-400" },
+      { min: 61, max: 80, className: "bg-blue-500" },
+      { min: 81, max: 100, className: "bg-green-600" },
+    ]
+
+    const levels = type === "health" ? [...riskLevels].reverse() : riskLevels
+    const match = levels.find(({ min, max }) => score >= min && score <= max)
+    return match?.className ?? "bg-gray-400"
+  }
+
+  useEffect(() => {
+    async function getOrgCustomers() {
+      try {
+        setLoading(true)
+        let res = await http.get(
+          `/organization/${user_data?.organization}/customers`,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        let response: any = await http.get(`/customer/redshift`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        let redshiftCustomerDetails = response?.data?.data
+        let customerDetails
+
+        if (redshiftCustomerDetails?.length > 0) {
+          customerDetails = res.data?.customers.map((x: any) => {
+            const detail = redshiftCustomerDetails.find(
+              (y: any) => x._id == y.company_id
+            )
+            x.redShiftCustomer = detail
+            return x
+          })
+        }
+        const orgCustomerData = { ...res.data, customers: customerDetails }
+        console.log("Customer list Dashboard", orgCustomerData)
+        setOrgCustomerData(orgCustomerData)
+      } catch (err) {
+      } finally {
+        setLoading(false)
+      }
+    }
+    getOrgCustomers()
+  }, [])
+
+  const stats = [
+    {
+      title: "Total Customers",
+      value: "127",
+      subtitle: "Active accounts",
+    },
+    {
+      title: "Health Score Average",
+      value: "72",
+      subtitle: "↑ 5 points vs last month",
+    },
+    {
+      title: "At-Risk Customers",
+      value: "23",
+      subtitle: "18% of total customers",
+    },
+    {
+      title: "Expansion Opportunities",
+      value: "34",
+      subtitle: "$2.3M potential ARR",
+    },
+  ]
+
+  return (
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between rounded bg-white p-6 shadow">
+        <div className="text-2xl font-bold ">Customer Success Dashboard</div>
+        {/* Filters */}
+        <div className="flex justify-end space-x-2">
+          <select className="rounded border px-3 py-1">
+            <option>All Phases</option>
+          </select>
+          <select className="rounded border px-3 py-1">
+            <option>All Risk Levels</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <div
+            key={stat.title}
+            className="rounded-xl border bg-white p-4 shadow-sm"
+          >
+            <div className="text-sm text-gray-500">{stat.title}</div>
+            <div className="m-2 text-2xl font-bold">{stat.value}</div>
+            <div className="mt-1 text-xs text-gray-400">{stat.subtitle}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Customer Overview Table */}
+      <div className="rounded-xl border bg-white p-4 shadow-sm">
+        <div className="mb-4 text-lg font-semibold">Customer Overview</div>
+
+        <input
+          type="text"
+          placeholder="Search customers..."
+          className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b text-gray-600">
+              <tr>
+                <th className="p-2">Customer</th>
+                <th className="p-2">Health Score</th>
+                <th className="p-2">Churn Risk</th>
+                <th className="p-2">Expansion Opportunity</th>
+                <th className="p-2">Phase</th>
+                <th className="p-2">ARR</th>
+                <th className="p-2">Renewal Date</th>
+                <th className="p-2"></th>
+              </tr>
+            </thead>
+            <tbody className="text-gray-700">
+              {loading ? (
+                <tr>
+                  <td className="py-6 text-center" colSpan={8}>
+                    Loading...
+                  </td>
+                </tr>
+              ) : filteredCustomers.length === 0 ? (
+                <tr>
+                  <td className="py-6 text-center" colSpan={8}>
+                    No customers to display
+                  </td>
+                </tr>
+              ) : (
+                filteredCustomers.map((customer: any, index: number) => {
+                  const healthScore = customer?.redShiftCustomer?.health_score
+                  const riskScore = customer?.redShiftCustomer?.churn_risk_score
+                  const oppScore =
+                    customer?.redShiftCustomer?.expansion_opp_score
+
+                  const healthColorClass = getScoreColorClass(
+                    healthScore ?? 0,
+                    "health"
+                  )
+                  const oppColor = getScoreColorClass(oppScore ?? 0, "health")
+
+                  return (
+                    <tr
+                      key={customer.id || index}
+                      className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
+                    >
+                      <td className="px-6 py-4">{customer.name}</td>
+                      <td className="px-6 py-4">
+                        {healthScore ? (
+                          <Chip
+                            value={healthScore}
+                            otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${healthColorClass}`}
+                          />
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {" "}
+                        {riskScore ? (
+                          <Chip
+                            value={riskScore}
+                            otherClasses={`text-white w-9 h-9  font-bold  text-white flex items-center justify-center ${healthColorClass}`}
+                          />
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
+                      <td className="px-6 py-4">
+                        {oppScore ? (
+                          <Chip
+                            value={oppScore}
+                            otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}
+                          />
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
+                      <td className="px-6 py-4">{customer.phase ?? "N/A"}</td>
+                      <td className="px-6 py-4">{customer.arr ?? "N/A"}</td>
+                      <td className="px-6 py-4">
+                        {customer.renewal_date ?? "N/A"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <MdKeyboardArrowRight size={25} />
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
