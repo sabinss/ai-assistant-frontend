@@ -5,12 +5,21 @@ import http from "@/config/http"
 import useAuth from "@/store/user"
 import { useEffect, useState, useMemo } from "react"
 import { MdKeyboardArrowRight } from "react-icons/md"
+import CustomerSlideIn from "./CustomerSlideIn"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const { user_data, access_token } = useAuth()
   const [orgCustomerData, setOrgCustomerData] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
+
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  const [stats, setStats] = useState([
+    { title: "Total Customers", value: "0", subtitle: "Active accounts" },
+    { title: "Health Score Average", value: "0", subtitle: "" },
+    { title: "At-Risk Customers", value: "0", subtitle: "" },
+    { title: "Expansion Opportunities", value: "0", subtitle: "" },
+  ])
 
   const filteredCustomers = useMemo(() => {
     if (!orgCustomerData?.customers) return []
@@ -73,28 +82,51 @@ export default function Dashboard() {
     getOrgCustomers()
   }, [])
 
-  const stats = [
-    {
-      title: "Total Customers",
-      value: "127",
-      subtitle: "Active accounts",
-    },
-    {
-      title: "Health Score Average",
-      value: "72",
-      subtitle: "↑ 5 points vs last month",
-    },
-    {
-      title: "At-Risk Customers",
-      value: "23",
-      subtitle: "18% of total customers",
-    },
-    {
-      title: "Expansion Opportunities",
-      value: "34",
-      subtitle: "$2.3M potential ARR",
-    },
-  ]
+  useEffect(() => {
+    if (orgCustomerData?.customers?.length > 0) {
+      console.log(
+        "cacluataiont",
+        orgCustomerData?.customers.map((x) => x?.redShiftCustomer?.health_score)
+      )
+      const totalCustomers = orgCustomerData?.customers?.length
+      const healthScoreAverage =
+        orgCustomerData?.customers
+          ?.filter((x) => x?.redShiftCustomer?.health_score)
+          .reduce(
+            (acc: number, customer: any) =>
+              acc + customer?.redShiftCustomer?.health_score,
+            0
+          ) / totalCustomers
+      const atRiskCustomers = orgCustomerData?.customers?.filter(
+        (customer: any) => customer?.redShiftCustomer?.churn_risk_score >= 70
+      ).length
+      const expansionCount = orgCustomerData?.customers?.filter(
+        (customer: any) => customer?.redShiftCustomer?.expansion_opp_score >= 70
+      ).length
+      setStats([
+        {
+          title: "Total Customers",
+          value: totalCustomers.toString(),
+          subtitle: "Active accounts",
+        },
+        {
+          title: "Health Score Average",
+          value: healthScoreAverage.toString(),
+          subtitle: "↑ 5 points vs last month",
+        },
+        {
+          title: "At-Risk Customers",
+          value: atRiskCustomers.toString(),
+          subtitle: `${(atRiskCustomers / totalCustomers) * 100} of ${totalCustomers} customers`,
+        },
+        {
+          title: "Expansion Opportunities",
+          value: expansionCount.toString(),
+          subtitle: `${(expansionCount / totalCustomers) * 100}% of ${totalCustomers} customers`,
+        },
+      ])
+    }
+  }, [orgCustomerData])
 
   return (
     <div className="space-y-6 p-6">
@@ -220,7 +252,11 @@ export default function Dashboard() {
                         {customer.renewal_date ?? "N/A"}
                       </td>
                       <td className="px-6 py-4">
-                        <MdKeyboardArrowRight size={25} />
+                        <MdKeyboardArrowRight
+                          size={25}
+                          className="cursor-pointer"
+                          onClick={() => setSelectedCustomer(customer)}
+                        />
                       </td>
                     </tr>
                   )
@@ -230,6 +266,15 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
+      <MdKeyboardArrowRight
+        size={25}
+        className="cursor-pointer"
+        onClick={() => setSelectedCustomer({})}
+      />
+      <CustomerSlideIn
+        customer={selectedCustomer}
+        onClose={() => setSelectedCustomer(null)}
+      />
     </div>
   )
 }
