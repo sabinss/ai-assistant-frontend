@@ -133,14 +133,14 @@ export default function Dashboard() {
       <div className="flex items-center justify-between rounded bg-white p-6 shadow">
         <div className="text-2xl font-bold ">Customer Success Dashboard</div>
         {/* Filters */}
-        <div className="flex justify-end space-x-2">
+        {/* <div className="flex justify-end space-x-2">
           <select className="rounded border px-3 py-1">
             <option>All Phases</option>
           </select>
           <select className="rounded border px-3 py-1">
             <option>All Risk Levels</option>
           </select>
-        </div>
+        </div> */}
       </div>
 
       {/* Stats */}
