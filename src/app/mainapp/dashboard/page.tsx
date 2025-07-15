@@ -266,11 +266,6 @@ export default function Dashboard() {
           </table>
         </div>
       </div>
-      <MdKeyboardArrowRight
-        size={25}
-        className="cursor-pointer"
-        onClick={() => setSelectedCustomer({})}
-      />
       <CustomerSlideIn
         customer={selectedCustomer}
         onClose={() => setSelectedCustomer(null)}

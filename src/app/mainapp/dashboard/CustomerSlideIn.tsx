@@ -11,7 +11,7 @@ export default function CustomerSlideIn({ customer, onClose }: any) {
     <AnimatePresence>
       {customer && (
         <motion.div
-          className="fixed inset-0 z-50 bg-white"
+          className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-white"
           initial={{ x: "-100%" }}
           animate={{ x: 0 }}
           exit={{ x: "-100%" }}
