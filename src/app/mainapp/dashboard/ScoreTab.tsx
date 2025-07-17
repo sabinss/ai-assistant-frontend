@@ -70,7 +70,7 @@ export default function ScoreTab({
               className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-4"
             >
               <div className="flex items-center gap-2">
-                {getTrendIcon(driver.trend)}
+                {/* {getTrendIcon(driver.trend)} */}
                 <div>
                   <div className="font-semibold">{driver.name}</div>
                   <div className="text-xs text-gray-400">
@@ -115,8 +115,8 @@ export default function ScoreTab({
                 {item.growthIndicators?.length > 0 && (
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-green-600">
-                      <TrendingUp className="h-4 w-4" />
-                      Growth Indicators
+                      {/* <TrendingUp className="h-4 w-4" />
+                      Growth Indicators */}
                     </div>
                     <ul className="ml-5 list-disc text-sm text-gray-700">
                       {item.growthIndicators.map((g, idx) => (
