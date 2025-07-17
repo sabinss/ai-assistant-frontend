@@ -312,9 +312,7 @@ export default function CustomerSlideIn({ customer, onClose }: any) {
           <div className="flex items-center justify-between border-b bg-white p-4 shadow-md">
             <div>
               <h2 className="text-xl font-bold">{customer.name}</h2>
-              <p className="text-sm text-gray-500">
-                ARR: {customer.arr} • Renewed
-              </p>
+              <p className="text-sm text-gray-500">ARR: {customer.arr}</p>
             </div>
             <X className="cursor-pointer" onClick={onClose} />
           </div>
@@ -333,19 +331,19 @@ export default function CustomerSlideIn({ customer, onClose }: any) {
                 <ScoreCard
                   title="Health Score"
                   value={health}
-                  description="Excellent"
+                  description=""
                   color="blue"
                 />
                 <ScoreCard
                   title="Churn Risk"
                   value={churn}
-                  description="Minimal Risk"
+                  description=""
                   color="red"
                 />
                 <ScoreCard
                   title="Expansion Opportunity"
                   value={opp}
-                  description="Good Opportunity"
+                  description=""
                   color="green"
                 />
               </div>
