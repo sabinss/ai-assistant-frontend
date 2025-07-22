@@ -167,14 +167,14 @@ export default function CustomerSlideIn({ customer, onClose }: any) {
     <AnimatePresence>
       {customer && (
         <motion.div
-          className="fixed inset-0 z-50 flex flex-row overflow-y-auto bg-white"
+          className="fixed inset-0 z-50 flex flex-row bg-white"
           initial={{ x: "-100%" }}
           animate={{ x: 0 }}
           exit={{ x: "-100%" }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-          {/* 👉 Right side: Your current content */}
-          <div className="flex flex-grow flex-col">
+          {/* 👉 Scrollable Left Side */}
+          <div className="flex h-screen w-[calc(100%-500px)] flex-grow-[1] flex-col overflow-y-auto">
             <div className="flex items-center justify-between border-b bg-white p-4 shadow-md">
               <div>
                 <h2 className="text-xl font-bold">{customer.name}</h2>
@@ -210,7 +210,10 @@ export default function CustomerSlideIn({ customer, onClose }: any) {
             )}
           </div>
 
-          <InsightsPanel />
+          {/* 👉 Fixed Insights Panel (floating on the right) */}
+          <div className="h-screen w-[500px] shrink-0 overflow-y-auto border-l shadow-lg">
+            <InsightsPanel />
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
