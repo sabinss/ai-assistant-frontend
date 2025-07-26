@@ -1,4 +1,23 @@
-export default function InsightsPanel() {
+import useOrgCustomer from "@/store/organization_customer"
+import { useState } from "react"
+import { useEffect, useRef } from "react"
+
+export default function InsightsPanel({
+  customer,
+  conversations = [],
+  sendCustomerChat,
+}: any) {
+  const [inputMessage, setInputMessage] = useState("")
+  const { customerConversationMessages, customerMessageSending } =
+    useOrgCustomer()
+
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }, [customerConversationMessages])
+
   return (
     <div className="flex h-full w-full flex-col bg-[#f2f4fb] p-2">
       {/* Chat Header */}
@@ -19,8 +38,28 @@ export default function InsightsPanel() {
         <div className="mb-4 text-sm text-gray-700">
           👋 Hi! I'm here to help you understand your customer insights...
         </div>
+        {/* Chat Body */}
+        <div className="flex flex-grow flex-col space-y-2 overflow-y-auto px-4 py-3">
+          {customerConversationMessages.map((c: any, idx: number) => {
+            return (
+              <div
+                key={idx}
+                className={`max-w-[75%] rounded px-4 py-2 text-sm ${
+                  c.sender === "user"
+                    ? "ml-auto bg-blue-100 text-right text-gray-800"
+                    : "mr-auto bg-white text-left text-gray-700"
+                }`}
+              >
+                {" "}
+                {c.message}
+              </div>
+            )
+          })}
+          {/* Add the bottom ref here */}
+          <div ref={messagesEndRef} />
+        </div>
 
-        <div className="mt-auto space-y-2 text-sm">
+        {/* <div className="mt-auto space-y-2 text-sm">
           <p className="text-xs font-medium text-gray-600">Quick Questions:</p>
           <button className="w-full rounded bg-white px-3 py-2 text-left text-sm shadow">
             What’s driving our satisfaction score?
@@ -34,7 +73,7 @@ export default function InsightsPanel() {
           <button className="w-full rounded bg-white px-3 py-2 text-left text-sm shadow">
             Show me trend analysis
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Chat Input */}
@@ -44,8 +83,27 @@ export default function InsightsPanel() {
             type="text"
             placeholder="Ask about your metrics..."
             className="w-full border-none bg-transparent text-sm outline-none"
+            value={inputMessage}
+            onChange={(e) => setInputMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && inputMessage.trim()) {
+                sendCustomerChat(inputMessage.trim())
+                setInputMessage("")
+              }
+            }}
           />
-          <button className="text-blue-600">➤</button>
+          <button
+            className="text-blue-600"
+            disabled={customerMessageSending}
+            onClick={() => {
+              if (inputMessage.trim()) {
+                sendCustomerChat(inputMessage.trim())
+                setInputMessage("")
+              }
+            }}
+          >
+            ➤
+          </button>
         </div>
       </div>
     </div>

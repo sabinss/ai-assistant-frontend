@@ -11,7 +11,6 @@ export default function ScoreTab({
   analysisData: any[]
   recommendedActions: any[]
 }) {
-  console.log("tabsData", tabsData)
   const [tabs, setTabs] = useState(tabsData)
   const [analysis, setAnalysis] = useState<any>(analysisData)
   const [activeTab, setActiveTab] = useState("Health Score")

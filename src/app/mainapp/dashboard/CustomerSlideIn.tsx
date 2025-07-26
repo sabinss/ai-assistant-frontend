@@ -7,8 +7,12 @@ import http from "@/config/http"
 import { Loader2 } from "lucide-react" // spinner icon from lucide-react
 import InsightsPanel from "./CustomeInsightsChat"
 
-export default function CustomerSlideIn({ customer, onClose }: any) {
-  const { user_data, access_token } = useAuth()
+export default function CustomerSlideIn({
+  customer,
+  onClose,
+  sendCustomerChat,
+}: any) {
+  const { user_data, access_token, chatSession, setChatSession } = useAuth()
   const [loading, setLoading] = useState(false)
   const [score, setScore] = useState<any[]>([])
   const [scoreDetails, setScoreDetails] = useState<any[]>([])
@@ -212,7 +216,10 @@ export default function CustomerSlideIn({ customer, onClose }: any) {
 
           {/* 👉 Fixed Insights Panel (floating on the right) */}
           <div className="h-screen w-[500px] shrink-0 overflow-y-auto border-l shadow-lg">
-            <InsightsPanel />
+            <InsightsPanel
+              customer={customer}
+              sendCustomerChat={sendCustomerChat}
+            />
           </div>
         </motion.div>
       )}

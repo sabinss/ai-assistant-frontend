@@ -6,12 +6,21 @@ import useAuth from "@/store/user"
 import { useEffect, useState, useMemo } from "react"
 import { MdKeyboardArrowRight } from "react-icons/md"
 import CustomerSlideIn from "./CustomerSlideIn"
+import useOrgCustomer from "@/store/organization_customer"
+import { formatDate } from "date-fns"
+import useNavBarStore from "@/store/store"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const { user_data, access_token } = useAuth()
   const [orgCustomerData, setOrgCustomerData] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const {
+    setCustomerConversationMessage,
+    setCustomerMessageStatus,
+    appendCustomerConversationMessage,
+  } = useOrgCustomer()
+  const { botName } = useNavBarStore()
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [stats, setStats] = useState([
@@ -45,6 +54,58 @@ export default function Dashboard() {
     const match = levels.find(({ min, max }) => score >= min && score <= max)
     return match?.className ?? "bg-gray-400"
   }
+
+  function formatDate(dateStr: string) {
+    const date = new Date(dateStr)
+    const options = {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }
+    return new Intl.DateTimeFormat("en-US", options).format(date)
+  }
+  useEffect(() => {
+    console.log("selectedCustomer", selectedCustomer?._id)
+
+    async function getCustomerConversationMessage() {
+      try {
+        const res = await http.get(
+          `/conversations?user_id=${user_data?.user_id}&customer_id=${selectedCustomer?._id}`,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        let messages: any = []
+        const messageArray = res?.data || []
+        messageArray?.forEach((message: any) => {
+          messages.push({
+            id: message._id,
+            sender: "user",
+            message: message.question,
+            time: formatDate(message.createdAt.toString()),
+            liked: false,
+            disliked: false,
+          })
+          messages.push({
+            id: `ANS_${message._id}`,
+            sender: botName,
+            message: message.answer,
+            time: formatDate(message.createdAt.toString()),
+            liked: message.liked_disliked === "liked",
+            disliked: message.liked_disliked === "disliked",
+          })
+        })
+        console.log("messageArray", messages)
+        setCustomerConversationMessage(messages)
+      } catch (error) {
+        console.error("Error fetching user messages:", error)
+        // setError("Error fetching user messages")
+      }
+    }
+    getCustomerConversationMessage()
+  }, [selectedCustomer?._id])
 
   useEffect(() => {
     async function getOrgCustomers() {
@@ -127,6 +188,112 @@ export default function Dashboard() {
       ])
     }
   }, [orgCustomerData])
+  function getClockTime() {
+    return new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    })
+  }
+
+  const sendCustomerMessageToBackend = async (message: string) => {
+    setCustomerMessageStatus(true)
+    const messageId = `stream_${Date.now()}`
+    const newSession = Math.floor(Math.random() * 1000).toString()
+    const messagePayload = {
+      sender: "user",
+      message: message,
+      question: message + `(from customer ${selectedCustomer.name})`,
+      time: getClockTime(),
+      id: messageId,
+      isStreaming: false,
+      fromCustomer: true,
+      customer: selectedCustomer._id,
+      chatSession: 1,
+    }
+    // ✅ Append user's message immediately to store
+    appendCustomerConversationMessage(messagePayload)
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify(messagePayload),
+        }
+      )
+      console.log("response", response)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("Response body is not readable")
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ""
+      let finalResponse: any = null // <- ✅ store the final response here
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n\n")
+        buffer = lines.pop() || ""
+        console.log({ buffer })
+
+        for (const line of lines) {
+          console.log({ line })
+
+          if (line.trim() && line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.substring(6))
+              console.log({ data })
+              if (data.done) {
+                console.log("✅ Final response:", data)
+                finalResponse = data // <- ✅ capture final response
+              } else {
+                console.log("🔄 Partial chunk:", data)
+              }
+            } catch (err) {
+              console.error("Failed to parse JSON:", err)
+            }
+          }
+        }
+      }
+
+      // ✅ Use finalResponse after stream ends
+      if (finalResponse) {
+        console.log("📦 Final Message:", finalResponse.answer) // or whatever your key is
+        const responseMessage = {
+          sender: "ai",
+          message: finalResponse.answer,
+          time: getClockTime(),
+          id: `resp_${Date.now()}`,
+          fromCustomer: false,
+          customer: selectedCustomer._id,
+          chatSession: 1,
+        }
+        console.log("responseMessage", responseMessage)
+        // ✅ Append response message to store
+        appendCustomerConversationMessage(responseMessage)
+        setCustomerMessageStatus(false)
+      } else {
+        console.warn("⚠️ No final response received.")
+      }
+    } catch (err) {
+      console.log(err)
+      setCustomerMessageStatus(false)
+    }
+    // setCustomerConversation((prev) => [...prev, , messagePayload])
+    // console.log("Sened message custoemr", customerConversation)
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -255,7 +422,9 @@ export default function Dashboard() {
                         <MdKeyboardArrowRight
                           size={25}
                           className="cursor-pointer"
-                          onClick={() => setSelectedCustomer(customer)}
+                          onClick={() => {
+                            setSelectedCustomer(customer)
+                          }}
                         />
                       </td>
                     </tr>
@@ -269,6 +438,7 @@ export default function Dashboard() {
       <CustomerSlideIn
         customer={selectedCustomer}
         onClose={() => setSelectedCustomer(null)}
+        sendCustomerChat={sendCustomerMessageToBackend}
       />
     </div>
   )

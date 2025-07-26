@@ -8,16 +8,37 @@ type orgCustomerConfig = {
   setLoading: (loading: boolean) => void
   setOrgToken: (token: string) => void
   agentList: string[]
+  customerConversationMessages: any
   redshiftCustomers: any[]
   setOrgAgents: (data: any) => void
+  customerMessageSending: boolean
+  setCustomerConversationMessage: (data: any) => void
+  appendCustomerConversationMessage: (data: any) => void
+  setCustomerMessageStatus: (data: any) => void
 }
 
-const useOrgCustomer = create<orgCustomerConfig>((set) => ({
+const useOrgCustomer = create<orgCustomerConfig>((set, get) => ({
   orgCustomers: { organization: "", customers: [] },
   redshiftCustomers: [],
   loading: false,
   agentList: [],
   orgToken: "",
+  customerMessageSending: false,
+  setCustomerMessageStatus: (loading: boolean) =>
+    set({ customerMessageSending: loading }),
+  customerConversationMessages: [],
+  setCustomerConversationMessage: (messages: any) =>
+    set({
+      customerConversationMessages: messages,
+    }),
+  // ➕ Append a new message
+  appendCustomerConversationMessage: (data: any) =>
+    set({
+      customerConversationMessages: [
+        ...get().customerConversationMessages,
+        data,
+      ],
+    }),
   setOrgAgents: (data: any[]) => set({ agentList: data }),
   setOrgCustomers: (data: any) => set({ orgCustomers: data }),
   setRedshiftCustomers: (data: any) => set({ redshiftCustomers: data }),
