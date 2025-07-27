@@ -17,6 +17,7 @@ export default function page() {
   const { register, handleSubmit, formState } = useForm()
   const { errors, isSubmitting } = formState
   const { loginUser } = useAuth()
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     try {
@@ -24,7 +25,6 @@ export default function page() {
       if (res.status === 201) {
         setError(res?.data?.message)
       }
-      console.log("res.data", res.data)
       if (res.status === 200) {
         loginUser(
           res.data?.user_details,
@@ -156,6 +156,31 @@ export default function page() {
       <p className="mt-3 text-right text-xs">
         <Link href="/auth/forgot-password">Forgot Password?</Link>
       </p>
+      <div className="mt-8 text-center">
+        <p
+          className="cursor-pointer text-xs text-blue-500 underline"
+          onClick={() => setShowPrivacy(true)}
+        >
+          Privacy Policy
+        </p>
+      </div>
+      {showPrivacy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="relative max-h-[90vh] w-[90%] max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-lg">
+            <button
+              onClick={() => setShowPrivacy(false)}
+              className="absolute right-2 top-2 text-gray-500 hover:text-black"
+            >
+              ✖
+            </button>
+            <iframe
+              src="https://mycowrkr.ai/privacy-policy/"
+              className="h-[70vh] w-full border-none"
+              title="Privacy Policy"
+            ></iframe>
+          </div>
+        </div>
+      )}
 
       {/* <div className="mt-3">
      
