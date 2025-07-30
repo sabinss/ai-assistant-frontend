@@ -46,7 +46,7 @@ export default function page() {
     }
   }
 
-  const TogglePassword = (param) => {
+  const TogglePassword = (param: string) => {
     const params = param === "password" ? "text" : "password"
     setTogglePass(params)
   }
@@ -152,9 +152,10 @@ export default function page() {
         )}
       </form>
 
-      <p className="mt-3 text-right text-xs">
+      <div className="mt-3 flex justify-between text-xs">
+        <Link href="/privacy">Privacy Policy</Link>
         <Link href="/auth/forgot-password">Forgot Password?</Link>
-      </p>
+      </div>
 
       {/* <div className="mt-3">
    
