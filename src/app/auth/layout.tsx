@@ -41,9 +41,6 @@ export default function AuthLayout({
           </div>
           <div className="flex min-h-[100%] w-full flex-col justify-center rounded-e-xl md:w-1/2">
             {children}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-center  p-4">
-              <Link href="/privacy"> Privacy Policy</Link>
-            </div>
           </div>
           <div></div>
         </div>

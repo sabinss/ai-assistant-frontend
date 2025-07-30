@@ -170,11 +170,8 @@ export default function PrivacyPage() {
             <strong>Agilemove Inc</strong>
             <br />
             Email:{" "}
-            <a
-              href="mailto:instwise@theagilemove.com"
-              className="text-blue-500"
-            >
-              instwise@theagilemove.com
+            <a href="mailto:cowrkr@theagilemove.com" className="text-blue-500">
+              cowrkr@theagilemove.com
             </a>
           </p>
         </div>
