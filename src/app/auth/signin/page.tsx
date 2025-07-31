@@ -17,6 +17,7 @@ export default function page() {
   const { register, handleSubmit, formState } = useForm()
   const { errors, isSubmitting } = formState
   const { loginUser } = useAuth()
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     try {
@@ -58,7 +59,7 @@ export default function page() {
     }
   }
 
-  const TogglePassword = (param) => {
+  const TogglePassword = (param: string) => {
     const params = param === "password" ? "text" : "password"
     setTogglePass(params)
   }
@@ -164,19 +165,20 @@ export default function page() {
         )}
       </form>
 
-      <p className="mt-3 text-right text-xs">
+      <div className="mt-3 flex justify-between text-xs">
+        <Link href="/privacy">Privacy Policy</Link>
         <Link href="/auth/forgot-password">Forgot Password?</Link>
-      </p>
+      </div>
 
       {/* <div className="mt-3">
-     
-        <p className="mt-3 text-center text-xs">
-          Don't have an account?{" "}
-          <Link href="/auth/signup" className="text-blue-500">
-            Sign up
-          </Link>
-        </p>
-      </div> */}
+   
+      <p className="mt-3 text-center text-xs">
+        Don't have an account?{" "}
+        <Link href="/auth/signup" className="text-blue-500">
+          Sign up
+        </Link>
+      </p>
+    </div> */}
     </div>
   )
 }

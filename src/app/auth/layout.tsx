@@ -6,6 +6,7 @@ import TopNavBar from "../mainapp/TopNavBar"
 import useAuth from "@/store/user"
 import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 
 export default function AuthLayout({
   children,
@@ -41,6 +42,7 @@ export default function AuthLayout({
           <div className="flex min-h-[100%] w-full flex-col justify-center rounded-e-xl md:w-1/2">
             {children}
           </div>
+          <div></div>
         </div>
       </div>
     </>
