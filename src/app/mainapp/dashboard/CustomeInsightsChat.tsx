@@ -16,21 +16,22 @@ export default function InsightsPanel({
   // Auto-scroll when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [customerConversationMessages])
+  }, [customerConversationMessages, customerMessageSending])
 
   return (
     <div className="flex h-full w-full flex-col bg-[#f2f4fb] p-2">
       {/* Chat Header */}
       <div className="rounded-t-xl bg-blue-600 px-4 py-3 font-semibold text-white">
-        Customer Insights AI
-        <p className="text-sm font-normal text-white/90">
+        {/* Customer Insights AI  */}
+        Chats with Gabby
+        {/* <p className="text-sm font-normal text-white/90">
           Ask me anything about your metrics
         </p>
         <p className="mb-4 text-sm text-white">
           👋 Hi! I'm here to help you understand your customer insights. Click
           on any metric card or ask me questions about your scores, trends, and
           recommendations.
-        </p>
+        </p> */}
       </div>
 
       {/* Chat Body */}
@@ -55,6 +56,27 @@ export default function InsightsPanel({
               </div>
             )
           })}
+
+          {/* Analyzing indicator */}
+          {customerMessageSending && (
+            <div className="mr-auto max-w-[75%] rounded bg-white px-4 py-2 text-left text-sm text-gray-700">
+              <div className="flex items-center space-x-2">
+                <div className="flex space-x-1">
+                  <div className="h-2 w-2 animate-bounce rounded-full bg-gray-400"></div>
+                  <div
+                    className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                    style={{ animationDelay: "0.1s" }}
+                  ></div>
+                  <div
+                    className="h-2 w-2 animate-bounce rounded-full bg-gray-400"
+                    style={{ animationDelay: "0.2s" }}
+                  ></div>
+                </div>
+                <span className="text-gray-600">Analyzing...</span>
+              </div>
+            </div>
+          )}
+
           {/* Add the bottom ref here */}
           <div ref={messagesEndRef} />
         </div>
@@ -62,7 +84,7 @@ export default function InsightsPanel({
         {/* <div className="mt-auto space-y-2 text-sm">
           <p className="text-xs font-medium text-gray-600">Quick Questions:</p>
           <button className="w-full rounded bg-white px-3 py-2 text-left text-sm shadow">
-            What’s driving our satisfaction score?
+            What's driving our satisfaction score?
           </button>
           <button className="w-full rounded bg-white px-3 py-2 text-left text-sm shadow">
             How can we improve response time?
