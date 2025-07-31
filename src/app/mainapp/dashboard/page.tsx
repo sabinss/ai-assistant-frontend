@@ -9,6 +9,7 @@ import CustomerSlideIn from "./CustomerSlideIn"
 import useOrgCustomer from "@/store/organization_customer"
 import { formatDate } from "date-fns"
 import useNavBarStore from "@/store/store"
+import { trackCustomerEvent } from "@/utility/tracking"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
@@ -57,7 +58,7 @@ export default function Dashboard() {
 
   function formatDate(dateStr: string) {
     const date = new Date(dateStr)
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -211,6 +212,22 @@ export default function Dashboard() {
       customer: selectedCustomer._id,
       chatSession: 1,
     }
+
+    // Track customer message sent event
+    trackCustomerEvent("customer_message_sent", {
+      email: user_data?.email,
+      organization: user_data?.organization,
+      user_id: user_data?.user_id,
+      customer_id: selectedCustomer._id,
+      additional_data: {
+        customer_name: selectedCustomer.name,
+        message_content: message,
+        message_length: message.length,
+        message_timestamp: new Date().toISOString(),
+        chat_session: newSession,
+        message_source: "dashboard_customer_slide_in",
+      },
+    })
     // ✅ Append user's message immediately to store
     appendCustomerConversationMessage(messagePayload)
     try {
@@ -423,6 +440,27 @@ export default function Dashboard() {
                           size={25}
                           className="cursor-pointer"
                           onClick={() => {
+                            // Track customer click event
+                            trackCustomerEvent("customer_profile_view", {
+                              email: user_data?.email,
+                              organization: user_data?.organization,
+                              user_id: user_data?.user_id,
+                              customer_id: customer._id,
+                              additional_data: {
+                                customer_name: customer.name,
+                                customer_phase: customer.phase,
+                                customer_arr: customer.arr,
+                                health_score:
+                                  customer?.redShiftCustomer?.health_score,
+                                churn_risk_score:
+                                  customer?.redShiftCustomer?.churn_risk_score,
+                                expansion_opp_score:
+                                  customer?.redShiftCustomer
+                                    ?.expansion_opp_score,
+                                view_timestamp: new Date().toISOString(),
+                                view_source: "dashboard_table",
+                              },
+                            })
                             setSelectedCustomer(customer)
                           }}
                         />

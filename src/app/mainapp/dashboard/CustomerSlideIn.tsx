@@ -6,6 +6,7 @@ import useAuth from "@/store/user"
 import http from "@/config/http"
 import { Loader2 } from "lucide-react" // spinner icon from lucide-react
 import InsightsPanel from "./CustomeInsightsChat"
+import { trackCustomerEvent } from "@/utility/tracking"
 
 export default function CustomerSlideIn({
   customer,
@@ -26,6 +27,24 @@ export default function CustomerSlideIn({
 
   useEffect(() => {
     if (!customer?._id) return
+
+    // Track customer slide-in open event
+    trackCustomerEvent("customer_slide_in_open", {
+      email: user_data?.email,
+      organization: user_data?.organization,
+      user_id: user_data?.user_id,
+      customer_id: customer._id,
+      additional_data: {
+        customer_name: customer.name,
+        customer_phase: customer.phase,
+        customer_arr: customer.arr,
+        health_score: customer?.redShiftCustomer?.health_score,
+        churn_risk_score: customer?.redShiftCustomer?.churn_risk_score,
+        expansion_opp_score: customer?.redShiftCustomer?.expansion_opp_score,
+        open_timestamp: new Date().toISOString(),
+        slide_in_source: "dashboard_click",
+      },
+    })
 
     async function fetchCustomerScoreData() {
       try {
