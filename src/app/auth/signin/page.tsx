@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation"
 import { useForm, SubmitHandler, FieldValues } from "react-hook-form"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
+import { trackLogin } from "@/utility/tracking"
 export default function page() {
   const [error, setError] = useState("")
   const [togglePass, setTogglePass] = useState("password")
@@ -34,16 +35,9 @@ export default function page() {
         )
         const { email, organization, user_id, ...rest } = res.data.user_details
 
-        window.trackEvent("login_event", {
-          feature_id: "login_event",
-          email,
-          organization,
-          feature_date: new Date().toISOString(),
-          device: "web",
-          url: window.location.href,
-          timestamp: new Date().toISOString(),
-          userAgent: navigator.userAgent,
-        })
+        // Track login event
+        trackLogin(email, organization)
+
         router.push("/mainapp/chat")
         toast.success("Logged in successfully", { autoClose: 100 })
       }
