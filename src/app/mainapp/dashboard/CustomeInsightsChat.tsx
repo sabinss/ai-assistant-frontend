@@ -1,4 +1,5 @@
 import useOrgCustomer from "@/store/organization_customer"
+import useNavBarStore from "@/store/store"
 import { useState } from "react"
 import { useEffect, useRef } from "react"
 
@@ -8,15 +9,59 @@ export default function InsightsPanel({
   sendCustomerChat,
 }: any) {
   const [inputMessage, setInputMessage] = useState("")
-  const { customerConversationMessages, customerMessageSending } =
-    useOrgCustomer()
+  const [localMessages, setLocalMessages] = useState<any[]>([])
+  const { customerMessageSending } = useOrgCustomer()
+  const { botName } = useNavBarStore()
+
+  // Local function to handle chat messages
+  const handleLocalChat = async (message: string) => {
+    // Add user message to local state
+    const userMessage = {
+      sender: "user",
+      message: message,
+      time: new Date().toLocaleTimeString(),
+      id: `local_${Date.now()}`,
+    }
+    setLocalMessages((prev) => [...prev, userMessage])
+
+    // Call the original sendCustomerChat function
+    await sendCustomerChat(message)
+
+    // The AI response will be handled by the parent component
+    // and we'll add it to local messages when it comes back
+  }
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  // Listen for new AI responses from the global store
+  const { customerConversationMessages } = useOrgCustomer()
+
+  // Clear local messages when customer changes
+  useEffect(() => {
+    setLocalMessages([])
+  }, [customer?._id])
+
+  useEffect(() => {
+    // Only add AI responses (not user messages) to local messages
+    if (customerConversationMessages.length > 0) {
+      const lastMessage =
+        customerConversationMessages[customerConversationMessages.length - 1]
+      if (lastMessage.sender === "ai" || lastMessage.sender === botName) {
+        // Check if this message is not already in local messages
+        const messageExists = localMessages.some(
+          (msg) => msg.id === lastMessage.id
+        )
+        if (!messageExists) {
+          setLocalMessages((prev) => [...prev, lastMessage])
+        }
+      }
+    }
+  }, [customerConversationMessages])
 
   // Auto-scroll when messages update
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [customerConversationMessages, customerMessageSending])
+  }, [localMessages, customerMessageSending])
 
   return (
     <div className="flex h-full w-full flex-col bg-[#f2f4fb] p-2">
@@ -36,12 +81,19 @@ export default function InsightsPanel({
 
       {/* Chat Body */}
       <div className="flex flex-grow flex-col overflow-y-auto px-4 py-3">
-        <div className="mb-4 text-sm text-gray-700">
-          👋 Hi! I'm here to help you understand your customer insights...
-        </div>
+        {localMessages.length === 0 ? (
+          <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
+            🆕 <strong>New conversation</strong> - Start chatting with Gabby
+            about {customer?.name}
+          </div>
+        ) : (
+          <div className="mb-4 text-sm text-gray-700">
+            👋 Hi! I'm here to help you understand your customer insights...
+          </div>
+        )}
         {/* Chat Body */}
         <div className="flex flex-grow flex-col space-y-2 overflow-y-auto px-4 py-3">
-          {customerConversationMessages.map((c: any, idx: number) => {
+          {localMessages.map((c: any, idx: number) => {
             return (
               <div
                 key={idx}
@@ -109,7 +161,7 @@ export default function InsightsPanel({
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && inputMessage.trim()) {
-                sendCustomerChat(inputMessage.trim())
+                handleLocalChat(inputMessage.trim())
                 setInputMessage("")
               }
             }}
@@ -119,7 +171,7 @@ export default function InsightsPanel({
             disabled={customerMessageSending}
             onClick={() => {
               if (inputMessage.trim()) {
-                sendCustomerChat(inputMessage.trim())
+                handleLocalChat(inputMessage.trim())
                 setInputMessage("")
               }
             }}
