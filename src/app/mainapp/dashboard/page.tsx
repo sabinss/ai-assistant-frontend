@@ -9,6 +9,7 @@ import CustomerSlideIn from "./CustomerSlideIn"
 import useOrgCustomer from "@/store/organization_customer"
 import { formatDate } from "date-fns"
 import useNavBarStore from "@/store/store"
+import { trackEvent } from "@/utility/tracking"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
@@ -104,7 +105,9 @@ export default function Dashboard() {
         // setError("Error fetching user messages")
       }
     }
-    getCustomerConversationMessage()
+    if (selectedCustomer?._id && user_data?.user_id) {
+      getCustomerConversationMessage()
+    }
   }, [selectedCustomer?._id])
 
   useEffect(() => {
@@ -423,6 +426,13 @@ export default function Dashboard() {
                           size={25}
                           className="cursor-pointer"
                           onClick={() => {
+                            // Track customer detail view
+                            trackEvent("dashboard_customer_detail", {
+                              email: user_data?.email,
+                              organization: user_data?.organization,
+                              customer_id: customer._id,
+                              customer_name: customer.name,
+                            })
                             setSelectedCustomer(customer)
                           }}
                         />
