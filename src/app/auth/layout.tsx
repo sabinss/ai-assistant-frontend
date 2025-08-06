@@ -42,8 +42,12 @@ export default function AuthLayout({
           <div className="flex min-h-[100%] w-full flex-col justify-center rounded-e-xl md:w-1/2">
             {children}
           </div>
-          <div></div>
         </div>
+      </div>
+
+      {/* Copyright Information */}
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform text-center text-xs text-gray-500">
+        Copyright © 2025 Agilmove Inc | All Right Reserved
       </div>
     </>
   )
