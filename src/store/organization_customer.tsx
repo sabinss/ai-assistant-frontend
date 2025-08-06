@@ -15,6 +15,7 @@ type orgCustomerConfig = {
   setCustomerConversationMessage: (data: any) => void
   appendCustomerConversationMessage: (data: any) => void
   setCustomerMessageStatus: (data: any) => void
+  clearCustomerConversationMessages: () => void
 }
 
 const useOrgCustomer = create<orgCustomerConfig>((set, get) => ({
@@ -38,6 +39,11 @@ const useOrgCustomer = create<orgCustomerConfig>((set, get) => ({
         ...get().customerConversationMessages,
         data,
       ],
+    }),
+  // ➕ Clear chat history
+  clearCustomerConversationMessages: () =>
+    set({
+      customerConversationMessages: [],
     }),
   setOrgAgents: (data: any[]) => set({ agentList: data }),
   setOrgCustomers: (data: any) => set({ orgCustomers: data }),

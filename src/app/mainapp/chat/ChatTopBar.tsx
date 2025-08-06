@@ -60,7 +60,6 @@ export default function ChatTopbar() {
   }
   const { botName } = useNavBarStore()
 
-  console.log("botName", botName)
   return (
     <div className="flex  w-full flex-col rounded-md bg-muted p-3 ">
       <div className="flex items-center justify-between">

@@ -9,6 +9,7 @@ import CustomerSlideIn from "./CustomerSlideIn"
 import useOrgCustomer from "@/store/organization_customer"
 import { formatDate } from "date-fns"
 import useNavBarStore from "@/store/store"
+import { trackEvent } from "@/utility/tracking"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
@@ -19,6 +20,7 @@ export default function Dashboard() {
     setCustomerConversationMessage,
     setCustomerMessageStatus,
     appendCustomerConversationMessage,
+    clearCustomerConversationMessages,
   } = useOrgCustomer()
   const { botName } = useNavBarStore()
 
@@ -104,89 +106,123 @@ export default function Dashboard() {
         // setError("Error fetching user messages")
       }
     }
-    getCustomerConversationMessage()
+    if (selectedCustomer?._id && user_data?.user_id) {
+      getCustomerConversationMessage()
+    }
   }, [selectedCustomer?._id])
 
   useEffect(() => {
     async function getOrgCustomers() {
+      if (!user_data?.organization || !access_token) return
+
       try {
         setLoading(true)
-        let res = await http.get(
-          `/organization/${user_data?.organization}/customers`,
-          {
-            headers: { Authorization: `Bearer ${access_token}` },
-          }
-        )
-        let response: any = await http.get(`/customer/redshift`, {
-          headers: { Authorization: `Bearer ${access_token}` },
-        })
-        let redshiftCustomerDetails = response?.data?.data
-        let customerDetails
 
-        if (redshiftCustomerDetails?.length > 0) {
-          customerDetails = res.data?.customers.map((x: any) => {
-            const detail = redshiftCustomerDetails.find(
-              (y: any) => x._id == y.company_id
-            )
-            x.redShiftCustomer = detail
-            return x
-          })
+        // Make both API calls in parallel for better performance
+        const [customersRes, redshiftRes] = await Promise.all([
+          http.get(`/organization/${user_data.organization}/customers`, {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }),
+          http.get(`/customer/redshift`, {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }),
+        ])
+
+        const customers = customersRes.data?.customers || []
+        const redshiftCustomerDetails = redshiftRes?.data?.data || []
+
+        // Create a Map for O(1) lookup instead of O(n) find operations
+        const redshiftMap = new Map(
+          redshiftCustomerDetails.map((detail: any) => [
+            detail.company_id,
+            detail,
+          ])
+        )
+
+        // Merge data efficiently
+        const customerDetails = customers.map((customer: any) => ({
+          ...customer,
+          redShiftCustomer: redshiftMap.get(customer._id) || null,
+        }))
+
+        const orgCustomerData = {
+          ...customersRes.data,
+          customers: customerDetails,
         }
-        const orgCustomerData = { ...res.data, customers: customerDetails }
+
         console.log("Customer list Dashboard", orgCustomerData)
         setOrgCustomerData(orgCustomerData)
       } catch (err) {
+        console.error("Error fetching customers:", err)
       } finally {
         setLoading(false)
       }
     }
+
     getOrgCustomers()
-  }, [])
+  }, [user_data?.organization, access_token])
 
   useEffect(() => {
-    if (orgCustomerData?.customers?.length > 0) {
-      console.log(
-        "cacluataiont",
-        orgCustomerData?.customers.map((x) => x?.redShiftCustomer?.health_score)
-      )
-      const totalCustomers = orgCustomerData?.customers?.length
-      const healthScoreAverage =
-        orgCustomerData?.customers
-          ?.filter((x) => x?.redShiftCustomer?.health_score)
-          .reduce(
-            (acc: number, customer: any) =>
-              acc + customer?.redShiftCustomer?.health_score,
-            0
-          ) / totalCustomers
-      const atRiskCustomers = orgCustomerData?.customers?.filter(
-        (customer: any) => customer?.redShiftCustomer?.churn_risk_score >= 70
-      ).length
-      const expansionCount = orgCustomerData?.customers?.filter(
-        (customer: any) => customer?.redShiftCustomer?.expansion_opp_score >= 70
-      ).length
-      setStats([
-        {
-          title: "Total Customers",
-          value: totalCustomers.toString(),
-          subtitle: "Active accounts",
-        },
-        {
-          title: "Health Score Average",
-          value: healthScoreAverage.toString(),
-          subtitle: "↑ 5 points vs last month",
-        },
-        {
-          title: "At-Risk Customers",
-          value: atRiskCustomers.toString(),
-          subtitle: `${(atRiskCustomers / totalCustomers) * 100} of ${totalCustomers} customers`,
-        },
-        {
-          title: "Expansion Opportunities",
-          value: expansionCount.toString(),
-          subtitle: `${(expansionCount / totalCustomers) * 100}% of ${totalCustomers} customers`,
-        },
-      ])
-    }
+    if (!orgCustomerData?.customers?.length) return
+
+    const customers = orgCustomerData.customers
+    const totalCustomers = customers.length
+
+    // Calculate all metrics in a single pass for better performance
+    let totalHealthScore = 0
+    let customersWithHealthScore = 0
+    let atRiskCustomers = 0
+    let expansionCount = 0
+
+    customers.forEach((customer: any) => {
+      const redshift = customer?.redShiftCustomer
+      if (redshift) {
+        // Health score calculation
+        if (redshift.health_score) {
+          totalHealthScore += redshift.health_score
+          customersWithHealthScore++
+        }
+
+        // Risk calculation
+        if (redshift.churn_risk_score >= 70) {
+          atRiskCustomers++
+        }
+
+        // Expansion calculation
+        if (redshift.expansion_opp_score >= 70) {
+          expansionCount++
+        }
+      }
+    })
+
+    const healthScoreAverage =
+      customersWithHealthScore > 0
+        ? (totalHealthScore / customersWithHealthScore).toFixed(1)
+        : "0"
+
+    setStats([
+      {
+        title: "Total Customers",
+        value: totalCustomers.toString(),
+        subtitle: "Active accounts",
+      },
+      {
+        title: "Health Score Average",
+        value: healthScoreAverage,
+        subtitle: "",
+        // 5 points vs last month
+      },
+      {
+        title: "At-Risk Customers",
+        value: atRiskCustomers.toString(),
+        subtitle: `${((atRiskCustomers / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+      },
+      {
+        title: "Expansion Opportunities",
+        value: expansionCount.toString(),
+        subtitle: `${((expansionCount / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+      },
+    ])
   }, [orgCustomerData])
   function getClockTime() {
     return new Date().toLocaleTimeString("en-US", {
@@ -352,11 +388,36 @@ export default function Dashboard() {
             </thead>
             <tbody className="text-gray-700">
               {loading ? (
-                <tr>
-                  <td className="py-6 text-center" colSpan={8}>
-                    Loading...
-                  </td>
-                </tr>
+                <>
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index} className="animate-pulse border-b">
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-32 rounded bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-16 rounded bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-20 rounded bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-24 rounded bg-gray-200"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-6 rounded bg-gray-200"></div>
+                      </td>
+                    </tr>
+                  ))}
+                </>
               ) : filteredCustomers.length === 0 ? (
                 <tr>
                   <td className="py-6 text-center" colSpan={8}>
@@ -423,6 +484,13 @@ export default function Dashboard() {
                           size={25}
                           className="cursor-pointer"
                           onClick={() => {
+                            // Track customer detail view
+                            trackEvent("dashboard_customer_detail", {
+                              email: user_data?.email,
+                              organization: user_data?.organization,
+                              customer_id: customer._id,
+                              customer_name: customer.name,
+                            })
                             setSelectedCustomer(customer)
                           }}
                         />
@@ -437,7 +505,9 @@ export default function Dashboard() {
       </div>
       <CustomerSlideIn
         customer={selectedCustomer}
-        onClose={() => setSelectedCustomer(null)}
+        onClose={() => {
+          setSelectedCustomer(null)
+        }}
         sendCustomerChat={sendCustomerMessageToBackend}
       />
     </div>
