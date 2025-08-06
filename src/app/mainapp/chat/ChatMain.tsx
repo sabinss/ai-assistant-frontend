@@ -31,8 +31,6 @@ const ChatMain: React.FC = () => {
     usePublicChat()
   const { sessionId } = useChatConfig()
 
-  console.log("Message list", messages)
-
   useEffect(() => {
     console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
@@ -77,7 +75,6 @@ const ChatMain: React.FC = () => {
       "/organization/greeting_botname?org_id=" + org_id
     )
     const org_data = response?.data
-    console.log("we are setting organization here", org_data)
     setBotName(org_data?.assistant_name)
     setGreeting(org_data?.greeting)
   }
@@ -95,7 +92,6 @@ const ChatMain: React.FC = () => {
       const agentsRecords: any = response?.data?.data
         ? response?.data?.data.filter((x: any) => x?.active == true)
         : []
-      console.log("Agent List Chat Input", agentsRecords)
 
       if (agentsRecords.length > 0) {
         setOrgAgents(agentsRecords)

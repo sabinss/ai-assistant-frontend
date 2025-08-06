@@ -6,6 +6,7 @@ import useAuth from "@/store/user"
 import http from "@/config/http"
 import { Loader2 } from "lucide-react" // spinner icon from lucide-react
 import InsightsPanel from "./CustomeInsightsChat"
+import useOrgCustomer from "@/store/organization_customer"
 
 export default function CustomerSlideIn({
   customer,
@@ -13,6 +14,7 @@ export default function CustomerSlideIn({
   sendCustomerChat,
 }: any) {
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
+  const { clearCustomerConversationMessages } = useOrgCustomer()
   const [loading, setLoading] = useState(false)
   const [score, setScore] = useState<any[]>([])
   const [scoreDetails, setScoreDetails] = useState<any[]>([])
@@ -55,21 +57,21 @@ export default function CustomerSlideIn({
             name: d.score_driver_id,
             impact: d.score,
             score: d.score,
-            trend: "up",
+            trend: "",
           }))
 
           churnDrivers = (grouped["Churn"] || []).map((d) => ({
             name: d.score_driver_id,
             impact: d.score,
             score: d.score,
-            trend: "down",
+            trend: "",
           }))
 
           expansionDrivers = (grouped["Expansion"] || []).map((d) => ({
             name: d.score_driver_id,
             impact: d.score,
             score: d.score,
-            trend: "neutral",
+            trend: "",
           }))
         }
 
@@ -167,6 +169,14 @@ export default function CustomerSlideIn({
     fetchCustomerScoreData()
   }, [customer?._id])
 
+  // Clear chat history when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clear chat history when CustomerSlideIn is unmounted
+      clearCustomerConversationMessages()
+    }
+  }, [clearCustomerConversationMessages])
+
   return (
     <AnimatePresence>
       {customer && (
@@ -184,7 +194,14 @@ export default function CustomerSlideIn({
                 <h2 className="text-xl font-bold">{customer.name}</h2>
                 <p className="text-sm text-gray-500">ARR: {customer.arr}</p>
               </div>
-              <X className="cursor-pointer" onClick={onClose} />
+              <X
+                className="cursor-pointer"
+                onClick={() => {
+                  // Clear chat history when closing the slide-in
+                  clearCustomerConversationMessages()
+                  onClose()
+                }}
+              />
             </div>
 
             {loading ? (
