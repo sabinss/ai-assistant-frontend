@@ -14,6 +14,8 @@ import { trackLogin } from "@/utility/tracking"
 export default function page() {
   const [error, setError] = useState("")
   const [togglePass, setTogglePass] = useState("password")
+  const [privacyPolicyChecked, setPrivacyPolicyChecked] = useState(false)
+  const [termsOfUseChecked, setTermsOfUseChecked] = useState(false)
   const router = useRouter()
   const { register, handleSubmit, formState } = useForm()
   const { errors, isSubmitting } = formState
@@ -125,9 +127,11 @@ export default function page() {
             This field is required
           </span>
         )}
+
         <div className="flex items-center text-xs">
           <Checkbox /> <span className="ml-2">Remember me</span>
         </div>
+
         {isSubmitting && (
           <Button
             type="submit"
@@ -159,10 +163,43 @@ export default function page() {
         )}
       </form>
 
-      <div className="mt-3 flex justify-between text-xs">
+      {/* Privacy Policy and Terms of Use Checkboxes - Horizontal Layout at Bottom */}
+      <div className="mt-3 flex items-center justify-between text-xs">
+        <div className="flex items-center">
+          <Checkbox
+            checked={privacyPolicyChecked}
+            onCheckedChange={(checked) =>
+              setPrivacyPolicyChecked(checked as boolean)
+            }
+          />
+          <span className="ml-2">
+            I agree with{" "}
+            <Link href="/privacy" className="text-blue-500 hover:underline">
+              Privacy Policy
+            </Link>
+          </span>
+        </div>
+
+        <div className="flex items-center">
+          <Checkbox
+            checked={termsOfUseChecked}
+            onCheckedChange={(checked) =>
+              setTermsOfUseChecked(checked as boolean)
+            }
+          />
+          <span className="ml-2">
+            I agree with{" "}
+            <Link href="/terms" className="text-blue-500 hover:underline">
+              Terms of Use
+            </Link>
+          </span>
+        </div>
+      </div>
+
+      {/* <div className="mt-3 flex justify-between text-xs">
         <Link href="/privacy">Privacy Policy</Link>
         <Link href="/auth/forgot-password">Forgot Password?</Link>
-      </div>
+      </div> */}
 
       {/* <div className="mt-3">
    
