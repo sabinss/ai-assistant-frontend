@@ -205,7 +205,7 @@ export default function Page() {
           )}
 
           {/* Privacy Policy and Terms of Use Checkboxes - Horizontal Layout */}
-          <div className="mt-2 flex items-center justify-between text-xs">
+          {/* <div className="mt-2 flex items-center justify-between text-xs">
             <div className="flex items-center">
               <Checkbox
                 checked={privacyPolicyChecked}
@@ -234,6 +234,45 @@ export default function Page() {
                   Terms of Use
                 </Link>
               </span>
+            </div>
+          </div> */}
+          <div className="mt-5 rounded-lg bg-gray-100 p-2 text-xs">
+            <span>
+              By creating an account, you confirm that you have read and agree
+              to our
+            </span>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <div className="flex items-center">
+                <Checkbox
+                  checked={privacyPolicyChecked}
+                  onCheckedChange={(checked) =>
+                    setPrivacyPolicyChecked(checked as boolean)
+                  }
+                />
+                <span className="ml-2">
+                  I agree with{" "}
+                  <Link
+                    href="/privacy"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Privacy Policy
+                  </Link>
+                </span>
+              </div>
+              <div className="flex items-center">
+                <Checkbox
+                  checked={termsOfUseChecked}
+                  onCheckedChange={(checked) =>
+                    setTermsOfUseChecked(checked as boolean)
+                  }
+                />
+                <span className="ml-2">
+                  I agree with{" "}
+                  <Link href="#" className="text-blue-500 hover:underline">
+                    Terms of Use
+                  </Link>
+                </span>
+              </div>
             </div>
           </div>
 
