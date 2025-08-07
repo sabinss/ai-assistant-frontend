@@ -241,7 +241,7 @@ export default function Page() {
               By creating an account, you confirm that you have read and agree
               to our
             </span>
-            <div className="items-cente4 mt-2 flex gap-4">
+            <div className="mt-2 flex items-center gap-4">
               <div className="flex items-center">
                 <Checkbox
                   checked={termsOfUseChecked}
@@ -250,8 +250,13 @@ export default function Page() {
                   }
                 />
                 <span className="ml-2">
-                  <Link href="#" className="text-blue-500 hover:underline">
-                    Terms of Service
+                  <Link
+                    href="/master_agreement"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Master Subscription Agreement
                   </Link>
                 </span>
               </div>

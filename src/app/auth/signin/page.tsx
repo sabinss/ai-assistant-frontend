@@ -167,8 +167,13 @@ export default function page() {
         <span>
           By continuing you are indicating that you have read and agree to the{" "}
           <span className="font-bold text-blue-900 hover:underline">
-            {" "}
-            <b>Terms of Service</b>
+            <Link
+              href="/master_agreement"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <b>Master Subscription Agreement</b>
+            </Link>
           </span>
           <span> and </span>
           <span className="font-bold text-blue-900 hover:underline">
