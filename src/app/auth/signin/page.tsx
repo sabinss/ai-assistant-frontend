@@ -163,8 +163,24 @@ export default function page() {
         )}
       </form>
 
+      <div className="mt-5 rounded-lg bg-gray-100 p-2 text-xs">
+        <span>
+          By continuing you are indicating that you have read and agree to the{" "}
+          <span className="font-bold text-blue-900 hover:underline">
+            {" "}
+            <b>Terms of Service</b>
+          </span>
+          <span> and </span>
+          <span className="font-bold text-blue-900 hover:underline">
+            <Link href="/privacy">
+              <b>Privacy Policy</b>
+            </Link>
+          </span>
+        </span>
+      </div>
+
       {/* Privacy Policy and Terms of Use Checkboxes - Horizontal Layout at Bottom */}
-      <div className="mt-3 flex items-center justify-between text-xs">
+      {/* <div className="mt-3 flex items-center justify-between text-xs">
         <div className="flex items-center">
           <Checkbox
             checked={privacyPolicyChecked}
@@ -193,8 +209,8 @@ export default function page() {
               Terms of Use
             </Link>
           </span>
-        </div>
-      </div>
+        </div> 
+      </div> */}
 
       {/* <div className="mt-3 flex justify-between text-xs">
         <Link href="/privacy">Privacy Policy</Link>
