@@ -172,7 +172,7 @@ export default function page() {
           </span>
           <span> and </span>
           <span className="font-bold text-blue-900 hover:underline">
-            <Link href="/privacy">
+            <Link href="/privacy" target="_blank" rel="noopener noreferrer">
               <b>Privacy Policy</b>
             </Link>
           </span>
