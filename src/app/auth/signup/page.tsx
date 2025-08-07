@@ -244,32 +244,30 @@ export default function Page() {
             <div className="mt-2 flex items-center justify-between gap-2">
               <div className="flex items-center">
                 <Checkbox
-                  checked={privacyPolicyChecked}
-                  onCheckedChange={(checked) =>
-                    setPrivacyPolicyChecked(checked as boolean)
-                  }
-                />
-                <span className="ml-2">
-                  I agree with{" "}
-                  <Link
-                    href="/privacy"
-                    className="text-blue-500 hover:underline"
-                  >
-                    Privacy Policy
-                  </Link>
-                </span>
-              </div>
-              <div className="flex items-center">
-                <Checkbox
                   checked={termsOfUseChecked}
                   onCheckedChange={(checked) =>
                     setTermsOfUseChecked(checked as boolean)
                   }
                 />
                 <span className="ml-2">
-                  I agree with{" "}
                   <Link href="#" className="text-blue-500 hover:underline">
-                    Terms of Use
+                    Terms of Service
+                  </Link>
+                </span>
+              </div>
+              <div className="flex items-center">
+                <Checkbox
+                  checked={privacyPolicyChecked}
+                  onCheckedChange={(checked) =>
+                    setPrivacyPolicyChecked(checked as boolean)
+                  }
+                />
+                <span className="ml-2">
+                  <Link
+                    href="/privacy"
+                    className="text-blue-500 hover:underline"
+                  >
+                    Privacy Policy
                   </Link>
                 </span>
               </div>
