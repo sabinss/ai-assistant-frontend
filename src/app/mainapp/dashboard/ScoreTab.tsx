@@ -72,9 +72,9 @@ export default function ScoreTab({
                 {/* {getTrendIcon(driver.trend)} */}
                 <div>
                   <div className="font-semibold">{driver.name}</div>
-                  <div className="text-xs text-gray-400">
+                  {/* <div className="text-xs text-gray-400">
                     {driver.impact}% impact
-                  </div>
+                  </div> */}
                 </div>
               </div>
 
