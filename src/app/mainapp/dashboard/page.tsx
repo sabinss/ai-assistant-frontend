@@ -196,7 +196,7 @@ export default function Dashboard() {
 
     const customers = orgCustomerData.customers
     const totalCustomers = customers.length
-
+    const threshold = 60
     // Calculate all metrics in a single pass for better performance
     let totalHealthScore = 0
     let customersWithHealthScore = 0
@@ -204,7 +204,7 @@ export default function Dashboard() {
     let expansionCount = 0
     let atRiskCustomersARR = 0
     let atRiskCustomersWithARR = 0
-
+    console.log("customers-----", customers)
     customers.forEach((customer: any) => {
       const redshift = customer?.redShiftCustomer
       if (redshift) {
@@ -215,7 +215,7 @@ export default function Dashboard() {
         }
 
         // Risk calculation
-        if (redshift.churn_risk_score >= 70) {
+        if (redshift.churn_risk_score >= threshold) {
           atRiskCustomers++
           // Calculate ARR for at-risk customers
           if (customer.arr && !isNaN(parseFloat(customer.arr))) {
@@ -236,10 +236,18 @@ export default function Dashboard() {
         ? (totalHealthScore / customersWithHealthScore).toFixed(1)
         : "0"
 
-    const atRiskAverageARR =
-      atRiskCustomersWithARR > 0
-        ? (atRiskCustomersARR / atRiskCustomersWithARR).toFixed(0)
-        : "0"
+    const atRiskAverageARR = customers
+      .filter((x: any) => {
+        if (x.redShiftCustomer?.churn_risk_score > threshold) {
+          return true
+        }
+      })
+      .reduce((acc: number, customer: any) => {
+        if (customer.redShiftCustomer.churn_risk_score >= threshold) {
+          return acc + parseFloat(customer.redShiftCustomer.arr)
+        }
+        return acc
+      }, 0)
 
     setStats([
       {
@@ -379,7 +387,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between rounded bg-white p-6 shadow">
+      <div className="mt-10 flex items-center justify-between rounded bg-white p-6 shadow">
         <div className="text-2xl font-bold ">Customer Success Dashboard</div>
         {/* Filters */}
         {/* <div className="flex justify-end space-x-2">
