@@ -27,6 +27,7 @@ export interface HighRiskCustomer {
   renewal_days: string
   monetary_value: string
   risk_level: string
+  arr?: string
 }
 
 export interface ChurnRiskDistribution {
@@ -74,32 +75,30 @@ export interface ChurnDashboardAPIResponse {
 interface ChurnDashboardState {
   metricsData: ChurnMetricItem[]
   distributionData: number[]
-  trendData: {
-    labels: string[]
-    datasets: {
-      label: string
-      data: number[]
-      borderColor: string
-      backgroundColor: string
-      tension: number
-    }[]
-  }
+  trendData: Array<{
+    month: number
+    monthName: string
+    totalCustomers: number
+    highRiskCustomers: number
+    avgChurnScore: number
+    highRiskARR: number
+  }>
   riskMatrixData: RiskMatrixPoint[]
   isLoading: boolean
   error: string | null
   apiData: ChurnDashboardAPIResponse | null
   setMetricsData: (metrics: ChurnMetricItem[]) => void
   setDistributionData: (distribution: number[]) => void
-  setTrendData: (trend: {
-    labels: string[]
-    datasets: {
-      label: string
-      data: number[]
-      borderColor: string
-      backgroundColor: string
-      tension: number
-    }[]
-  }) => void
+  setTrendData: (
+    trend: Array<{
+      month: number
+      monthName: string
+      totalCustomers: number
+      highRiskCustomers: number
+      avgChurnScore: number
+      highRiskARR: number
+    }>
+  ) => void
   setRiskMatrixData: (points: RiskMatrixPoint[]) => void
   setApiData: (data: ChurnDashboardAPIResponse) => void
   fetchHighRiskChurnStats: (accessToken: string) => Promise<void>
@@ -124,32 +123,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       change: "↓ 5.2% improvement",
     },
   ],
-  trendData: {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-    datasets: [
-      {
-        label: "Average Churn Score",
-        data: [45, 52, 58, 65, 72, 40],
-        borderColor: "#3B82F6",
-        backgroundColor: "rgba(59, 130, 246, 0.1)",
-        tension: 0.4,
-      },
-      {
-        label: "High Risk Customers (>70)",
-        data: [3, 5, 7, 9, 12, 0],
-        borderColor: "#EF4444",
-        backgroundColor: "rgba(239, 68, 68, 0.1)",
-        tension: 0.4,
-      },
-      {
-        label: "High Risk ARR",
-        data: [45000, 75000, 105000, 135000, 180000, 0],
-        borderColor: "#F59E0B",
-        backgroundColor: "rgba(245, 158, 11, 0.1)",
-        tension: 0.4,
-      },
-    ],
-  },
+  trendData: [],
   distributionData: [10, 15, 25, 30, 20],
   riskMatrixData: [
     {
@@ -252,7 +226,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       })
       const data = res?.data || {}
 
-      console.log("data", data)
+      console.log("data----", data.data)
 
       // Store the raw API data
       set({ apiData: data })
@@ -297,64 +271,12 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         ]
         set({ distributionData: distribution })
 
-        // Update trend data with multiple months for better visualization
-        const trendLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
-        const trendData = {
-          labels: trendLabels,
-          datasets: [
-            {
-              label: "Average Churn Score",
-              data: [
-                45,
-                52,
-                58,
-                65,
-                72,
-                data.previousPreviousMonth.avgChurnScore,
-                data.previousMonth.avgChurnScore,
-              ],
-              borderColor: "#3B82F6",
-              backgroundColor: "rgba(59, 130, 246, 0.1)",
-              tension: 0.4,
-            },
-            {
-              label: "High Risk Customers (>70)",
-              data: [
-                3,
-                5,
-                7,
-                9,
-                12,
-                data.previousPreviousMonth.highRiskCount,
-                data.previousMonth.highRiskCount,
-              ],
-              borderColor: "#EF4444",
-              backgroundColor: "rgba(239, 68, 68, 0.1)",
-              tension: 0.4,
-            },
-            {
-              label: "High Risk ARR",
-              data: [
-                45000,
-                75000,
-                105000,
-                135000,
-                180000,
-                data.previousPreviousMonth.highRiskARR || 0,
-                data.previousMonth.highRiskARR || 0,
-              ],
-              borderColor: "#F59E0B",
-              backgroundColor: "rgba(245, 158, 11, 0.1)",
-              tension: 0.4,
-            },
-          ],
-        }
-        set({ trendData: trendData })
-
         // Transform high risk customers to risk matrix format
+        console.log("highRiskCustomers----", data.highRiskCustomers)
         const riskMatrix = data.highRiskCustomers.map(
           (customer: HighRiskCustomer) => ({
             company: customer.customer_name,
+            arr: customer.arr,
             churnRisk: customer.churn_risk_score,
             daysToRenewal:
               customer.renewal_days === "N/A"
@@ -384,12 +306,9 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       if (Array.isArray(data.distributionData)) {
         set({ distributionData: data.distributionData })
       }
-      if (
-        data.trendData &&
-        Array.isArray(data.trendData.labels) &&
-        Array.isArray(data.trendData.datasets)
-      ) {
-        set({ trendData: data.trendData })
+      console.log("trendData----**", data.data.trendData)
+      if (data.data.trendData && Array.isArray(data.data.trendData)) {
+        set({ trendData: data.data.trendData })
       }
       if (Array.isArray(data.riskMatrixData)) {
         set({ riskMatrixData: data.riskMatrixData })
@@ -585,36 +504,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       demoData.previousMonth.churnRiskDistribution.critical,
     ]
     set({ distributionData: distribution })
-
-    // Update trend data
-    const trendLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"]
-    const trendData = {
-      labels: trendLabels,
-      datasets: [
-        {
-          label: "Average Churn Score",
-          data: [45, 52, 58, 65, 72, 40, 80],
-          borderColor: "#3B82F6",
-          backgroundColor: "rgba(59, 130, 246, 0.1)",
-          tension: 0.4,
-        },
-        {
-          label: "High Risk Customers (>70)",
-          data: [3, 5, 7, 9, 12, 0, 10],
-          borderColor: "#EF4444",
-          backgroundColor: "rgba(239, 68, 68, 0.1)",
-          tension: 0.4,
-        },
-        {
-          label: "High Risk ARR",
-          data: [45000, 75000, 105000, 135000, 180000, 0, 120000],
-          borderColor: "#F59E0B",
-          backgroundColor: "rgba(245, 158, 11, 0.1)",
-          tension: 0.4,
-        },
-      ],
-    }
-    set({ trendData: trendData })
 
     // Transform high risk customers to risk matrix format
     const riskMatrix = demoData.highRiskCustomers.map(

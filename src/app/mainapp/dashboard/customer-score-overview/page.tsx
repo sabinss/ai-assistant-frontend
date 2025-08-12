@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useRef } from "react"
+import { useRouter } from "next/navigation"
+import { ChevronLeft } from "lucide-react"
 import {
   Chart,
   ArcElement,
@@ -35,6 +37,7 @@ Chart.register(
 )
 
 export default function Page() {
+  const router = useRouter()
   const donutRef: any = useRef(null)
   const donutInstanceRef = useRef<Chart | null>(null)
 
@@ -46,10 +49,8 @@ export default function Page() {
 
   const metrics = useChurnDashboardStore((s) => s.metricsData) || []
   const distribution = useChurnDashboardStore((s) => s.distributionData) || []
-  const trendData = useChurnDashboardStore((s) => s.trendData) || {
-    labels: [],
-    datasets: [],
-  }
+  const trendData = useChurnDashboardStore((s) => s.trendData) || []
+  console.log("trendData from store----", trendData)
   const riskMatrixData = useChurnDashboardStore((s) => s.riskMatrixData) || []
   const isLoading = useChurnDashboardStore((s) => s.isLoading) || false
   const error = useChurnDashboardStore((s) => s.error) || null
@@ -91,6 +92,55 @@ export default function Page() {
       maximumFractionDigits: 0,
     }).format(value)
   }
+
+  // Transform monthly trend data to Chart.js format
+  const transformedTrendData = useMemo(() => {
+    if (!trendData || !Array.isArray(trendData) || trendData.length === 0) {
+      return {
+        labels: [],
+        datasets: [],
+      }
+    }
+
+    // Use the trendData directly from API - it already has the correct structure
+    const labels = trendData.map((item) => item.monthName)
+    console.log("labels----", labels)
+    const avgChurnScores = trendData.map((item) => item.avgChurnScore || 0)
+    const highRiskCustomers = trendData.map(
+      (item) => item.highRiskCustomers || 0
+    )
+    const highRiskARR = trendData.map((item) => item.highRiskARR || 0)
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Average Churn Score",
+          data: avgChurnScores,
+          borderColor: "#EF4444",
+          backgroundColor: "rgba(239, 68, 68, 0.1)",
+          tension: 0.4,
+          yAxisID: "y",
+        },
+        {
+          label: "High Risk Customers (>70)",
+          data: highRiskCustomers,
+          borderColor: "#F59E0B",
+          backgroundColor: "rgba(245, 158, 11, 0.1)",
+          tension: 0.4,
+          yAxisID: "y",
+        },
+        {
+          label: "High Risk ARR",
+          data: highRiskARR,
+          borderColor: "#10B981",
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          tension: 0.4,
+          yAxisID: "y1",
+        },
+      ],
+    }
+  }, [trendData])
 
   // Fetch data on component mount
   useEffect(() => {
@@ -161,7 +211,10 @@ export default function Page() {
 
   // Line Chart
   useEffect(() => {
-    if (!lineRef.current || isLoading) return
+    if (!lineRef.current || isLoading) {
+      return
+    }
+    console.log("transformedTrendData***", transformedTrendData)
     const ctx = lineRef.current.getContext("2d")
 
     if (lineInstanceRef.current) {
@@ -170,145 +223,152 @@ export default function Page() {
 
     // Calculate max values for y-axis scaling
     const churnScoreData =
-      trendData.datasets.find((d) => d.label === "Average Churn Score")?.data ||
-      []
+      transformedTrendData.datasets.find(
+        (d) => d.label === "Average Churn Score"
+      )?.data || []
     const customerCountData =
-      trendData.datasets.find((d) => d.label === "High Risk Customers (>70)")
-        ?.data || []
+      transformedTrendData.datasets.find(
+        (d) => d.label === "High Risk Customers (>70)"
+      )?.data || []
     const arrData =
-      trendData.datasets.find((d) => d.label === "High Risk ARR")?.data || []
+      transformedTrendData.datasets.find((d) => d.label === "High Risk ARR")
+        ?.data || []
 
     const maxChurnScore = Math.max(...churnScoreData)
     const maxCustomerCount = Math.max(...customerCountData)
     const maxARR = Math.max(...arrData)
 
-    lineInstanceRef.current = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: trendData.labels,
-        datasets: trendData.datasets.map((dataset) => ({
-          label: dataset.label,
-          data: dataset.data,
-          borderColor: dataset.borderColor,
-          backgroundColor: dataset.backgroundColor,
-          borderWidth: 2,
-          fill: false, // Remove fill for cleaner look with multiple lines
-          tension: dataset.tension,
-          pointBackgroundColor: dataset.borderColor,
-          pointBorderColor: "#ffffff",
-          pointBorderWidth: 2,
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          yAxisID: dataset.label === "High Risk ARR" ? "y1" : "y",
-        })),
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: "index",
-          intersect: false,
+    try {
+      lineInstanceRef.current = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: transformedTrendData.labels,
+          datasets: transformedTrendData.datasets.map((dataset) => ({
+            label: dataset.label,
+            data: dataset.data,
+            borderColor: dataset.borderColor,
+            backgroundColor: dataset.backgroundColor,
+            borderWidth: 2,
+            fill: false, // Remove fill for cleaner look with multiple lines
+            tension: dataset.tension,
+            pointBackgroundColor: dataset.borderColor,
+            pointBorderColor: "#ffffff",
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            yAxisID: dataset.label === "High Risk ARR" ? "y1" : "y",
+          })),
         },
-        plugins: {
-          legend: {
-            position: "top",
-            align: "end",
-            labels: {
-              usePointStyle: true,
-              boxWidth: 8,
-              padding: 16,
-              font: { size: 12 },
-            },
-          },
-          tooltip: {
-            enabled: true,
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
             mode: "index",
             intersect: false,
-            backgroundColor: "rgba(17, 24, 39, 0.95)",
-            titleColor: "#ffffff",
-            bodyColor: "#ffffff",
-            borderColor: "rgba(17, 24, 39, 0.1)",
-            borderWidth: 1,
-            cornerRadius: 8,
-            displayColors: true,
-            caretPadding: 6,
-            callbacks: {
-              label: function (context) {
-                const label = context.dataset.label || ""
-                const value = context.parsed.y
-                if (label === "High Risk ARR") {
-                  return `${label}: $${value.toLocaleString()}`
-                }
-                return `${label}: ${value}`
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              align: "end",
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                padding: 16,
+                font: { size: 12 },
+              },
+            },
+            tooltip: {
+              enabled: true,
+              mode: "index",
+              intersect: false,
+              backgroundColor: "rgba(17, 24, 39, 0.95)",
+              titleColor: "#ffffff",
+              bodyColor: "#ffffff",
+              borderColor: "rgba(17, 24, 39, 0.1)",
+              borderWidth: 1,
+              cornerRadius: 8,
+              displayColors: true,
+              caretPadding: 6,
+              callbacks: {
+                label: function (context) {
+                  const label = context.dataset.label || ""
+                  const value = context.parsed.y
+                  if (label === "High Risk ARR") {
+                    return `${label}: $${value.toLocaleString()}`
+                  }
+                  return `${label}: ${value}`
+                },
+              },
+            },
+          },
+          scales: {
+            y: {
+              type: "linear",
+              display: true,
+              position: "left",
+              beginAtZero: true,
+              suggestedMax: Math.ceil(maxChurnScore * 1.1),
+              border: { display: false },
+              grid: {
+                color: "rgba(17, 24, 39, 0.08)",
+              },
+              ticks: {
+                color: "#6B7280",
+                padding: 8,
+                font: { size: 12 },
+              },
+              title: {
+                display: true,
+                text: "Churn Score / Customer Count",
+                color: "#6B7280",
+                font: { size: 12 },
+              },
+            },
+            y1: {
+              type: "linear",
+              display: true,
+              position: "right",
+              beginAtZero: true,
+              suggestedMax: Math.ceil(maxARR * 1.1),
+              border: { display: false },
+              grid: {
+                drawOnChartArea: false,
+              },
+              ticks: {
+                color: "#F59E0B",
+                padding: 8,
+                font: { size: 12 },
+                callback: function (value) {
+                  if (typeof value === "number") {
+                    return "$" + value / 1000 + "K"
+                  }
+                  return "$0K"
+                },
+              },
+              title: {
+                display: true,
+                text: "ARR ($)",
+                color: "#F59E0B",
+                font: { size: 12 },
+              },
+            },
+            x: {
+              border: { display: false },
+              grid: {
+                color: "rgba(17, 24, 39, 0.06)",
+              },
+              ticks: {
+                color: "#6B7280",
+                padding: 8,
+                font: { size: 12 },
               },
             },
           },
         },
-        scales: {
-          y: {
-            type: "linear",
-            display: true,
-            position: "left",
-            beginAtZero: true,
-            suggestedMax: Math.ceil(maxChurnScore * 1.1),
-            border: { display: false },
-            grid: {
-              color: "rgba(17, 24, 39, 0.08)",
-            },
-            ticks: {
-              color: "#6B7280",
-              padding: 8,
-              font: { size: 12 },
-            },
-            title: {
-              display: true,
-              text: "Churn Score / Customer Count",
-              color: "#6B7280",
-              font: { size: 12 },
-            },
-          },
-          y1: {
-            type: "linear",
-            display: true,
-            position: "right",
-            beginAtZero: true,
-            suggestedMax: Math.ceil(maxARR * 1.1),
-            border: { display: false },
-            grid: {
-              drawOnChartArea: false,
-            },
-            ticks: {
-              color: "#F59E0B",
-              padding: 8,
-              font: { size: 12 },
-              callback: function (value) {
-                if (typeof value === "number") {
-                  return "$" + value / 1000 + "K"
-                }
-                return "$0K"
-              },
-            },
-            title: {
-              display: true,
-              text: "ARR ($)",
-              color: "#F59E0B",
-              font: { size: 12 },
-            },
-          },
-          x: {
-            border: { display: false },
-            grid: {
-              color: "rgba(17, 24, 39, 0.06)",
-            },
-            ticks: {
-              color: "#6B7280",
-              padding: 8,
-              font: { size: 12 },
-            },
-          },
-        },
-      },
-    })
+      })
+    } catch (e) {
+      console.error("Error creating line chart:", e)
+    }
 
     return () => {
       if (lineInstanceRef.current) {
@@ -316,7 +376,7 @@ export default function Page() {
         lineInstanceRef.current = null
       }
     }
-  }, [trendData, isLoading])
+  }, [transformedTrendData, isLoading])
 
   // Scatter Chart (Risk Matrix)
   useEffect(() => {
@@ -430,6 +490,17 @@ export default function Page() {
   console.log("Main dhasboard", metrics)
   return (
     <div className="relative space-y-6 p-6">
+      {/* Back Button */}
+      <div className="mb-20">
+        <button
+          onClick={() => router.push("/mainapp/dashboard")}
+          className="absolute left-6 top-6 z-10  flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back to Dashboard
+        </button>
+      </div>
+
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
@@ -511,7 +582,7 @@ export default function Page() {
                   apiData: null,
                   metricsData: [],
                   distributionData: [],
-                  trendData: { labels: [], datasets: [] },
+                  trendData: [],
                   riskMatrixData: [],
                 })
               }}
@@ -556,14 +627,81 @@ export default function Page() {
       )}
 
       {/* Line Chart */}
-      {trendData && trendData.datasets && trendData.datasets.length > 0 && (
-        <div className="rounded-xl bg-white p-6 shadow">
-          {renderSectionTitle("Churn Risk Trend")}
-          <div className="h-64">
-            <canvas ref={lineRef}></canvas>
+      {transformedTrendData &&
+        transformedTrendData.datasets &&
+        transformedTrendData.datasets.length > 0 && (
+          <div className="rounded-xl bg-white p-6 shadow">
+            {renderSectionTitle("Churn Risk Trend")}
+            <div className="h-64">
+              <canvas ref={lineRef}></canvas>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+      {/* Debug: Show data structure */}
+      <div className="rounded-xl bg-gray-50 p-4 text-sm">
+        <h3 className="mb-2 font-semibold">Debug Info:</h3>
+        <p>
+          trendData type:{" "}
+          {Array.isArray(trendData) ? "Array" : typeof trendData}
+        </p>
+        <p>
+          trendData length:{" "}
+          {Array.isArray(trendData) ? trendData.length : "N/A"}
+        </p>
+        <p>
+          transformedTrendData datasets:{" "}
+          {transformedTrendData?.datasets?.length || 0}
+        </p>
+        <p>
+          transformedTrendData labels:{" "}
+          {transformedTrendData?.labels?.length || 0}
+        </p>
+        {Array.isArray(trendData) && trendData.length > 0 && (
+          <div className="mt-2">
+            <p>Sample trendData item:</p>
+            <pre className="rounded bg-white p-2 text-xs">
+              {JSON.stringify(trendData[0], null, 2)}
+            </pre>
+          </div>
+        )}
+
+        {/* Test button to populate sample data */}
+        <button
+          onClick={() => {
+            const sampleData = [
+              {
+                month: 1,
+                monthName: "Jan",
+                totalCustomers: 5,
+                highRiskCustomers: 2,
+                avgChurnScore: 45.5,
+                highRiskARR: 25000,
+              },
+              {
+                month: 2,
+                monthName: "Feb",
+                totalCustomers: 8,
+                highRiskCustomers: 3,
+                avgChurnScore: 52.3,
+                highRiskARR: 35000,
+              },
+              {
+                month: 3,
+                monthName: "Mar",
+                totalCustomers: 12,
+                highRiskCustomers: 5,
+                avgChurnScore: 68.7,
+                highRiskARR: 45000,
+              },
+            ]
+            useChurnDashboardStore.setState({ trendData: sampleData })
+          }}
+          className="mt-2 rounded bg-blue-500 px-3 py-1 text-xs text-white"
+        >
+          Load Sample Data
+        </button>
+      </div>
 
       {/* Scatter Chart */}
       {riskMatrixData && riskMatrixData.length > 0 && (
@@ -580,7 +718,7 @@ export default function Page() {
         <div className="rounded-xl bg-white p-6 shadow">
           {renderSectionTitle("Immediate Action Required")}
           <div className="space-y-4">
-            {immediateActionItems.map((item, idx) => {
+            {immediateActionItems.map((item: any, idx) => {
               const isCritical = item.priority === "CRITICAL"
               const pillClasses = isCritical
                 ? "bg-red-100 text-red-700"
@@ -601,7 +739,7 @@ export default function Page() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right font-semibold text-green-600">
-                      {formatCurrency(item.churnRisk)}
+                      {formatCurrency(item?.arr)}
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs ${pillClasses}`}

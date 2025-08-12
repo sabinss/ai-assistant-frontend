@@ -31,7 +31,15 @@ export default function Dashboard() {
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  const [stats, setStats] = useState([
+  const [stats, setStats] = useState<
+    Array<{
+      id: string
+      title: string
+      value: string
+      subtitle: string
+      arrValue?: string
+    }>
+  >([
     {
       id: "total",
       title: "Total Customers",
@@ -194,6 +202,8 @@ export default function Dashboard() {
     let customersWithHealthScore = 0
     let atRiskCustomers = 0
     let expansionCount = 0
+    let atRiskCustomersARR = 0
+    let atRiskCustomersWithARR = 0
 
     customers.forEach((customer: any) => {
       const redshift = customer?.redShiftCustomer
@@ -207,6 +217,11 @@ export default function Dashboard() {
         // Risk calculation
         if (redshift.churn_risk_score >= 70) {
           atRiskCustomers++
+          // Calculate ARR for at-risk customers
+          if (customer.arr && !isNaN(parseFloat(customer.arr))) {
+            atRiskCustomersARR += parseFloat(customer.arr)
+            atRiskCustomersWithARR++
+          }
         }
 
         // Expansion calculation
@@ -219,6 +234,11 @@ export default function Dashboard() {
     const healthScoreAverage =
       customersWithHealthScore > 0
         ? (totalHealthScore / customersWithHealthScore).toFixed(1)
+        : "0"
+
+    const atRiskAverageARR =
+      atRiskCustomersWithARR > 0
+        ? (atRiskCustomersARR / atRiskCustomersWithARR).toFixed(0)
         : "0"
 
     setStats([
@@ -240,6 +260,7 @@ export default function Dashboard() {
         title: "At-Risk Customers",
         value: atRiskCustomers.toString(),
         subtitle: `${((atRiskCustomers / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+        arrValue: `$${atRiskAverageARR}`,
       },
       {
         id: "expansion",
@@ -401,11 +422,36 @@ export default function Dashboard() {
               }
             }}
           >
-            <div className="text-sm text-gray-500">{stat.title}</div>
-            <div className="m-2 text-2xl font-bold">
-              {stat.id === "atRisk" && churnLoading ? "Loading..." : stat.value}
-            </div>
-            <div className="mt-1 text-xs text-gray-400">{stat.subtitle}</div>
+            {stat.id === "atRisk" ? (
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500">{stat.title}</div>
+                  <div className="text-sm text-gray-500">ARR</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="m-2 text-2xl font-bold">
+                    {stat.id === "atRisk" && churnLoading
+                      ? "Loading..."
+                      : stat.value}
+                  </div>
+                  <div>{stat.arrValue}</div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="text-sm text-gray-500">{stat.title}</div>
+                <div className="m-2 text-2xl font-bold">
+                  {stat.id === "atRisk" && churnLoading
+                    ? "Loading..."
+                    : stat.value}
+                </div>
+
+                <div className="mt-1 text-xs text-gray-400">
+                  {stat.subtitle}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
