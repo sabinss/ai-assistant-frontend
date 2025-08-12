@@ -706,11 +706,11 @@ export default function MasterSubscriptionAgreement() {
           {/* Continue adding sections similarly from the PDF... */}
         </div>
 
-        <div className="mt-6 flex justify-end">
+        {/* <div className="mt-6 flex justify-end">
           <button className="rounded-lg bg-blue-600 px-6 py-2 text-white shadow hover:bg-blue-700">
             I Agree
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   )
