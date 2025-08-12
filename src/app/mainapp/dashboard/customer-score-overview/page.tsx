@@ -233,7 +233,7 @@ export default function Page() {
       )?.data || []
     const customerCountData =
       transformedTrendData.datasets.find(
-        (d) => d.label === "High Risk Customers (>70)"
+        (d) => d.label === "High Risk Customers"
       )?.data || []
     const arrData =
       transformedTrendData.datasets.find((d) => d.label === "High Risk ARR")
