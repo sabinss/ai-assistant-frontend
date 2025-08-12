@@ -524,14 +524,22 @@ export default function Page() {
   return (
     <div className="relative space-y-6 p-6">
       {/* Back Button */}
-      <div className="mb-20">
+      <div className="relative mb-10">
+        {/* Back Button */}
         <button
           onClick={() => router.push("/mainapp/dashboard")}
-          className="absolute left-6 top-6 z-10  flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+          className="absolute left-6 top-1/2 z-10 flex -translate-y-1/2 items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-md transition-all hover:bg-gray-100 hover:shadow-lg"
         >
           <ChevronLeft className="h-4 w-4" />
           Back to Dashboard
         </button>
+
+        {/* Title Centered */}
+        <div className="flex justify-center">
+          <h1 className="text-2xl font-bold tracking-tight text-gray-800">
+            Churn Risk Dashboard
+          </h1>
+        </div>
       </div>
 
       {isLoading && (
