@@ -93,17 +93,20 @@ export default function Page() {
     }).format(value)
   }
 
-  // Calculate bubble size based on churn score
-  const getBubbleSize = (churnScore: number) => {
+  // Calculate bubble size based on ARR value
+  const getBubbleSize = (arr: number) => {
     // Base size: 6px, max size: 18px
-    // Higher churn scores = bigger bubbles
-    return Math.max(6, Math.min(18, 6 + (churnScore / 100) * 12))
+    // Higher ARR values = bigger bubbles
+    if (!arr || arr <= 0) return 6
+    // Normalize ARR to a reasonable range (assuming max ARR is around 1M)
+    const normalizedArr = Math.min(arr / 1000000, 1) // Cap at 1M
+    return Math.max(6, Math.min(18, 6 + normalizedArr * 12))
   }
 
-  // Calculate hover size based on churn score
-  const getHoverSize = (churnScore: number) => {
+  // Calculate hover size based on ARR value
+  const getHoverSize = (arr: number) => {
     // Hover size is 1.5x the base size
-    return getBubbleSize(churnScore) * 1.5
+    return getBubbleSize(arr) * 1.5
   }
 
   // Transform monthly trend data to Chart.js format
@@ -393,7 +396,28 @@ export default function Page() {
     const critical = riskMatrixData.filter((p) => p.priority === "CRITICAL")
     const high = riskMatrixData.filter((p) => p.priority === "HIGH")
     const healthy = riskMatrixData.filter((p) => p.priority === "HEALTHY")
+    console.log("critical", critical)
+    console.log("high", high)
+    console.log("healthy", healthy)
 
+    // Debug ARR values for bubble sizing
+    console.log("ARR values for bubble sizing:", {
+      critical: critical.map((p) => ({
+        company: p.company,
+        arr: p.arr,
+        bubbleSize: getBubbleSize(p.arr),
+      })),
+      high: high.map((p) => ({
+        company: p.company,
+        arr: p.arr,
+        bubbleSize: getBubbleSize(p.arr),
+      })),
+      healthy: healthy.map((p) => ({
+        company: p.company,
+        arr: p.arr,
+        bubbleSize: getBubbleSize(p.arr),
+      })),
+    })
     scatterInstanceRef.current = new Chart(ctx, {
       type: "scatter",
       data: {
@@ -407,8 +431,8 @@ export default function Page() {
             })),
             pointBackgroundColor: "#EF4444",
             pointBorderColor: "#EF4444",
-            pointRadius: critical.map((p) => getBubbleSize(p.churnRisk)), // Dynamic size based on churn score
-            pointHoverRadius: critical.map((p) => getHoverSize(p.churnRisk)),
+            pointRadius: critical.map((p) => getBubbleSize(p.arr || 0)), // Dynamic size based on ARR
+            pointHoverRadius: critical.map((p) => getHoverSize(p.arr || 0)),
             pointBorderWidth: 2,
           },
           {
@@ -420,8 +444,8 @@ export default function Page() {
             })),
             pointBackgroundColor: "#F59E0B",
             pointBorderColor: "#F59E0B",
-            pointRadius: high.map((p) => getBubbleSize(p.churnRisk)), // Dynamic size based on churn score
-            pointHoverRadius: high.map((p) => getHoverSize(p.churnRisk)),
+            pointRadius: high.map((p) => getBubbleSize(p.arr || 0)), // Dynamic size based on ARR
+            pointHoverRadius: high.map((p) => getHoverSize(p.arr || 0)),
             pointBorderWidth: 2,
           },
           {
@@ -433,8 +457,8 @@ export default function Page() {
             })),
             pointBackgroundColor: "#10B981",
             pointBorderColor: "#10B981",
-            pointRadius: healthy.map((p) => getBubbleSize(p.churnRisk)), // Dynamic size based on churn score
-            pointHoverRadius: healthy.map((p) => getHoverSize(p.churnRisk)),
+            pointRadius: healthy.map((p) => getBubbleSize(p.arr || 0)), // Dynamic size based on ARR
+            pointHoverRadius: healthy.map((p) => getHoverSize(p.arr || 0)),
             pointBorderWidth: 2,
           },
         ],
@@ -464,7 +488,7 @@ export default function Page() {
               },
               afterLabel: (ctx) => {
                 const m: any = (ctx.raw as any).meta
-                return `ARR: $${m.revenue.toLocaleString()}\nPriority: ${m.priority}`
+                return `ARR: $${m.arr?.toLocaleString() || "0"}\nPriority: ${m.priority}`
               },
               title: () => "",
             },
