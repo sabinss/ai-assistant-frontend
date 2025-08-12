@@ -527,82 +527,6 @@ export default function Page() {
         </div>
       )}
 
-      {/* Show loading state if no data is available yet */}
-      {/* {!apiData && !isLoading && !error && (
-        <div className="rounded-xl bg-gray-50 p-6 text-center">
-          <div className="text-lg font-medium text-gray-600">
-            Loading churn dashboard data...
-          </div>
-          <p className="mt-2 text-sm text-gray-500">
-            Please wait while we fetch the latest churn risk insights.
-          </p>
-        </div>
-      )} */}
-
-      {/* API Data Summary */}
-      {/* {apiData && apiData.previousMonth && (
-        <div className="rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 shadow">
-          {renderSectionTitle("Churn Risk Overview")}
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-600">
-                {apiData.threshold}
-              </div>
-              <div className="text-sm text-gray-600">Risk Threshold</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-gray-800">
-                {apiData.previousMonth.totalCustomers}
-              </div>
-              <div className="text-sm text-gray-600">Total Customers</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-red-600">
-                {apiData.previousMonth.highRiskCount}
-              </div>
-              <div className="text-sm text-gray-600">High Risk Customers</div>
-            </div>
-          </div>
-        </div>
-      )} */}
-
-      {/* Demo Controls */}
-      {/* <div className="rounded-xl bg-gray-50 p-4 shadow">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-800">
-              Demo Controls
-            </h3>
-            <p className="text-sm text-gray-600">
-              {apiData ? "Data loaded successfully" : "No data loaded yet"}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={populateWithDemoData}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Load Demo Data
-            </button>
-            <button
-              onClick={() => {
-                // Clear the data
-                useChurnDashboardStore.setState({
-                  apiData: null,
-                  metricsData: [],
-                  distributionData: [],
-                  trendData: [],
-                  riskMatrixData: [],
-                })
-              }}
-              className="rounded-lg bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-            >
-              Clear Data
-            </button>
-          </div>
-        </div>
-      </div> */}
-
       {/* Metrics */}
       {metrics && metrics.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -636,11 +560,11 @@ export default function Page() {
       )}
 
       {/* Debug: Show distribution data */}
-      <div className="rounded-xl bg-gray-50 p-4 text-sm">
+      {/* <div className="rounded-xl bg-gray-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold">Distribution Data Debug:</h3>
         <p>distribution length: {distribution?.length || 0}</p>
         <p>distribution data: {JSON.stringify(distribution)}</p>
-      </div>
+      </div> */}
 
       {/* Line Chart */}
       {transformedTrendData &&
@@ -671,7 +595,7 @@ export default function Page() {
       {/* Scatter Chart */}
       {riskMatrixData && riskMatrixData.length > 0 && (
         <div className="rounded-xl bg-white p-6 shadow">
-          {renderSectionTitle("Risk Matrix: Churn Score vs Time to Renewal")}
+          {renderSectionTitle("Customer Churn Score Analysis")}
           <div className="h-96">
             <canvas ref={scatterRef}></canvas>
           </div>
@@ -710,8 +634,8 @@ export default function Page() {
                       {item.customer_name}
                     </div>
                     <div className="text-sm text-gray-500">
-                      Score: {item.churnRisk} | Renewal: {item.daysToRenewal}{" "}
-                      days
+                      Score: {item.churn_risk_score} | Renewal:{" "}
+                      {item.renewal_days} days
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
