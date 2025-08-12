@@ -68,7 +68,6 @@ export default function Dashboard() {
       customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [orgCustomerData?.customers, searchTerm])
-
   const getScoreColorClass = (
     score: number,
     type: "health" | "risk"
@@ -387,7 +386,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="mt-10 flex items-center justify-between rounded bg-white p-6 shadow">
+      <div className="mt-5 flex items-center justify-between rounded bg-white p-6 shadow">
         <div className="text-2xl font-bold ">Customer Success Dashboard</div>
         {/* Filters */}
         {/* <div className="flex justify-end space-x-2">
@@ -540,7 +539,7 @@ export default function Dashboard() {
                     "health"
                   )
                   const oppColor = getScoreColorClass(oppScore ?? 0, "health")
-
+                  console.log("-----", customer.arr)
                   return (
                     <tr
                       key={customer.id || index}
