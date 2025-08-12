@@ -17,6 +17,7 @@ export interface RiskMatrixPoint {
   segment: string
   csm: string
   priority: RiskPriority
+  arr: number
 }
 
 // New interfaces for the API response
@@ -159,7 +160,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
           },
           {
             label: "Revenue at Risk",
-            value: `$${data.previousMonth.revenueAtRisk}M`,
+            value: `$${data.previousMonth.revenueAtRisk}`,
             change: data.deltas?.revenueAtRiskPctChange
               ? `${data.deltas.revenueAtRiskPctChange > 0 ? "↑" : "↓"} ${Math.abs(data.deltas.revenueAtRiskPctChange).toFixed(1)}% vs last month`
               : "No change vs last month",
@@ -216,7 +217,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         const riskMatrix = data.highRiskCustomers.map(
           (customer: HighRiskCustomer) => ({
             company: customer.customer_name,
-            arr: customer.arr,
+            arr: customer.arr ? parseFloat(customer.arr) || 0 : 0,
             churnRisk: customer.churn_risk_score,
             daysToRenewal:
               customer.renewal_days === "N/A"
@@ -321,10 +322,11 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         let customers = data.riskMatrix.customers
 
         // Transform customers data to risk matrix format
-        const riskMatrix = customers.map((customer: any) => ({
+        const riskMatrix = data.highRiskCustomers.map((customer: any) => ({
           company: customer.customer_name,
+          arr: customer.arr ? parseFloat(customer.arr) || 0 : 0,
           churnRisk: customer.churn_risk_score,
-          daysToRenewal: customer.days_to_renewal || 0,
+          daysToRenewal: customer.renewal_days || 0,
           revenue: customer.arr || 0,
           segment: "Unknown", // Not provided in API
           csm: "Unknown", // Not provided in API
@@ -335,7 +337,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
               : "HEALTHY") as RiskPriority,
           riskColor: customer.risk_color || "#000000",
         }))
-        console.log("111111", riskMatrix)
 
         set({ riskMatrixData: riskMatrix })
       }
