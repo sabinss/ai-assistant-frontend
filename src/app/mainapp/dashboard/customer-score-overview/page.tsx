@@ -138,7 +138,7 @@ export default function Page() {
           yAxisID: "y",
         },
         {
-          label: "High Risk Customers (>70)",
+          label: "High Risk Customers (>60)",
           data: highRiskCustomers,
           borderColor: "#F59E0B",
           backgroundColor: "rgba(245, 158, 11, 0.1)",
