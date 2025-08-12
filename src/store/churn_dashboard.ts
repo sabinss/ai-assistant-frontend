@@ -135,6 +135,15 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         JSON.stringify(data, null, 2)
       )
 
+      // Debug distribution data
+      console.log("Distribution data sources:", {
+        distributionData: data.distributionData,
+        riskDistribution: data.riskDistribution,
+        previousMonthChurnRiskDistribution:
+          data.previousMonth?.churnRiskDistribution,
+        insightsRiskDistribution: data.insights?.riskDistribution,
+      })
+
       // Store the raw API data
       set({ apiData: data })
 
@@ -166,18 +175,37 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
 
         set({ metricsData: metrics })
 
-        // Update distribution data
+        // Update distribution data - check multiple possible locations
         if (Array.isArray(data.distributionData)) {
           set({ distributionData: data.distributionData })
-        }
-
-        // Check if distribution data is in a different location
-        if (data.riskDistribution) {
+        } else if (data.riskDistribution) {
           // Transform riskDistribution to distributionData format
           const distribution = [
-            data.riskDistribution.healthy || 0,
+            data.riskDistribution.veryLow || 0,
+            data.riskDistribution.low || 0,
+            data.riskDistribution.medium || 0,
             data.riskDistribution.high || 0,
             data.riskDistribution.critical || 0,
+          ]
+          set({ distributionData: distribution })
+        } else if (data.previousMonth?.churnRiskDistribution) {
+          // Use the churnRiskDistribution from previousMonth if available
+          const distribution = [
+            data.previousMonth.churnRiskDistribution.veryLow || 0,
+            data.previousMonth.churnRiskDistribution.low || 0,
+            data.previousMonth.churnRiskDistribution.medium || 0,
+            data.previousMonth.churnRiskDistribution.high || 0,
+            data.previousMonth.churnRiskDistribution.critical || 0,
+          ]
+          set({ distributionData: distribution })
+        } else if (data.insights?.riskDistribution) {
+          // Use the riskDistribution from insights if available
+          const distribution = [
+            data.insights.riskDistribution.veryLow || 0,
+            data.insights.riskDistribution.low || 0,
+            data.insights.riskDistribution.medium || 0,
+            data.insights.riskDistribution.high || 0,
+            data.insights.riskDistribution.critical || 0,
           ]
           set({ distributionData: distribution })
         }
@@ -230,6 +258,18 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
             },
           ]
           set({ metricsData: metrics })
+
+          // Also set distribution data for pie chart
+          if (data.riskDistribution) {
+            const distribution = [
+              data.riskDistribution.veryLow || 0,
+              data.riskDistribution.low || 0,
+              data.riskDistribution.medium || 0,
+              data.riskDistribution.high || 0,
+              data.riskDistribution.critical || 0,
+            ]
+            set({ distributionData: distribution })
+          }
         }
       }
 
@@ -237,8 +277,16 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       if (Array.isArray(data.metricsData)) {
         set({ metricsData: data.metricsData })
       }
-      if (Array.isArray(data.distributionData)) {
-        set({ distributionData: data.distributionData })
+
+      // Final fallback for distribution data if still not set
+      if (
+        !Array.isArray(data.distributionData) &&
+        !data.riskDistribution &&
+        !data.previousMonth?.churnRiskDistribution &&
+        !data.insights?.riskDistribution
+      ) {
+        console.log("No distribution data found, setting default empty array")
+        set({ distributionData: [0, 0, 0, 0, 0] })
       }
       console.log("trendData----**", data.trendData)
       if (data.trendData && Array.isArray(data.trendData)) {
