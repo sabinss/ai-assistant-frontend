@@ -7,9 +7,10 @@ import { useEffect, useState, useMemo } from "react"
 import { MdKeyboardArrowRight } from "react-icons/md"
 import CustomerSlideIn from "./CustomerSlideIn"
 import useOrgCustomer from "@/store/organization_customer"
-import { formatDate } from "date-fns"
 import useNavBarStore from "@/store/store"
 import { trackEvent } from "@/utility/tracking"
+import { useRouter } from "next/navigation"
+import { useChurnDashboardStore } from "@/store/churn_dashboard"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
@@ -23,13 +24,41 @@ export default function Dashboard() {
     clearCustomerConversationMessages,
   } = useOrgCustomer()
   const { botName } = useNavBarStore()
+  const router = useRouter()
+  const fetchHighRiskChurnStats = useChurnDashboardStore(
+    (s) => s.fetchHighRiskChurnStats
+  )
+  const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  const [stats, setStats] = useState([
-    { title: "Total Customers", value: "0", subtitle: "Active accounts" },
-    { title: "Health Score Average", value: "0", subtitle: "" },
-    { title: "At-Risk Customers", value: "0", subtitle: "" },
-    { title: "Expansion Opportunities", value: "0", subtitle: "" },
+  const [stats, setStats] = useState<
+    Array<{
+      id: string
+      title: string
+      value: string
+      subtitle: string
+      arrValue?: string
+    }>
+  >([
+    {
+      id: "total",
+      title: "Total Customers",
+      value: "0",
+      subtitle: "Active accounts",
+    },
+    {
+      id: "healthAvg",
+      title: "Health Score Average",
+      value: "0",
+      subtitle: "",
+    },
+    { id: "atRisk", title: "At-Risk Customers", value: "0", subtitle: "" },
+    {
+      id: "expansion",
+      title: "Expansion Opportunities",
+      value: "0",
+      subtitle: "",
+    },
   ])
 
   const filteredCustomers = useMemo(() => {
@@ -59,7 +88,7 @@ export default function Dashboard() {
 
   function formatDate(dateStr: string) {
     const date = new Date(dateStr)
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
       month: "short",
       day: "numeric",
       hour: "numeric",
@@ -173,6 +202,8 @@ export default function Dashboard() {
     let customersWithHealthScore = 0
     let atRiskCustomers = 0
     let expansionCount = 0
+    let atRiskCustomersARR = 0
+    let atRiskCustomersWithARR = 0
 
     customers.forEach((customer: any) => {
       const redshift = customer?.redShiftCustomer
@@ -186,6 +217,11 @@ export default function Dashboard() {
         // Risk calculation
         if (redshift.churn_risk_score >= 70) {
           atRiskCustomers++
+          // Calculate ARR for at-risk customers
+          if (customer.arr && !isNaN(parseFloat(customer.arr))) {
+            atRiskCustomersARR += parseFloat(customer.arr)
+            atRiskCustomersWithARR++
+          }
         }
 
         // Expansion calculation
@@ -200,24 +236,34 @@ export default function Dashboard() {
         ? (totalHealthScore / customersWithHealthScore).toFixed(1)
         : "0"
 
+    const atRiskAverageARR =
+      atRiskCustomersWithARR > 0
+        ? (atRiskCustomersARR / atRiskCustomersWithARR).toFixed(0)
+        : "0"
+
     setStats([
       {
+        id: "total",
         title: "Total Customers",
         value: totalCustomers.toString(),
         subtitle: "Active accounts",
       },
       {
+        id: "healthAvg",
         title: "Health Score Average",
         value: healthScoreAverage,
         subtitle: "",
         // 5 points vs last month
       },
       {
+        id: "atRisk",
         title: "At-Risk Customers",
         value: atRiskCustomers.toString(),
         subtitle: `${((atRiskCustomers / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+        arrValue: `$${atRiskAverageARR}`,
       },
       {
+        id: "expansion",
         title: "Expansion Opportunities",
         value: expansionCount.toString(),
         subtitle: `${((expansionCount / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
@@ -350,12 +396,62 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (
           <div
-            key={stat.title}
-            className="rounded-xl border bg-white p-4 shadow-sm"
+            key={stat.id}
+            className={`rounded-xl border bg-white p-4 shadow-sm ${
+              stat.id === "atRisk" ? "cursor-pointer hover:shadow-md" : ""
+            }`}
+            onClick={async () => {
+              console.log("stat", stat)
+              if (stat.id === "atRisk") {
+                console.log("Click: atRisk card (handler start)")
+                try {
+                  console.log("Calling store action fetchHighRiskChurnStats")
+                  await useChurnDashboardStore
+                    .getState()
+                    .fetchHighRiskChurnStats(access_token || "")
+                  console.log("Store action resolved; navigating")
+                  router.push("/mainapp/dashboard/customer-score-overview")
+                } catch (e) {
+                  console.error("fetchHighRiskChurnStats failed", e)
+                  router.push("/mainapp/dashboard/customer-score-overview")
+                }
+              } else if (stat.id === "total") {
+                setSelectedCustomer(null)
+              } else {
+                setSelectedCustomer(stat)
+              }
+            }}
           >
-            <div className="text-sm text-gray-500">{stat.title}</div>
-            <div className="m-2 text-2xl font-bold">{stat.value}</div>
-            <div className="mt-1 text-xs text-gray-400">{stat.subtitle}</div>
+            {stat.id === "atRisk" ? (
+              <div>
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-500">{stat.title}</div>
+                  <div className="text-sm text-gray-500">ARR</div>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="m-2 text-2xl font-bold">
+                    {stat.id === "atRisk" && churnLoading
+                      ? "Loading..."
+                      : stat.value}
+                  </div>
+                  <div>{stat.arrValue}</div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div className="text-sm text-gray-500">{stat.title}</div>
+                <div className="m-2 text-2xl font-bold">
+                  {stat.id === "atRisk" && churnLoading
+                    ? "Loading..."
+                    : stat.value}
+                </div>
+
+                <div className="mt-1 text-xs text-gray-400">
+                  {stat.subtitle}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
