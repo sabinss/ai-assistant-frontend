@@ -50,17 +50,17 @@ export default function Page() {
   const metrics = useChurnDashboardStore((s) => s.metricsData) || []
   const distribution = useChurnDashboardStore((s) => s.distributionData) || []
   const trendData = useChurnDashboardStore((s) => s.trendData) || []
-  console.log("trendData from store----", trendData)
   const riskMatrixData = useChurnDashboardStore((s) => s.riskMatrixData) || []
+  const highRiskCustomers =
+    useChurnDashboardStore((s) => s.highRiskCustomers) || []
+  console.log("highRiskCustomers----", highRiskCustomers)
   const isLoading = useChurnDashboardStore((s) => s.isLoading) || false
   const error = useChurnDashboardStore((s) => s.error) || null
   const apiData = useChurnDashboardStore((s) => s.apiData) || null
   const fetchHighRiskChurnStats = useChurnDashboardStore(
     (s) => s.fetchHighRiskChurnStats
   )
-  const populateWithDemoData = useChurnDashboardStore(
-    (s) => s.populateWithDemoData
-  )
+  const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const immediateActionItems = useMemo(() => {
     if (!riskMatrixData || riskMatrixData.length === 0) {
@@ -93,6 +93,19 @@ export default function Page() {
     }).format(value)
   }
 
+  // Calculate bubble size based on churn score
+  const getBubbleSize = (churnScore: number) => {
+    // Base size: 6px, max size: 18px
+    // Higher churn scores = bigger bubbles
+    return Math.max(6, Math.min(18, 6 + (churnScore / 100) * 12))
+  }
+
+  // Calculate hover size based on churn score
+  const getHoverSize = (churnScore: number) => {
+    // Hover size is 1.5x the base size
+    return getBubbleSize(churnScore) * 1.5
+  }
+
   // Transform monthly trend data to Chart.js format
   const transformedTrendData = useMemo(() => {
     if (!trendData || !Array.isArray(trendData) || trendData.length === 0) {
@@ -104,7 +117,6 @@ export default function Page() {
 
     // Use the trendData directly from API - it already has the correct structure
     const labels = trendData.map((item) => item.monthName)
-    console.log("labels----", labels)
     const avgChurnScores = trendData.map((item) => item.avgChurnScore || 0)
     const highRiskCustomers = trendData.map(
       (item) => item.highRiskCustomers || 0
@@ -141,15 +153,6 @@ export default function Page() {
       ],
     }
   }, [trendData])
-
-  // Fetch data on component mount
-  useEffect(() => {
-    // For demo purposes, populate with sample data
-    // In a real app, you'd call fetchHighRiskChurnStats with an access token
-    if (populateWithDemoData) {
-      populateWithDemoData()
-    }
-  }, [populateWithDemoData])
 
   // Donut Chart
   useEffect(() => {
@@ -214,7 +217,6 @@ export default function Page() {
     if (!lineRef.current || isLoading) {
       return
     }
-    console.log("transformedTrendData***", transformedTrendData)
     const ctx = lineRef.current.getContext("2d")
 
     if (lineInstanceRef.current) {
@@ -387,6 +389,7 @@ export default function Page() {
       scatterInstanceRef.current.destroy()
     }
 
+    // Group customers by priority
     const critical = riskMatrixData.filter((p) => p.priority === "CRITICAL")
     const high = riskMatrixData.filter((p) => p.priority === "HIGH")
     const healthy = riskMatrixData.filter((p) => p.priority === "HEALTHY")
@@ -404,7 +407,9 @@ export default function Page() {
             })),
             pointBackgroundColor: "#EF4444",
             pointBorderColor: "#EF4444",
-            pointRadius: 5,
+            pointRadius: critical.map((p) => getBubbleSize(p.churnRisk)), // Dynamic size based on churn score
+            pointHoverRadius: critical.map((p) => getHoverSize(p.churnRisk)),
+            pointBorderWidth: 2,
           },
           {
             label: "High",
@@ -413,9 +418,11 @@ export default function Page() {
               y: p.churnRisk,
               meta: p,
             })),
-            pointBackgroundColor: "#F97316",
-            pointBorderColor: "#F97316",
-            pointRadius: 5,
+            pointBackgroundColor: "#F59E0B",
+            pointBorderColor: "#F59E0B",
+            pointRadius: high.map((p) => getBubbleSize(p.churnRisk)), // Dynamic size based on churn score
+            pointHoverRadius: high.map((p) => getHoverSize(p.churnRisk)),
+            pointBorderWidth: 2,
           },
           {
             label: "Healthy",
@@ -426,7 +433,9 @@ export default function Page() {
             })),
             pointBackgroundColor: "#10B981",
             pointBorderColor: "#10B981",
-            pointRadius: 5,
+            pointRadius: healthy.map((p) => getBubbleSize(p.churnRisk)), // Dynamic size based on churn score
+            pointHoverRadius: healthy.map((p) => getHoverSize(p.churnRisk)),
+            pointBorderWidth: 2,
           },
         ],
       },
@@ -451,11 +460,11 @@ export default function Page() {
               label: (ctx) => {
                 const p: any = ctx.raw
                 const m = p.meta
-                return ` ${m.company} | Risk ${m.churnRisk} | ${m.daysToRenewal} days`
+                return `${m.company} | Risk: ${m.churnRisk} | Renewal: ${m.daysToRenewal} days`
               },
               afterLabel: (ctx) => {
                 const m: any = (ctx.raw as any).meta
-                return `Revenue: $${m.revenue.toLocaleString()}\nSegment: ${m.segment}\nCSM: ${m.csm}\nPriority: ${m.priority}`
+                return `ARR: $${m.revenue.toLocaleString()}\nPriority: ${m.priority}`
               },
               title: () => "",
             },
@@ -471,8 +480,8 @@ export default function Page() {
           y: {
             title: { display: true, text: "Churn Risk Score" },
             border: { display: false },
-            suggestedMin: 70,
-            suggestedMax: 95,
+            suggestedMin: 0,
+            suggestedMax: 100,
             grid: { color: "rgba(17, 24, 39, 0.08)" },
             ticks: { color: "#6B7280", font: { size: 12 } },
           },
@@ -626,6 +635,13 @@ export default function Page() {
         </div>
       )}
 
+      {/* Debug: Show distribution data */}
+      <div className="rounded-xl bg-gray-50 p-4 text-sm">
+        <h3 className="mb-2 font-semibold">Distribution Data Debug:</h3>
+        <p>distribution length: {distribution?.length || 0}</p>
+        <p>distribution data: {JSON.stringify(distribution)}</p>
+      </div>
+
       {/* Line Chart */}
       {transformedTrendData &&
         transformedTrendData.datasets &&
@@ -638,17 +654,10 @@ export default function Page() {
           </div>
         )}
 
-      {/* Debug: Show data structure */}
-      <div className="rounded-xl bg-gray-50 p-4 text-sm">
-        <h3 className="mb-2 font-semibold">Debug Info:</h3>
-        <p>
-          trendData type:{" "}
-          {Array.isArray(trendData) ? "Array" : typeof trendData}
-        </p>
-        <p>
-          trendData length:{" "}
-          {Array.isArray(trendData) ? trendData.length : "N/A"}
-        </p>
+      {/* Debug: Show line chart data */}
+      {/* <div className="rounded-xl bg-gray-50 p-4 text-sm">
+        <h3 className="mb-2 font-semibold">Line Chart Debug:</h3>
+        <p>transformedTrendData exists: {!!transformedTrendData}</p>
         <p>
           transformedTrendData datasets:{" "}
           {transformedTrendData?.datasets?.length || 0}
@@ -657,51 +666,7 @@ export default function Page() {
           transformedTrendData labels:{" "}
           {transformedTrendData?.labels?.length || 0}
         </p>
-        {Array.isArray(trendData) && trendData.length > 0 && (
-          <div className="mt-2">
-            <p>Sample trendData item:</p>
-            <pre className="rounded bg-white p-2 text-xs">
-              {JSON.stringify(trendData[0], null, 2)}
-            </pre>
-          </div>
-        )}
-
-        {/* Test button to populate sample data */}
-        <button
-          onClick={() => {
-            const sampleData = [
-              {
-                month: 1,
-                monthName: "Jan",
-                totalCustomers: 5,
-                highRiskCustomers: 2,
-                avgChurnScore: 45.5,
-                highRiskARR: 25000,
-              },
-              {
-                month: 2,
-                monthName: "Feb",
-                totalCustomers: 8,
-                highRiskCustomers: 3,
-                avgChurnScore: 52.3,
-                highRiskARR: 35000,
-              },
-              {
-                month: 3,
-                monthName: "Mar",
-                totalCustomers: 12,
-                highRiskCustomers: 5,
-                avgChurnScore: 68.7,
-                highRiskARR: 45000,
-              },
-            ]
-            useChurnDashboardStore.setState({ trendData: sampleData })
-          }}
-          className="mt-2 rounded bg-blue-500 px-3 py-1 text-xs text-white"
-        >
-          Load Sample Data
-        </button>
-      </div>
+      </div> */}
 
       {/* Scatter Chart */}
       {riskMatrixData && riskMatrixData.length > 0 && (
@@ -713,12 +678,24 @@ export default function Page() {
         </div>
       )}
 
+      {/* Debug: Show scatter chart data */}
+      {/* <div className="rounded-xl bg-gray-50 p-4 text-sm">
+        <h3 className="mb-2 font-semibold">Scatter Chart Debug:</h3>
+        <p>riskMatrixData length: {riskMatrixData?.length || 0}</p>
+        <p>
+          riskMatrixData sample:{" "}
+          {riskMatrixData.length > 0
+            ? JSON.stringify(riskMatrixData[0])
+            : "No data"}
+        </p>
+      </div> */}
+
       {/* Immediate Action Required */}
-      {immediateActionItems && immediateActionItems.length > 0 && (
+      {highRiskCustomers && highRiskCustomers.length > 0 && (
         <div className="rounded-xl bg-white p-6 shadow">
           {renderSectionTitle("Immediate Action Required")}
           <div className="space-y-4">
-            {immediateActionItems.map((item: any, idx) => {
+            {highRiskCustomers.map((item: any, idx) => {
               const isCritical = item.priority === "CRITICAL"
               const pillClasses = isCritical
                 ? "bg-red-100 text-red-700"
@@ -730,7 +707,7 @@ export default function Page() {
                 >
                   <div>
                     <div className="font-semibold text-gray-800">
-                      {item.company}
+                      {item.customer_name}
                     </div>
                     <div className="text-sm text-gray-500">
                       Score: {item.churnRisk} | Renewal: {item.daysToRenewal}{" "}
