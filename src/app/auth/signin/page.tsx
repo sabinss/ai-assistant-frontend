@@ -172,7 +172,7 @@ export default function page() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <b>Master Subscription Agreement</b>
+              <b>Terms of Service</b>
             </Link>
           </span>
           <span> and </span>

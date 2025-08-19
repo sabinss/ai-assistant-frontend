@@ -90,52 +90,7 @@ export const MessageDiv = ({ msg }: any) => {
     return updatedParagraph
   }
 
-  // const cleanAndConvertMessage = (message: string) => {
-  //   if (message) {
-  //     // Remove HTML tags
-  //     // const strippedMessage = message?.replace(/<\/?[^>]+(>|$)/g, "")
-
-  //     // Convert Markdown to HTML
-  //     const sanitizedMessage = message.replace(/\\`/g, "`")
-  //     const htmlMessage = marked(sanitizedMessage)
-
-  //     return htmlMessage
-  //   } else {
-  //     return ""
-  //   }
-  // }
-  // const cleanAndConvertMessage = (message: string) => {
-  //   if (message) {
-  //     try {
-  //       // Remove HTML tags if needed (optional)
-  //       const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
-
-  //       // Detect and extract the Markdown from the code block
-  //       const codeBlockRegex = /```markdown([\s\S]*?)```/
-  //       const match = strippedMessage.match(codeBlockRegex)
-
-  //       let contentToParse = strippedMessage
-  //       if (match) {
-  //         // Use only the content inside the code block
-  //         contentToParse = match[1].trim()
-  //       }
-
-  //       // Convert Markdown to HTML
-  //       const htmlMessage = marked(contentToParse)
-
-  //       return htmlMessage
-  //     } catch (error) {
-  //       console.error("Error parsing Markdown:", error)
-  //       return "Error parsing content."
-  //     }
-  //   } else {
-  //     return ""
-  //   }
-  // }
   const cleanAndConvertMessage = (message: string) => {
-    console.log("------")
-    console.log("msg.message", msg.message)
-    console.log("------")
     if (!message) return ""
 
     try {

@@ -11,6 +11,7 @@ import useNavBarStore from "@/store/store"
 import { trackEvent } from "@/utility/tracking"
 import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
+import { formatCurrency } from "@/utility"
 
 export default function Dashboard() {
   const [loading, setLoading] = useState(false)
@@ -158,7 +159,8 @@ export default function Dashboard() {
 
         const customers = customersRes.data?.customers || []
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
-
+        console.log("111111", customers)
+        console.log("22222", redshiftCustomerDetails)
         // Create a Map for O(1) lookup instead of O(n) find operations
         const redshiftMap = new Map(
           redshiftCustomerDetails.map((detail: any) => [
@@ -195,7 +197,7 @@ export default function Dashboard() {
 
     const customers = orgCustomerData.customers
     const totalCustomers = customers.length
-    const threshold = 60
+    const threshold = 40
     // Calculate all metrics in a single pass for better performance
     let totalHealthScore = 0
     let customersWithHealthScore = 0
@@ -203,7 +205,6 @@ export default function Dashboard() {
     let expansionCount = 0
     let atRiskCustomersARR = 0
     let atRiskCustomersWithARR = 0
-    console.log("customers-----", customers)
     customers.forEach((customer: any) => {
       const redshift = customer?.redShiftCustomer
       if (redshift) {
@@ -214,7 +215,7 @@ export default function Dashboard() {
         }
 
         // Risk calculation
-        if (redshift.churn_risk_score >= threshold) {
+        if (redshift.churn_risk_score > threshold) {
           atRiskCustomers++
           // Calculate ARR for at-risk customers
           if (customer.arr && !isNaN(parseFloat(customer.arr))) {
@@ -433,7 +434,7 @@ export default function Dashboard() {
               <div>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-500">{stat.title}</div>
-                  <div className="text-sm text-gray-500">ARR</div>
+                  <div className="text-sm text-gray-500">ARRs</div>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -442,7 +443,8 @@ export default function Dashboard() {
                       ? "Loading..."
                       : stat.value}
                   </div>
-                  <div>{stat.arrValue}</div>
+                  {/* <div>{stat.arrValue}</div> */}
+                  <div>{formatCurrency(stat?.arrValue)}</div>
                 </div>
               </div>
             ) : (
@@ -539,7 +541,6 @@ export default function Dashboard() {
                     "health"
                   )
                   const oppColor = getScoreColorClass(oppScore ?? 0, "health")
-                  console.log("-----", customer.arr)
                   return (
                     <tr
                       key={customer.id || index}

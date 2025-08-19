@@ -1,5 +1,6 @@
 import { create } from "zustand"
 import http from "@/config/http"
+import { formatCurrency } from "@/utility"
 
 export interface ChurnMetricItem {
   label: string
@@ -160,7 +161,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
           },
           {
             label: "Revenue at Risk",
-            value: `$${data.previousMonth.revenueAtRisk}`,
+            // value: `$${data.previousMonth.revenueAtRisk} asdf`,
+            value: formatCurrency(data.previousMonth.revenueAtRisk),
             change: data.deltas?.revenueAtRiskPctChange
               ? `${data.deltas.revenueAtRiskPctChange > 0 ? "↑" : "↓"} ${Math.abs(data.deltas.revenueAtRiskPctChange).toFixed(1)}% vs last month`
               : "No change vs last month",
