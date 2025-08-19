@@ -6,6 +6,19 @@ import qs from "query-string"
 function parseMarkup(str: string) {
   return str.replace(/<[^>]*>/g, "")
 }
+
+function formatCurrency(amount: number) {
+  console.log("amount", amount)
+  if (!amount) return 0
+  const number = amount.toString().replace("$", "")
+  const UsDollar = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  })
+  return UsDollar.format(+number)
+}
+
+// let USDollar =
 function timeAgo(date: string) {
   const now = new Date()
   const givenDate = new Date(date)
@@ -58,4 +71,4 @@ const formUrlQuery = ({ params, key, value }: UrlQueryParams) => {
   )
 }
 
-export { parseMarkup, timeAgo, formUrlQuery }
+export { parseMarkup, timeAgo, formUrlQuery, formatCurrency }

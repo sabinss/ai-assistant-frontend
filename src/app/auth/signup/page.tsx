@@ -256,7 +256,7 @@ export default function Page() {
                     rel="noopener noreferrer"
                     className="text-blue-500 hover:underline"
                   >
-                    Master Subscription Agreement
+                    Terms of Service
                   </Link>
                 </span>
               </div>

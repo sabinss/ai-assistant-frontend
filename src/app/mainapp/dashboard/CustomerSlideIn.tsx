@@ -40,6 +40,8 @@ export default function CustomerSlideIn({
             headers: { Authorization: `Bearer ${access_token}` },
           }),
         ])
+        console.log("scoreResp---", scoreResp)
+        console.log("detailResp---", detailResp)
 
         let healthDrivers: any[] = []
         let churnDrivers: any[] = []
