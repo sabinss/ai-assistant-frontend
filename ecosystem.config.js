@@ -12,13 +12,17 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3000,
-        NEXT_PUBLIC_APP_URL: "http://52.200.128.96:3000",
-        NEXTAUTH_URL: "http://52.200.128.96:3000",
+        NEXT_PUBLIC_APP_URL:
+          process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",
         NEXT_PUBLIC_OPEN_API_KEY_FOR_CHAT:
-          "LzoxbGt7BQD_LZebon69EtwpUez-Zcmeblqd22L829OnMUP9WVyy0Q",
-        NEXT_PUBLIC_APP_VERSION: "api/v1",
-        NEXT_PUBLIC_OPEN_API_FOR_CHAT: "https://3.18.9.82/api",
-        NEXT_PUBLIC_APP_FE_URL: " http://52.200.128.96:3000",
+          process.env.NEXT_PUBLIC_OPEN_API_KEY_FOR_CHAT || "",
+        NEXT_PUBLIC_APP_VERSION:
+          process.env.NEXT_PUBLIC_APP_VERSION || "api/v1",
+        NEXT_PUBLIC_OPEN_API_FOR_CHAT:
+          process.env.NEXT_PUBLIC_OPEN_API_FOR_CHAT || "http://localhost:3000",
+        NEXT_PUBLIC_APP_FE_URL:
+          process.env.NEXT_PUBLIC_APP_FE_URL || "http://localhost:3000",
       },
       env_production: {
         NODE_ENV: "production",
