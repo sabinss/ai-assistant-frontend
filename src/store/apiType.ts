@@ -8,7 +8,6 @@ type ApiType = {
 const useApiType = create<ApiType>((set) => ({
   apiType: "Product Knowledge",
   setApiType: (apiType: string) => {
-    console.log("setting type to ", apiType)
     set({ apiType })
   },
 }))
