@@ -18,20 +18,16 @@ function getGoogleOAuthURL(orgId: any) {
     ].join(" "),
   }
 
-  console.log("options", options)
-  const qs = new URLSearchParams(options)
-  console.log("qs", qs.toString())
+  const qs = new URLSearchParams({
+    client_id: options.client_id,
+    redirect_uri: options.redirect_uri,
+    scope: options.scope,
+    response_type: options.response_type,
+    access_type: options.access_type,
+    prompt: options.prompt,
+  })
+
   return `${rootURL}?${qs.toString()}`
 }
 
 export { getGoogleOAuthURL }
-// let params = {
-//   client_id: CLIENT_ID,
-//   redirect_uri: `${DEPLOYMENT_ENVIRONMENT === "dev" ? "http://localhost:4321" : "https://demo.instwise.app"}/oauthcallback`,
-//   scope: "openid profile email https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.compose",
-//   include_granted_scopes: "true",
-//   response_type: "code",
-//   state: "auth_flow",
-//   access_type: "offline",
-//   prompt: "consent",
-// };

@@ -1,3 +1,0 @@
-curl ifconfig.me   -> to check if ec2 has elastic ip or not
-
-  hostname -I  > to find private ip of ec2
