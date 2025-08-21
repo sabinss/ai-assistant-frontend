@@ -8,7 +8,6 @@ function parseMarkup(str: string) {
 }
 
 function formatCurrency(amount: number) {
-  console.log("amount", amount)
   if (!amount) return 0
   const number = amount.toString().replace("$", "")
   const UsDollar = new Intl.NumberFormat("en-US", {
@@ -22,7 +21,7 @@ function formatCurrency(amount: number) {
 function timeAgo(date: string) {
   const now = new Date()
   const givenDate = new Date(date)
-  const secondsDiff = Math.floor((now - givenDate) / 1000) // Difference in seconds
+  const secondsDiff = Math.floor((now.getTime() - givenDate.getTime()) / 1000) // Difference in seconds
 
   if (secondsDiff < 60) {
     return `${secondsDiff} seconds ago`
