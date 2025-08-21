@@ -49,6 +49,9 @@ export const AgentTable = () => {
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
     active: false,
+    batch_process_enabled: false,
+    batch_size: 1,
+    batch_scope: "",
   })
   const [isAddNew, setAddNew] = useState(false)
   const [isAgentLoading, setAgentLoading] = useState(false)
@@ -179,7 +182,6 @@ export const AgentTable = () => {
   const handleCancel = () => {
     setIsEditing(false)
   }
-
   return (
     <div className="relative mb-10 w-full overflow-y-auto rounded-md bg-white p-4 text-[#333333]">
       {isEditing ? (
@@ -356,6 +358,67 @@ export const AgentTable = () => {
                   })
                 }}
               />
+            </div>
+
+            <div className="mb-4">
+              <div className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="batch-process-enabled"
+                    checked={formData.batch_process_enabled}
+                    onChange={(e) => {
+                      setFormData({
+                        ...formData,
+                        batch_process_enabled: e.target.checked,
+                      })
+                    }}
+                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label className="block font-medium">
+                    Flag Batch Process
+                  </label>
+                </div>
+
+                {formData.batch_process_enabled && (
+                  <>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Batch Size
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={formData.batch_size}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            batch_size: parseInt(e.target.value) || 1,
+                          })
+                        }}
+                        className="w-full rounded border p-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Scope
+                      </label>
+                      <textarea
+                        className="h-20 w-full rounded border p-2"
+                        placeholder="Enter batch process scope..."
+                        value={formData.batch_scope}
+                        onChange={(e) => {
+                          setFormData({
+                            ...formData,
+                            batch_scope: e.target.value,
+                          })
+                        }}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="mb-4">
