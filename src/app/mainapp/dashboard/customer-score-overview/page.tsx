@@ -396,28 +396,7 @@ export default function Page() {
     const critical = riskMatrixData.filter((p) => p.priority === "CRITICAL")
     const high = riskMatrixData.filter((p) => p.priority === "HIGH")
     const healthy = riskMatrixData.filter((p) => p.priority === "HEALTHY")
-    console.log("critical", critical)
-    console.log("high", high)
-    console.log("healthy", healthy)
 
-    // Debug ARR values for bubble sizing
-    console.log("ARR values for bubble sizing:", {
-      critical: critical.map((p) => ({
-        company: p.company,
-        arr: p.arr,
-        bubbleSize: getBubbleSize(p.arr),
-      })),
-      high: high.map((p) => ({
-        company: p.company,
-        arr: p.arr,
-        bubbleSize: getBubbleSize(p.arr),
-      })),
-      healthy: healthy.map((p) => ({
-        company: p.company,
-        arr: p.arr,
-        bubbleSize: getBubbleSize(p.arr),
-      })),
-    })
     scatterInstanceRef.current = new Chart(ctx, {
       type: "scatter",
       data: {

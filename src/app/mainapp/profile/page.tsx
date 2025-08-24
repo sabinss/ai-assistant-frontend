@@ -73,7 +73,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
-        console.log("res", res.data)
         if (res?.data?.success) {
           setGoogleLoginUser(res.data.data.email)
           setGoogleLogin(true)
@@ -81,7 +80,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         setCheckingGoogleUser(false)
       }
     } catch (err) {
-      console.log(err)
       setCheckingGoogleUser(false)
     }
   }
@@ -114,10 +112,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         setIsLoading(true)
         console.log("Fetching data with token:", access_token)
 
-        console.log("Making API calls to:", {
-          profileUrl: `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/user/profile`,
-          statusUrl: `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/status`,
-        })
         const userData = await http.get(`/user/profile`, {
           headers: {
             Authorization: `Bearer ${access_token}`,
