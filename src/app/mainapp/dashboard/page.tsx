@@ -98,8 +98,6 @@ export default function Dashboard() {
     return new Intl.DateTimeFormat("en-US", options).format(date)
   }
   useEffect(() => {
-    console.log("selectedCustomer", selectedCustomer?._id)
-
     async function getCustomerConversationMessage() {
       try {
         const res = await http.get(
@@ -128,7 +126,6 @@ export default function Dashboard() {
             disliked: message.liked_disliked === "disliked",
           })
         })
-        console.log("messageArray", messages)
         setCustomerConversationMessage(messages)
       } catch (error) {
         console.error("Error fetching user messages:", error)
@@ -159,8 +156,6 @@ export default function Dashboard() {
 
         const customers = customersRes.data?.customers || []
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
-        console.log("111111", customers)
-        console.log("22222", redshiftCustomerDetails)
         // Create a Map for O(1) lookup instead of O(n) find operations
         const redshiftMap = new Map(
           redshiftCustomerDetails.map((detail: any) => [
@@ -336,17 +331,12 @@ export default function Dashboard() {
         buffer += decoder.decode(value, { stream: true })
         const lines = buffer.split("\n\n")
         buffer = lines.pop() || ""
-        console.log({ buffer })
 
         for (const line of lines) {
-          console.log({ line })
-
           if (line.trim() && line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.substring(6))
-              console.log({ data })
               if (data.done) {
-                console.log("✅ Final response:", data)
                 finalResponse = data // <- ✅ capture final response
               } else {
                 console.log("🔄 Partial chunk:", data)
@@ -409,18 +399,13 @@ export default function Dashboard() {
               stat.id === "atRisk" ? "cursor-pointer hover:shadow-md" : ""
             }`}
             onClick={async () => {
-              console.log("stat", stat)
               if (stat.id === "atRisk") {
-                console.log("Click: atRisk card (handler start)")
                 try {
-                  console.log("Calling store action fetchHighRiskChurnStats")
                   await useChurnDashboardStore
                     .getState()
                     .fetchHighRiskChurnStats(access_token || "")
-                  console.log("Store action resolved; navigating")
                   router.push("/mainapp/dashboard/customer-score-overview")
                 } catch (e) {
-                  console.error("fetchHighRiskChurnStats failed", e)
                   router.push("/mainapp/dashboard/customer-score-overview")
                 }
               } else if (stat.id === "total") {

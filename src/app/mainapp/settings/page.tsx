@@ -81,7 +81,6 @@ export default function Page() {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
-        console.log("orgData------", orgData)
         setOrganizationData(orgData)
         setOrgSetting({
           database_name: orgData?.database_name ?? "",
@@ -135,7 +134,6 @@ export default function Page() {
   }
   const handleSubmit = async () => {
     try {
-      console.log("whatsappConfig", whatsappConfig)
       setIsLoading(true)
       // let hasError = false
       // // Reset errors
