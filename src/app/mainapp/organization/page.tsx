@@ -34,7 +34,6 @@ export default function Edit() {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       const org_data = response?.data?.org
-      console.log({ org_data })
       setOrganizationId(org_data._id)
       setAssistantName(org_data.assistant_name)
       setBotName(org_data.assistant_name)

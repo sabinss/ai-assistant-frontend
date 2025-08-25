@@ -214,7 +214,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         }
 
         // Transform high risk customers to risk matrix format
-        console.log("highRiskCustomers----", data.highRiskCustomers)
         set({ highRiskCustomers: data.highRiskCustomers })
         const riskMatrix = data.highRiskCustomers.map(
           (customer: HighRiskCustomer) => ({
@@ -291,7 +290,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         console.log("No distribution data found, setting default empty array")
         set({ distributionData: [0, 0, 0, 0, 0] })
       }
-      console.log("trendData----**", data.trendData)
       if (data.trendData && Array.isArray(data.trendData)) {
         set({ trendData: data.trendData })
       } else {

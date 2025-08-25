@@ -50,7 +50,7 @@ export const AgentTable = () => {
     tasks: [], // Array to store instructions dynamically
     active: false,
     batch_process_enabled: false,
-    batch_size: 1,
+    batch_size: null,
     batch_scope: "",
   })
   const [isAddNew, setAddNew] = useState(false)
@@ -375,9 +375,7 @@ export const AgentTable = () => {
                     }}
                     className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <label className="block font-medium">
-                    Flag Batch Process
-                  </label>
+                  <label className="block font-medium">Batch Process</label>
                 </div>
 
                 {formData.batch_process_enabled && (
@@ -391,9 +389,10 @@ export const AgentTable = () => {
                         min="1"
                         value={formData.batch_size}
                         onChange={(e) => {
+                          console.log("batch size", e.target.value)
                           setFormData({
                             ...formData,
-                            batch_size: parseInt(e.target.value) || 1,
+                            batch_size: e.target.value,
                           })
                         }}
                         className="w-full rounded border p-2"

@@ -103,7 +103,6 @@ http.getPdfList = async (
     limit: limit || 10,
   }
   const url = `${process.env.NEXT_PUBLIC_OPEN_API_FOR_CHAT}/assistant/get-pdfs-list?company_id=${params.company_id}&page=${params.page}&search=${params.search}&sortField=${params.sortField}&sortDirection=${params.sortDirection}&limit=${params.limit}`
-  console.log("url", url)
   try {
     const response = await http.get(url, { headers })
     return response?.data

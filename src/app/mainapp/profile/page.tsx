@@ -24,7 +24,7 @@ interface FormData {
 }
 
 export default function EditProfile({ params }: { params: { id: string } }) {
-  const { user_data, access_token } = useAuth() // Call useAuth here
+  const { user_data, access_token, _hasHydrated } = useAuth() // Call useAuth here
   const [showChange, setShowChange] = useState(false)
   const user_id = params.id
   const [showNewPassword, setShowNewPassword] = useState(false)
@@ -35,6 +35,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const [checkingGoogleUser, setCheckingGoogleUser] = useState(false)
   const [googleLoggedInUser, setGoogleLoginUser] = useState<null>(null)
   const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     checkGoogleLoggedInUser()
@@ -72,7 +73,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
-        console.log("res", res.data)
         if (res?.data?.success) {
           setGoogleLoginUser(res.data.data.email)
           setGoogleLogin(true)
@@ -80,7 +80,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         setCheckingGoogleUser(false)
       }
     } catch (err) {
-      console.log(err)
       setCheckingGoogleUser(false)
     }
   }
@@ -96,20 +95,39 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const router = useRouter()
 
   useEffect(() => {
+    console.log("Profile page useEffect triggered", {
+      hasHydrated: _hasHydrated,
+      accessToken: access_token ? "Available" : "Not available",
+      userData: user_data ? "Available" : "Not available",
+    })
+
     async function fetchData() {
       try {
-        const [userData, statusData] = await Promise.all([
-          http.get(`/user/profile`, {
-            headers: {
-              Authorization: `Bearer ${access_token}`,
-            },
-          }),
+        // Check if access_token is available
+        if (!access_token) {
+          console.log("No access token available")
+          return
+        }
+
+        setIsLoading(true)
+        console.log("Fetching data with token:", access_token)
+
+        const userData = await http.get(`/user/profile`, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        })
+        const [statusData] = await Promise.all([
           http.get("/status", {
             headers: {
               Authorization: `Bearer ${access_token}`,
             },
           }),
         ])
+
+        console.log("User data response:", userData)
+        console.log("Status data response:", statusData)
+
         const { first_name, last_name, email, status } = userData?.data?.user
         setValue("first_name", first_name)
         setValue("last_name", last_name)
@@ -121,14 +139,31 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             name: item.name,
           }))
         )
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch data", error)
-        toast.error("Failed to load data.")
+        console.error("Error details:", {
+          message: error?.message,
+          status: error?.response?.status,
+          data: error?.response?.data,
+        })
+        // More specific error message
+        if (error?.response?.status === 401) {
+          toast.error("Authentication failed. Please login again.")
+        } else if (error?.response?.status === 404) {
+          toast.error("User profile not found.")
+        } else {
+          toast.error("Failed to load data. Please try again.")
+        }
+      } finally {
+        setIsLoading(false)
       }
     }
 
-    fetchData()
-  }, [])
+    // Only fetch data when access_token is available
+    if (access_token) {
+      fetchData()
+    }
+  }, [access_token, setValue])
 
   const handlePasswordToggle = () => {
     setShowChange(!showChange)
@@ -165,9 +200,37 @@ export default function EditProfile({ params }: { params: { id: string } }) {
     window.location.href = url
   }
 
+  // Don't render until hydration is complete
+  if (!_hasHydrated) {
+    return (
+      <div className="w-full rounded-md bg-white p-4 text-[#333333]">
+        <div className="flex items-center justify-center">
+          <div className="text-blue-600">Loading...</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Check if user is authenticated
+  if (!access_token || !user_data) {
+    return (
+      <div className="w-full rounded-md bg-white p-4 text-[#333333]">
+        <div className="flex items-center justify-center">
+          <div className="text-red-600">Please login to view your profile</div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full rounded-md bg-white p-4 text-[#333333]">
       <p className="mb-6 text-2xl">Edit Profile</p>
+
+      {isLoading && (
+        <div className="mb-4 flex items-center justify-center">
+          <div className="text-blue-600">Loading profile data...</div>
+        </div>
+      )}
       {/* User Details */}
       <div className="userDetails flex flex-col gap-4 text-base">
         {/* Email */}
