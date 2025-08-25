@@ -18,9 +18,9 @@ export default function CustomerSlideIn({
   const [loading, setLoading] = useState(false)
   const [score, setScore] = useState<any[]>([])
   const [scoreDetails, setScoreDetails] = useState<any[]>([])
-  const health = customer?.redShiftCustomer?.health_score ?? 0
-  const churn = customer?.redShiftCustomer?.churn_risk_score ?? 0
-  const opp = customer?.redShiftCustomer?.expansion_opp_score ?? 0
+  const health = customer?.health_score ?? 0
+  const churn = customer?.churn_risk_score ?? 0
+  const opp = customer?.expansion_opp_score ?? 0
 
   const [scoreTabData, setScoreTabData] = useState<any>([])
   const [recommendedActions, setRecommendedActions] = useState<any>([])

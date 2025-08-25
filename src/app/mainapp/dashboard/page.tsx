@@ -32,6 +32,7 @@ export default function Dashboard() {
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  console.log("selectedCustomer", selectedCustomer)
   const [stats, setStats] = useState<
     Array<{
       id: string
@@ -66,7 +67,7 @@ export default function Dashboard() {
     if (!orgCustomerData?.customers) return []
 
     return orgCustomerData?.customers.filter((customer: any) =>
-      customer?.name.toLowerCase().includes(searchTerm.toLowerCase())
+      customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [orgCustomerData?.customers, searchTerm])
   const getScoreColorClass = (
@@ -144,35 +145,27 @@ export default function Dashboard() {
       try {
         setLoading(true)
 
-        // Make both API calls in parallel for better performance
-        const [customersRes, redshiftRes] = await Promise.all([
-          http.get(`/organization/${user_data.organization}/customers`, {
-            headers: { Authorization: `Bearer ${access_token}` },
-          }),
-          http.get(`/customer/redshift`, {
-            headers: { Authorization: `Bearer ${access_token}` },
-          }),
-        ])
+        // Now only fetch from redshift as it contains all customer data
+        const redshiftRes = await http.get(`/customer/redshift`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
 
-        const customers = customersRes.data?.customers || []
+        console.log("redshiftRes > customers", redshiftRes)
+
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
-        // Create a Map for O(1) lookup instead of O(n) find operations
-        const redshiftMap = new Map(
-          redshiftCustomerDetails.map((detail: any) => [
-            detail.company_id,
-            detail,
-          ])
+        console.log("Redshift customer details:", redshiftCustomerDetails)
+
+        // Add _id field to each customer object for compatibility
+        const customersWithId = redshiftCustomerDetails.map(
+          (customer: any) => ({
+            ...customer,
+            _id: customer.company_id,
+          })
         )
 
-        // Merge data efficiently
-        const customerDetails = customers.map((customer: any) => ({
-          ...customer,
-          redShiftCustomer: redshiftMap.get(customer._id) || null,
-        }))
-
+        // Use redshift data directly as the customer data source
         const orgCustomerData = {
-          ...customersRes.data,
-          customers: customerDetails,
+          customers: customersWithId,
         }
 
         console.log("Customer list Dashboard", orgCustomerData)
@@ -201,28 +194,26 @@ export default function Dashboard() {
     let atRiskCustomersARR = 0
     let atRiskCustomersWithARR = 0
     customers.forEach((customer: any) => {
-      const redshift = customer?.redShiftCustomer
-      if (redshift) {
-        // Health score calculation
-        if (redshift.health_score) {
-          totalHealthScore += redshift.health_score
-          customersWithHealthScore++
-        }
+      // Now customer data comes directly from redshift, so no need for redShiftCustomer property
+      // Health score calculation
+      if (customer.health_score) {
+        totalHealthScore += customer.health_score
+        customersWithHealthScore++
+      }
 
-        // Risk calculation
-        if (redshift.churn_risk_score > threshold) {
-          atRiskCustomers++
-          // Calculate ARR for at-risk customers
-          if (customer.arr && !isNaN(parseFloat(customer.arr))) {
-            atRiskCustomersARR += parseFloat(customer.arr)
-            atRiskCustomersWithARR++
-          }
+      // Risk calculation
+      if (customer.churn_risk_score > threshold) {
+        atRiskCustomers++
+        // Calculate ARR for at-risk customers
+        if (customer.arr && !isNaN(parseFloat(customer.arr))) {
+          atRiskCustomersARR += parseFloat(customer.arr)
+          atRiskCustomersWithARR++
         }
+      }
 
-        // Expansion calculation
-        if (redshift.expansion_opp_score >= 70) {
-          expansionCount++
-        }
+      // Expansion calculation
+      if (customer.expansion_opp_score >= 70) {
+        expansionCount++
       }
     })
 
@@ -233,13 +224,13 @@ export default function Dashboard() {
 
     const atRiskAverageARR = customers
       .filter((x: any) => {
-        if (x.redShiftCustomer?.churn_risk_score > threshold) {
+        if (x.churn_risk_score > threshold) {
           return true
         }
       })
       .reduce((acc: number, customer: any) => {
-        if (customer.redShiftCustomer.churn_risk_score >= threshold) {
-          return acc + parseFloat(customer.redShiftCustomer.arr)
+        if (customer.churn_risk_score >= threshold) {
+          return acc + parseFloat(customer.arr)
         }
         return acc
       }, 0)
@@ -429,7 +420,11 @@ export default function Dashboard() {
                       : stat.value}
                   </div>
                   {/* <div>{stat.arrValue}</div> */}
-                  <div>{formatCurrency(stat?.arrValue)}</div>
+                  <div>
+                    {formatCurrency(
+                      stat?.arrValue ? parseFloat(stat.arrValue) : 0
+                    )}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -516,10 +511,9 @@ export default function Dashboard() {
                 </tr>
               ) : (
                 filteredCustomers.map((customer: any, index: number) => {
-                  const healthScore = customer?.redShiftCustomer?.health_score
-                  const riskScore = customer?.redShiftCustomer?.churn_risk_score
-                  const oppScore =
-                    customer?.redShiftCustomer?.expansion_opp_score
+                  const healthScore = customer?.health_score
+                  const riskScore = customer?.churn_risk_score
+                  const oppScore = customer?.expansion_opp_score
 
                   const healthColorClass = getScoreColorClass(
                     healthScore ?? 0,
@@ -574,12 +568,12 @@ export default function Dashboard() {
                           className="cursor-pointer"
                           onClick={() => {
                             // Track customer detail view
-                            trackEvent("dashboard_customer_detail", {
-                              email: user_data?.email,
-                              organization: user_data?.organization,
-                              customer_id: customer._id,
-                              customer_name: customer.name,
-                            })
+                            // trackEvent("dashboard_customer_detail", {
+                            //   email: user_data?.email,
+                            //   organization: user_data?.organization,
+                            //   customer_id: customer._id,
+                            //   customer_name: customer.name,
+                            // })
                             setSelectedCustomer(customer)
                           }}
                         />
