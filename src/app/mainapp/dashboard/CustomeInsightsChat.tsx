@@ -2,6 +2,9 @@ import useOrgCustomer from "@/store/organization_customer"
 import useNavBarStore from "@/store/store"
 import { useState } from "react"
 import { useEffect, useRef } from "react"
+import ReactMarkdown from "react-markdown"
+import rehypeRaw from "rehype-raw" // Allows rendering inline HTML inside Markdown
+import remarkGfm from "remark-gfm"
 
 export default function InsightsPanel({
   customer,
@@ -12,9 +15,9 @@ export default function InsightsPanel({
   const [localMessages, setLocalMessages] = useState<any[]>([])
   const { customerMessageSending } = useOrgCustomer()
   const { botName } = useNavBarStore()
-
   // Local function to handle chat messages
   const handleLocalChat = async (message: string) => {
+    setCustomerInsightsOpen(false)
     // Add user message to local state
     const userMessage = {
       sender: "user",
@@ -34,12 +37,48 @@ export default function InsightsPanel({
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Listen for new AI responses from the global store
-  const { customerConversationMessages } = useOrgCustomer()
+  const {
+    customerConversationMessages,
+    clearCustomerConversationMessages,
+    isCustomerInsightsOpen,
+    setCustomerInsightsOpen,
+    resetCustomerInsightsState,
+  } = useOrgCustomer()
+  console.log(
+    "111",
+    customerConversationMessages,
+    "isCustomerInsightsOpen:",
+    isCustomerInsightsOpen
+  )
 
-  // Clear local messages when customer changes
+  // Set flag when component mounts and clear chat history
   useEffect(() => {
-    setLocalMessages([])
-  }, [customer?._id])
+    console.log("CustomerInsightsChat mounted - setting flag to open")
+    setCustomerInsightsOpen(true)
+
+    // Clear chat history when component mounts
+    clearCustomerConversationMessages()
+
+    return () => {
+      console.log("CustomerInsightsChat unmounting - resetting state")
+      resetCustomerInsightsState()
+    }
+  }, [
+    setCustomerInsightsOpen,
+    clearCustomerConversationMessages,
+    resetCustomerInsightsState,
+  ])
+
+  // Clear chat history when customer changes
+  useEffect(() => {
+    if (customer?._id) {
+      console.log(
+        "CustomerInsightsChat - customer changed, clearing chat history"
+      )
+      setLocalMessages([])
+      clearCustomerConversationMessages()
+    }
+  }, [customer?._id, clearCustomerConversationMessages])
 
   useEffect(() => {
     // Only add AI responses (not user messages) to local messages
@@ -51,8 +90,10 @@ export default function InsightsPanel({
         const messageExists = localMessages.some(
           (msg) => msg.id === lastMessage.id
         )
-        if (!messageExists) {
+        if (!messageExists && !isCustomerInsightsOpen) {
           setLocalMessages((prev) => [...prev, lastMessage])
+        } else {
+          setLocalMessages([])
         }
       }
     }
@@ -83,8 +124,8 @@ export default function InsightsPanel({
       <div className="flex flex-grow flex-col overflow-y-auto px-4 py-3">
         {localMessages.length === 0 ? (
           <div className="mb-4 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-            🆕 <strong>New conversation</strong> - Start chatting with Gabby
-            about {customer?.name}
+            🆕 <strong>Fresh conversation</strong> - Start chatting with Gabby
+            about {customer?.name || "this customer"}
           </div>
         ) : (
           <div className="mb-4 text-sm text-gray-700">
@@ -103,8 +144,20 @@ export default function InsightsPanel({
                     : "mr-auto bg-white text-left text-gray-700"
                 }`}
               >
-                {" "}
-                {c.message}
+                {c.sender === "user" ? (
+                  // User messages - plain text
+                  <span>{c.message}</span>
+                ) : (
+                  // AI messages - use ReactMarkdown for formatting
+                  <div className="prose prose-sm prose-gray max-w-none">
+                    <ReactMarkdown
+                      rehypePlugins={[rehypeRaw]}
+                      remarkPlugins={[remarkGfm]}
+                    >
+                      {c.message}
+                    </ReactMarkdown>
+                  </div>
+                )}
               </div>
             )
           })}

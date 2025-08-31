@@ -1,8 +1,8 @@
 "use client"
 
-import { useEffect, useMemo, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import {
   Chart,
   ArcElement,
@@ -20,6 +20,9 @@ import {
 } from "chart.js"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { renderSectionTitle } from "@/lib/sectionTitle"
+import CustomerSlideIn from "../CustomerSlideIn"
+import useOrgCustomer from "@/store/organization_customer"
+import useAuth from "@/store/user"
 
 Chart.register(
   DoughnutController,
@@ -47,6 +50,16 @@ export default function Page() {
   const scatterRef: any = useRef(null)
   const scatterInstanceRef = useRef<Chart | null>(null)
 
+  // Add state for selected customer and customer slide-in
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
+  const { user_data, access_token } = useAuth()
+  const {
+    setCustomerConversationMessage,
+    setCustomerMessageStatus,
+    appendCustomerConversationMessage,
+    clearCustomerConversationMessages,
+  } = useOrgCustomer()
+
   const metrics = useChurnDashboardStore((s) => s.metricsData) || []
   const distribution = useChurnDashboardStore((s) => s.distributionData) || []
   const trendData = useChurnDashboardStore((s) => s.trendData) || []
@@ -61,6 +74,108 @@ export default function Page() {
     (s) => s.fetchHighRiskChurnStats
   )
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
+
+  // Helper function to get current time
+  const getClockTime = () => {
+    return new Date().toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    })
+  }
+
+  // Function to send customer message to backend (same as Dashboard)
+  const sendCustomerMessageToBackend = async (message: string) => {
+    setCustomerMessageStatus(true)
+    const messageId = `stream_${Date.now()}`
+    const newSession = Math.floor(Math.random() * 1000).toString()
+    const messagePayload = {
+      sender: "user",
+      message: message,
+      question: message + `(from customer ${selectedCustomer.customer_name})`,
+      time: getClockTime(),
+      id: messageId,
+      isStreaming: false,
+      fromCustomer: true,
+      customer: selectedCustomer._id,
+      chatSession: 1,
+    }
+    // ✅ Append user's message immediately to store
+    appendCustomerConversationMessage(messagePayload)
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/add`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${access_token}`,
+          },
+          body: JSON.stringify(messagePayload),
+        }
+      )
+      console.log("response", response)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error("Response body is not readable")
+      }
+
+      const decoder = new TextDecoder()
+      let buffer = ""
+      let finalResponse: any = null // <- ✅ store the final response here
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split("\n\n")
+        buffer = lines.pop() || ""
+
+        for (const line of lines) {
+          if (line.trim() && line.startsWith("data: ")) {
+            try {
+              const data = JSON.parse(line.substring(6))
+              if (data.done) {
+                finalResponse = data // <- ✅ capture final response
+              } else {
+                console.log("🔄 Partial chunk:", data)
+              }
+            } catch (err) {
+              console.error("Failed to parse JSON:", err)
+            }
+          }
+        }
+      }
+
+      // ✅ Use finalResponse after stream ends
+      if (finalResponse) {
+        console.log("📦 Final Message:", finalResponse.answer) // or whatever your key is
+        const responseMessage = {
+          sender: "ai",
+          message: finalResponse.answer,
+          time: getClockTime(),
+          id: `resp_${Date.now()}`,
+          fromCustomer: false,
+          customer: selectedCustomer._id,
+          chatSession: 1,
+        }
+        console.log("responseMessage", responseMessage)
+        // ✅ Append response message to store
+        appendCustomerConversationMessage(responseMessage)
+        setCustomerMessageStatus(false)
+      } else {
+        console.warn("⚠️ No final response received.")
+      }
+    } catch (err) {
+      console.log(err)
+      setCustomerMessageStatus(false)
+    }
+  }
 
   const immediateActionItems = useMemo(() => {
     if (!riskMatrixData || riskMatrixData.length === 0) {
@@ -499,7 +614,7 @@ export default function Page() {
       }
     }
   }, [riskMatrixData, isLoading])
-  console.log("Main dhasboard", metrics)
+  console.log("Main dhasboard", highRiskCustomers)
   return (
     <div className="relative space-y-6 p-6">
       {/* Back Button */}
@@ -631,7 +746,8 @@ export default function Page() {
           {renderSectionTitle("Immediate Action Required")}
           <div className="space-y-4">
             {highRiskCustomers.map((item: any, idx) => {
-              const isCritical = item.priority === "CRITICAL"
+              // Map risk_level to determine if critical or high
+              const isCritical = item.risk_level?.toLowerCase() === "critical"
               const pillClasses = isCritical
                 ? "bg-red-100 text-red-700"
                 : "bg-amber-100 text-amber-700"
@@ -651,13 +767,30 @@ export default function Page() {
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right font-semibold text-green-600">
-                      {formatCurrency(item?.arr)}
+                      {formatCurrency(item?.arr ? parseFloat(item.arr) : 0)}
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-xs ${pillClasses}`}
                     >
                       {isCritical ? "Critical" : "High"}
                     </span>
+                    <ChevronRight
+                      size={20}
+                      className="cursor-pointer text-gray-400 transition-colors hover:text-gray-600"
+                      onClick={() => {
+                        // Transform the item data to match the expected customer format
+                        const customerData = {
+                          _id: item.customer_id,
+                          name: item.customer_name,
+                          arr: item.arr ? parseFloat(item.arr) : 0,
+                          health_score: 0, // Default value since not available
+                          churn_risk_score: item.churn_risk_score,
+                          expansion_opp_score: 0, // Default value since not available
+                          // Add any other fields that CustomerSlideIn might need
+                        }
+                        setSelectedCustomer(customerData)
+                      }}
+                    />
                   </div>
                 </div>
               )
@@ -761,6 +894,15 @@ export default function Page() {
           </details>
         </div>
       )} */}
+
+      {/* Customer Slide-In Component */}
+      <CustomerSlideIn
+        customer={selectedCustomer}
+        onClose={() => {
+          setSelectedCustomer(null)
+        }}
+        sendCustomerChat={sendCustomerMessageToBackend}
+      />
     </div>
   )
 }
