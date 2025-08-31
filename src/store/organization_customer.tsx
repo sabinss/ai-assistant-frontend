@@ -16,6 +16,10 @@ type orgCustomerConfig = {
   appendCustomerConversationMessage: (data: any) => void
   setCustomerMessageStatus: (data: any) => void
   clearCustomerConversationMessages: () => void
+  // CustomerInsightsChat state management
+  isCustomerInsightsOpen: boolean
+  setCustomerInsightsOpen: (isOpen: boolean) => void
+  resetCustomerInsightsState: () => void
 }
 
 const useOrgCustomer = create<orgCustomerConfig>((set, get) => ({
@@ -43,6 +47,15 @@ const useOrgCustomer = create<orgCustomerConfig>((set, get) => ({
   // ➕ Clear chat history
   clearCustomerConversationMessages: () =>
     set({
+      customerConversationMessages: [],
+    }),
+  // CustomerInsightsChat state management
+  isCustomerInsightsOpen: false,
+  setCustomerInsightsOpen: (isOpen: boolean) =>
+    set({ isCustomerInsightsOpen: isOpen }),
+  resetCustomerInsightsState: () =>
+    set({
+      isCustomerInsightsOpen: false,
       customerConversationMessages: [],
     }),
   setOrgAgents: (data: any[]) => set({ agentList: data }),
