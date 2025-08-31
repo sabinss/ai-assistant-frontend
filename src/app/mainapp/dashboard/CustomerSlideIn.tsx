@@ -14,7 +14,8 @@ export default function CustomerSlideIn({
   sendCustomerChat,
 }: any) {
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
-  const { clearCustomerConversationMessages } = useOrgCustomer()
+  const { clearCustomerConversationMessages, resetCustomerInsightsState } =
+    useOrgCustomer()
   const [loading, setLoading] = useState(false)
   const [score, setScore] = useState<any[]>([])
   const [scoreDetails, setScoreDetails] = useState<any[]>([])
@@ -171,13 +172,16 @@ export default function CustomerSlideIn({
     fetchCustomerScoreData()
   }, [customer?._id])
 
-  // Clear chat history when component unmounts
+  // Reset CustomerInsightsChat state when customer changes or component unmounts
   useEffect(() => {
+    // Reset state when customer changes
+    resetCustomerInsightsState()
+
     return () => {
-      // Clear chat history when CustomerSlideIn is unmounted
-      clearCustomerConversationMessages()
+      // Reset state when CustomerSlideIn is unmounted
+      resetCustomerInsightsState()
     }
-  }, [clearCustomerConversationMessages])
+  }, [customer?._id, resetCustomerInsightsState])
 
   return (
     <AnimatePresence>
@@ -199,8 +203,8 @@ export default function CustomerSlideIn({
               <X
                 className="cursor-pointer"
                 onClick={() => {
-                  // Clear chat history when closing the slide-in
-                  clearCustomerConversationMessages()
+                  // Reset CustomerInsightsChat state and clear chat history when closing
+                  resetCustomerInsightsState()
                   onClose()
                 }}
               />
@@ -236,6 +240,7 @@ export default function CustomerSlideIn({
           {/* 👉 Fixed Insights Panel (floating on the right) */}
           <div className="h-screen w-[500px] shrink-0 overflow-y-auto border-l shadow-lg">
             <InsightsPanel
+              key={customer?._id} // Force remount when customer changes
               customer={customer}
               sendCustomerChat={sendCustomerChat}
             />
