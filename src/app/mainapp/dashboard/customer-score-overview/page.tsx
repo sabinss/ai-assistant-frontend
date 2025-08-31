@@ -614,7 +614,7 @@ export default function Page() {
       }
     }
   }, [riskMatrixData, isLoading])
-  console.log("Main dhasboard", metrics)
+  console.log("Main dhasboard", highRiskCustomers)
   return (
     <div className="relative space-y-6 p-6">
       {/* Back Button */}
