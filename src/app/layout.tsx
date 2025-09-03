@@ -18,12 +18,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <meta
-          httpEquiv="Permissions-Policy"
-          content="camera=(), microphone=(), geolocation=()"
-        />
-      </head>
       <body className={poppins.className}>
         <ToastContainer />
         {/* ✅ Load tracker script after page becomes interactive */}
