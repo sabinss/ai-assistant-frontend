@@ -51,7 +51,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
-        console.log("disconnect", res)
         if (res?.data?.success) {
           setGoogleLoginUser(null)
           setGoogleLogin(false)
@@ -95,23 +94,14 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const router = useRouter()
 
   useEffect(() => {
-    console.log("Profile page useEffect triggered", {
-      hasHydrated: _hasHydrated,
-      accessToken: access_token ? "Available" : "Not available",
-      userData: user_data ? "Available" : "Not available",
-    })
-
     async function fetchData() {
       try {
         // Check if access_token is available
         if (!access_token) {
-          console.log("No access token available")
           return
         }
 
         setIsLoading(true)
-        console.log("Fetching data with token:", access_token)
-
         const userData = await http.get(`/user/profile`, {
           headers: {
             Authorization: `Bearer ${access_token}`,
@@ -124,9 +114,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             },
           }),
         ])
-
-        console.log("User data response:", userData)
-        console.log("Status data response:", statusData)
 
         const { first_name, last_name, email, status } = userData?.data?.user
         setValue("first_name", first_name)
@@ -196,7 +183,6 @@ export default function EditProfile({ params }: { params: { id: string } }) {
 
   const connectToGmail = () => {
     const url = getGoogleOAuthURL(user_data?.organization)
-    console.log("url", url)
     window.location.href = url
   }
 

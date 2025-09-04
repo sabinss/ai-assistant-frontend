@@ -105,8 +105,6 @@ export default function NotificationListTable({ notifications }: any) {
     useState(notifications) // Keep original list
 
   useEffect(() => {
-    console.log(notifications) // Check the incoming data
-
     setNotificationList(notifications)
     setOriginalNotifications(notifications) // Update original when notifications change
   }, [notifications])

@@ -56,7 +56,6 @@ export const Configuration = () => {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         const orgData = res?.data?.org
-        console.log("orgData--", orgData._id)
         setOrganizationId(orgData._id)
         setAdditionalPrompt({
           primary_prompt: orgData.primary_prompt || "",
@@ -107,7 +106,6 @@ export const Configuration = () => {
           headers: { Authorization: `Bearer ${access_token}` },
         }
       )
-      console.log("Task agent response", res.data)
       setOrgTaskAgents(res?.data?.taskAgents)
       setIsLoading(false)
     } catch (err) {
@@ -174,7 +172,6 @@ export const Configuration = () => {
         //   additionalPrompt.outreach_customer_list_generation_prompt,
       }),
     }
-    console.log("data", data)
     // Make API call here
     await handleSubmit(data)
   }
@@ -190,7 +187,6 @@ export const Configuration = () => {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
-        console.log("Task agent response", res.data)
         setOrgTaskAgents((prev: any) =>
           prev.map((agent: any) =>
             agent._id === data._id ? { ...agent, ...res.data } : agent
@@ -205,7 +201,6 @@ export const Configuration = () => {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
-        console.log("Task agent response create", res.data)
         // Add the new task agent to the orgTaskAgents list
         setOrgTaskAgents((prev: any) => [res.data, ...prev])
         toasMsg = "Task Agent created successfully"
