@@ -54,12 +54,7 @@ window.trackEvent = function (feature, data) {
   };
 
   // Log the payload if debug mode is enabled
-  if (TRACKING_CONFIG.DEBUG_MODE) {
-    console.log("📊 Tracking Event:", {
-      feature: feature,
-      payload: payload
-    });
-  }
+ 
 
   // Send the tracking data
   fetch(TRACKING_CONFIG.API_URL, {

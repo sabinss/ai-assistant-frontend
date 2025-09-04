@@ -114,9 +114,7 @@ const Configuration = () => {
     }
     fetchOrganizationData()
   }, [access_token])
-  console.log("additionalPrompt", additionalPrompt)
   const handleChangeAdditionalPrompt = (field: string) => (event: any) => {
-    console.log("field", field, event.target.value)
     setAdditionalPrompt((prev) => ({
       ...prev,
       [field]: event.target.value,
