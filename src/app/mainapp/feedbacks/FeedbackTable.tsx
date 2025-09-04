@@ -80,7 +80,6 @@ const MemoizedTableRow = React.memo(({ item, index }: any) => {
       })
       //remove from third party api
       const res = await http.deleteFeedback(user_data?.organization, [id])
-      console.log(res)
       //setFeedbacks((prevFeedbacks) => prevFeedbacks.filter((feedback) => feedback._id !== id));
       updateFeedbackTable("removeState", Math.random())
     } catch (error) {

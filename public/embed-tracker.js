@@ -23,7 +23,6 @@
   const utils = {
     log: function(message, data) {
       if (CONFIG.debug) {
-        console.log('[EmbedTracker]', message, data);
       }
     },
 

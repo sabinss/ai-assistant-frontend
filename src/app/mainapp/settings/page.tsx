@@ -104,7 +104,6 @@ export default function Page() {
         setPrompt(orgData?.prompt || "")
         setGreeting(orgData?.greeting || "")
       } catch (e) {
-        console.log(e)
       } finally {
         setIsLoading(false)
       }
