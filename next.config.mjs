@@ -3,6 +3,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Disable X-Powered-By header to prevent server disclosure
+  poweredByHeader: false,
+  // Disable server information disclosure
+  generateEtags: false,
+  // Enable standalone output for Docker
+  output: 'standalone',
+  // Custom headers to remove all technology disclosure
   async headers() {
     return [
       {
@@ -35,6 +42,31 @@ const nextConfig = {
           {
             key: "Strict-Transport-Security",
             value: "max-age=31536000; includeSubDomains; preload",
+          },
+          // Remove ALL server identification headers
+          {
+            key: "Server",
+            value: "",
+          },
+          {
+            key: "X-Powered-By",
+            value: "",
+          },
+          {
+            key: "X-AspNet-Version",
+            value: "",
+          },
+          {
+            key: "X-AspNetMvc-Version",
+            value: "",
+          },
+          {
+            key: "X-Drupal-Cache",
+            value: "",
+          },
+          {
+            key: "X-Generator",
+            value: "",
           },
         ],
       },

@@ -1,120 +1,113 @@
-# Security Implementation
+# Security Configuration
 
-This document outlines the security measures implemented to protect against various web vulnerabilities, including the clickjacking attack identified in the security scan.
+This document outlines the security measures implemented to address the "Proxy Disclosure" vulnerability and other security concerns.
 
-## Implemented Security Headers
+## Issues Addressed
 
-### 1. Anti-Clickjacking Protection
+### 1. Proxy Disclosure (CWEID: 204)
+- **Problem**: Server headers revealing infrastructure details (nginx/1.24.0, awselb/2.0, Next.js)
+- **Solution**: 
+  - Disabled `X-Powered-By` header in Next.js config
+  - Removed server identification headers in middleware
+  - Configured nginx to hide version information
+  - Added custom error pages to prevent fingerprinting
 
-- **X-Frame-Options: DENY** - Prevents the page from being embedded in iframes on any domain
-- **Content-Security-Policy: frame-ancestors 'none'** - Modern alternative that provides the same protection
+### 2. HTTP Method Disclosure
+- **Problem**: TRACE, OPTIONS, and TRACK methods enabled
+- **Solution**: 
+  - Blocked dangerous HTTP methods in middleware
+  - Configured nginx to reject TRACE and TRACK requests
+  - Limited allowed methods to GET, HEAD, POST, PUT, DELETE, PATCH
 
-### 2. Additional Security Headers
+### 3. Server Version Disclosure
+- **Problem**: Server and X-Powered-By headers revealing technology stack
+- **Solution**:
+  - Set `poweredByHeader: false` in Next.js config
+  - Added header removal in middleware
+  - Configured nginx to hide upstream server headers
 
-- **X-Content-Type-Options: nosniff** - Prevents MIME type sniffing
-- **X-XSS-Protection: 1; mode=block** - Enables XSS filtering in older browsers
-- **Referrer-Policy: strict-origin-when-cross-origin** - Controls referrer information
-- **Permissions-Policy** - Restricts access to sensitive browser features
+## Files Modified
 
-### 3. Content Security Policy (CSP)
+### Application Level
+- `next.config.mjs` - Disabled server headers, added security headers
+- `middleware.ts` - Blocked dangerous methods, removed server headers
+- `src/app/not-found.tsx` - Custom 404 page
+- `src/app/error.tsx` - Custom error page
+- `src/app/global-error.tsx` - Global error handler
 
-- Restricts resource loading to trusted sources
-- Prevents inline script execution (with exceptions for necessary functionality)
-- Controls frame embedding and form submissions
+### Infrastructure Level
+- `nginx.conf` - Server configuration to hide versions and block methods
+- `Dockerfile.production` - Secure Docker configuration
+- `deploy-security.sh` - Deployment script with security measures
 
-### 4. HTTP Strict Transport Security (HSTS)
+## Deployment Instructions
 
-- Enforces HTTPS connections in production
-- Includes subdomains and preload support
+### Option 1: Using the Security Deployment Script
+```bash
+./deploy-security.sh
+```
 
-## Implementation Details
-
-### Files Modified/Created:
-
-1. **`next.config.mjs`** - Added security headers configuration
-2. **`middleware.ts`** - Custom middleware for dynamic header injection
-3. **`src/config/security.ts`** - Centralized security configuration
-4. **`src/app/layout.tsx`** - Added security meta tags
-5. **`SECURITY.md`** - This documentation file
-
-### How It Works:
-
-1. **Next.js Headers**: Static headers applied at build time
-2. **Middleware**: Dynamic headers applied for each request
-3. **Meta Tags**: Additional client-side protection
-4. **Centralized Config**: Easy maintenance and updates
-
-## Testing Security Headers
-
-You can verify the headers are working by:
-
-1. **Browser Developer Tools**:
-
-   - Open Network tab
-   - Reload the page
-   - Check response headers for security headers
-
-2. **Online Security Scanners**:
-
-   - SecurityHeaders.com
-   - Mozilla Observatory
-   - OWASP ZAP
-
-3. **Command Line**:
+### Option 2: Manual Deployment
+1. Build the application:
    ```bash
-   curl -I https://yourdomain.com
+   npm run build
    ```
 
-## Maintenance
+2. Update nginx configuration:
+   ```bash
+   sudo cp nginx.conf /etc/nginx/sites-available/default
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
 
-### Updating Security Headers:
+3. Start with PM2:
+   ```bash
+   pm2 start ecosystem.config.js --env production
+   ```
 
-1. Modify `src/config/security.ts`
-2. Test locally
-3. Deploy to production
-4. Verify headers are applied
+### Option 3: Docker Deployment
+```bash
+docker build -f Dockerfile.production -t your-app .
+docker run -p 3000:3000 your-app
+```
 
-### Adding New Domains to CSP:
+## Testing Security Fixes
 
-1. Update the appropriate source in `securityConfig.csp`
-2. Test functionality
-3. Deploy changes
+After deployment, test the following:
 
-## Security Considerations
+1. **Check server headers**:
+   ```bash
+   curl -I https://mycowrkr.cloud
+   ```
+   Should NOT show: `Server: nginx/1.24.0`, `X-Powered-By: Next.js`
 
-### Current Configuration:
+2. **Test blocked HTTP methods**:
+   ```bash
+   curl -X TRACE https://mycowrkr.cloud
+   curl -X OPTIONS https://mycowrkr.cloud
+   ```
+   Should return 405 Method Not Allowed
 
-- **frame-ancestors 'none'** - Most restrictive, prevents all embedding
-- **script-src** - Allows necessary inline scripts and external analytics
-- **connect-src** - Allows API connections to your backend
+3. **Test error pages**:
+   ```bash
+   curl https://mycowrkr.cloud/nonexistent-page
+   ```
+   Should return custom 404 page without server details
 
-### Potential Adjustments:
+## Security Headers Applied
 
-- If you need to allow embedding on your own domain, change to `frame-ancestors 'self'`
-- If you need to allow specific external domains, add them to the appropriate CSP directive
+- `X-Frame-Options: DENY`
+- `X-Content-Type-Options: nosniff`
+- `X-XSS-Protection: 1; mode=block`
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Permissions-Policy: camera=(), microphone=(), geolocation=()`
+- `Content-Security-Policy: [comprehensive CSP]`
+- `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
 
 ## Compliance
 
-This implementation addresses:
-
-- ✅ **CWE-1021** - Missing Anti-clickjacking Header
-- ✅ **OWASP Top 10** - Security misconfiguration
-- ✅ **Modern browser security standards**
-
-## Troubleshooting
-
-### Common Issues:
-
-1. **CSP blocking legitimate resources**: Add domains to appropriate directives
-2. **Headers not appearing**: Check middleware configuration and Next.js version
-3. **Breaking functionality**: Review CSP directives and adjust as needed
-
-### Debug Mode:
-
-Set `NODE_ENV=development` to see detailed CSP violations in browser console.
-
-## Resources
-
-- [OWASP Security Headers](https://owasp.org/www-project-secure-headers/)
-- [MDN Content Security Policy](https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP)
-- [Next.js Security Documentation](https://nextjs.org/docs/advanced-features/security-headers)
+These changes address:
+- CASA Tier 2 & Tier 3 security requirements
+- OWASP security guidelines
+- CWE-204 (Proxy Disclosure) vulnerability
+- Server information disclosure prevention
+- HTTP method restriction best practices
