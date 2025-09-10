@@ -25,6 +25,7 @@ export default function CustomerSlideIn({
   const [scoreTabData, setScoreTabData] = useState<any>([])
   const [recommendedActions, setRecommendedActions] = useState<any>([])
   const [scoreAnalysis, setScoreAnalysis] = useState<any>([])
+  console.log("selected customer---", customer)
 
   useEffect(() => {
     if (!customer?._id) return
@@ -40,9 +41,6 @@ export default function CustomerSlideIn({
             headers: { Authorization: `Bearer ${access_token}` },
           }),
         ])
-        console.log("scoreResp---", scoreResp)
-        console.log("detailResp---", detailResp)
-
         let healthDrivers: any[] = []
         let churnDrivers: any[] = []
         let expansionDrivers: any[] = []
@@ -89,6 +87,23 @@ export default function CustomerSlideIn({
           } = scoreResp.data.data[0]
 
           // ✅ Set keyDrivers here using mapped arrays
+          console.log("final tab data", [
+            {
+              title: "Health Score",
+              value: health_score,
+              keyDrivers: healthDrivers,
+            },
+            {
+              title: "Churn Risk",
+              value: churn_risk_score,
+              keyDrivers: churnDrivers,
+            },
+            {
+              title: "Expansion Opp Score",
+              value: expansion_opp_score,
+              keyDrivers: expansionDrivers,
+            },
+          ])
           setScoreTabData([
             {
               title: "Health Score",
