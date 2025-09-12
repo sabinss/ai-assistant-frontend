@@ -12,6 +12,7 @@ import { trackEvent } from "@/utility/tracking"
 import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { formatCurrency } from "@/utility"
+import { AlertCircle } from "lucide-react"
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("alert")
@@ -34,7 +35,7 @@ export default function Dashboard() {
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  console.log("selectedCustomer", selectedCustomer)
+  const [alertData, setAlertData] = useState<any>([])
   const [stats, setStats] = useState<
     Array<{
       id: string
@@ -141,6 +142,23 @@ export default function Dashboard() {
   }, [selectedCustomer?._id])
 
   useEffect(() => {
+    async function fetchCustomerAlertData() {
+      try {
+        const res = await http.get(`/customer/alerts`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        console.log("Alert response", res.data)
+        if (res?.data?.data?.length > 0) {
+          setAlertData(res?.data?.data)
+        }
+      } catch (err) {
+        console.log("Fetch alert data error", err)
+      }
+    }
+    fetchCustomerAlertData()
+  }, [user_data?.organization])
+
+  useEffect(() => {
     async function getOrgCustomers() {
       if (!user_data?.organization || !access_token) return
 
@@ -231,12 +249,10 @@ export default function Dashboard() {
 
     const atRiskAverageARR = threasoldCustomer.reduce(
       (acc: number, customer: any) => {
-        console.log("arr value", +customer.arr)
         return +customer.arr + acc
       },
       0
     )
-    console.log("atRiskAverageARR", atRiskAverageARR)
     setStats([
       {
         id: "total",
@@ -452,12 +468,13 @@ export default function Dashboard() {
         <div className="flex space-x-4 border-b border-gray-300">
           <button
             onClick={() => setActiveTab("alert")}
-            className={`rounded-t-lg px-4 py-2 font-medium transition ${
+            className={`flex items-center gap-2 rounded-t-lg px-4 py-2 font-medium transition ${
               activeTab === "alert"
-                ? "border-b-2 border-red-500 bg-red-100 text-red-700"
+                ? "border-b-2 border-blue-500 bg-blue-100 text-blue-700"
                 : "text-gray-500 hover:text-gray-700"
             }`}
           >
+            <AlertCircle size={18} />
             Alert
           </button>
           <button
@@ -476,7 +493,92 @@ export default function Dashboard() {
         <div className="mt-4">
           {activeTab === "alert" && (
             <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <h2 className="text-xl font-semibold">⚠️ Alerts</h2>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b text-gray-600">
+                    <tr>
+                      <th className="p-2">Company Name</th>
+                      <th className="p-2">Alert</th>
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Owner</th>
+                      <th className="p-2">Source</th>
+                      <th className="p-2">Addressed</th>
+                      <th className="p-2"></th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-gray-700">
+                    {loading ? (
+                      <>
+                        {[...Array(5)].map((_, index) => (
+                          <tr key={index} className="animate-pulse border-b">
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-32 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-16 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-20 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-24 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-6 w-6 rounded bg-gray-200"></div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
+                    ) : alertData.length === 0 ? (
+                      <tr>
+                        <td className="py-6 text-center" colSpan={8}>
+                          No alert to display
+                        </td>
+                      </tr>
+                    ) : (
+                      alertData.map((item: any, index: number) => {
+                        return (
+                          <tr
+                            key={item?.company_id || index}
+                            className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
+                          >
+                            <td className="px-6 py-4">{item?.company_name}</td>
+                            <td className="px-4 py-4">
+                              {item?.alert ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item?.week_date ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item?.owner_id ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item?.source ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              <input
+                                type="checkbox"
+                                checked={item?.addressed}
+                                readOnly
+                                className="h-4 w-4 cursor-default"
+                              />
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

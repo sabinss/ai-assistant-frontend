@@ -69,7 +69,7 @@ export default function Edit() {
   const handleSaveOrganizationName = async () => {
     setIsEditable(false)
     try {
-      await http.patch(
+      await http.put(
         "/organization",
         { name: organizationName, singleUpdate: true },
         {
@@ -84,7 +84,7 @@ export default function Edit() {
   const handleSaveAssistantName = async () => {
     setIsEditingAssistantName(false)
     try {
-      await http.patch(
+      await http.put(
         "/organization",
         { assistant_name: assistantName, singleUpdate: true },
         {

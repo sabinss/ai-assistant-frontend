@@ -124,7 +124,7 @@ export const Configuration = () => {
   const handleSubmit = async (data: any) => {
     try {
       setIsLoading(true)
-      const response = await http.patch(
+      const response = await http.put(
         "/organization",
         {
           selectedModel,
