@@ -498,7 +498,7 @@ export default function Dashboard() {
                   <thead className="border-b text-gray-600">
                     <tr>
                       <th className="p-2">Company Name</th>
-                      <th className="p-2">Alert</th>
+                      <th className="w-1/2 p-2">Alert</th>
                       <th className="p-2">Date</th>
                       <th className="p-2">Owner</th>
                       <th className="p-2">Source</th>
