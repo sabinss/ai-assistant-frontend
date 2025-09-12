@@ -11,6 +11,7 @@ export default function ScoreTab({
   analysisData: any[]
   recommendedActions: any[]
 }) {
+  console.log("tabsData---", tabsData)
   const [tabs, setTabs] = useState(tabsData)
   const [analysis, setAnalysis] = useState<any>(analysisData)
   const [activeTab, setActiveTab] = useState("Health Score")
@@ -63,9 +64,9 @@ export default function ScoreTab({
         <h2 className="mb-4 text-lg font-semibold">Key Drivers</h2>
 
         <div className="divide-y">
-          {currentTab?.keyDrivers.map((driver) => (
+          {currentTab?.keyDrivers.map((driver, index) => (
             <div
-              key={driver.name}
+              key={index}
               className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-4"
             >
               <div className="flex items-center gap-2">

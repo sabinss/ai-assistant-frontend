@@ -12,8 +12,11 @@ import { trackEvent } from "@/utility/tracking"
 import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { formatCurrency } from "@/utility"
+import { AlertCircle } from "lucide-react"
 
 export default function Dashboard() {
+  const [activeTab, setActiveTab] = useState("alert")
+
   const [loading, setLoading] = useState(false)
   const { user_data, access_token } = useAuth()
   const [orgCustomerData, setOrgCustomerData] = useState<any>(null)
@@ -32,7 +35,7 @@ export default function Dashboard() {
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  console.log("selectedCustomer", selectedCustomer)
+  const [alertData, setAlertData] = useState<any>([])
   const [stats, setStats] = useState<
     Array<{
       id: string
@@ -139,6 +142,23 @@ export default function Dashboard() {
   }, [selectedCustomer?._id])
 
   useEffect(() => {
+    async function fetchCustomerAlertData() {
+      try {
+        const res = await http.get(`/customer/alerts`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        console.log("Alert response", res.data)
+        if (res?.data?.data?.length > 0) {
+          setAlertData(res?.data?.data)
+        }
+      } catch (err) {
+        console.log("Fetch alert data error", err)
+      }
+    }
+    fetchCustomerAlertData()
+  }, [user_data?.organization])
+
+  useEffect(() => {
     async function getOrgCustomers() {
       if (!user_data?.organization || !access_token) return
 
@@ -221,20 +241,18 @@ export default function Dashboard() {
       customersWithHealthScore > 0
         ? (totalHealthScore / customersWithHealthScore).toFixed(1)
         : "0"
+    const threasoldCustomer = customers.filter((x: any) => {
+      if (x.churn_risk_score > threshold) {
+        return true
+      }
+    })
 
-    const atRiskAverageARR = customers
-      .filter((x: any) => {
-        if (x.churn_risk_score > threshold) {
-          return true
-        }
-      })
-      .reduce((acc: number, customer: any) => {
-        if (customer.churn_risk_score >= threshold) {
-          return acc + parseFloat(customer.arr)
-        }
-        return acc
-      }, 0)
-
+    const atRiskAverageARR = threasoldCustomer.reduce(
+      (acc: number, customer: any) => {
+        return +customer.arr + acc
+      },
+      0
+    )
     setStats([
       {
         id: "total",
@@ -254,7 +272,7 @@ export default function Dashboard() {
         title: "At-Risk Customers",
         value: atRiskCustomers.toString(),
         subtitle: `${((atRiskCustomers / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
-        arrValue: `$${atRiskAverageARR}`,
+        arrValue: `${atRiskAverageARR}`,
       },
       {
         id: "expansion",
@@ -444,155 +462,291 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      {/* tab */}
+      <div className="">
+        {/* Tab Header */}
+        <div className="flex space-x-4 border-b border-gray-300">
+          <button
+            onClick={() => setActiveTab("alert")}
+            className={`flex items-center gap-2 rounded-t-lg px-4 py-2 font-medium transition ${
+              activeTab === "alert"
+                ? "border-b-2 border-blue-500 bg-blue-100 text-blue-700"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <AlertCircle size={18} />
+            Alert
+          </button>
+          <button
+            onClick={() => setActiveTab("customer")}
+            className={`rounded-t-lg px-4 py-2 font-medium transition ${
+              activeTab === "customer"
+                ? "border-b-2 border-blue-500 bg-blue-100 text-blue-700"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            👤 Customer Overview
+          </button>
+        </div>
 
-      {/* Customer Overview Table */}
-      <div className="rounded-xl border bg-white p-4 shadow-sm">
-        <div className="mb-4 text-lg font-semibold">Customer Overview</div>
-
-        <input
-          type="text"
-          placeholder="Search customers..."
-          className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b text-gray-600">
-              <tr>
-                <th className="p-2">Customer</th>
-                <th className="p-2">Health Score</th>
-                <th className="p-2">Churn Risk</th>
-                <th className="p-2">Expansion Opportunity</th>
-                <th className="p-2">Phase</th>
-                <th className="p-2">ARR</th>
-                <th className="p-2">Renewal Date</th>
-                <th className="p-2"></th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-700">
-              {loading ? (
-                <>
-                  {[...Array(5)].map((_, index) => (
-                    <tr key={index} className="animate-pulse border-b">
-                      <td className="px-6 py-4">
-                        <div className="h-4 w-32 rounded bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 w-16 rounded bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 w-20 rounded bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-4 w-24 rounded bg-gray-200"></div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="h-6 w-6 rounded bg-gray-200"></div>
-                      </td>
+        {/* Tab Content */}
+        <div className="mt-4">
+          {activeTab === "alert" && (
+            <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b text-gray-600">
+                    <tr>
+                      <th className="p-2">Company Name</th>
+                      <th className="w-1/2 p-2">Alert</th>
+                      <th className="p-2">Date</th>
+                      <th className="p-2">Owner</th>
+                      <th className="p-2">Source</th>
+                      <th className="p-2">Addressed</th>
+                      <th className="p-2"></th>
                     </tr>
-                  ))}
-                </>
-              ) : filteredCustomers.length === 0 ? (
-                <tr>
-                  <td className="py-6 text-center" colSpan={8}>
-                    No customers to display
-                  </td>
-                </tr>
-              ) : (
-                filteredCustomers.map((customer: any, index: number) => {
-                  const healthScore = customer?.health_score
-                  const riskScore = customer?.churn_risk_score
-                  const oppScore = customer?.expansion_opp_score
+                  </thead>
+                  <tbody className="text-gray-700">
+                    {loading ? (
+                      <>
+                        {[...Array(5)].map((_, index) => (
+                          <tr key={index} className="animate-pulse border-b">
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-32 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-16 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-20 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-4 w-24 rounded bg-gray-200"></div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="h-6 w-6 rounded bg-gray-200"></div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
+                    ) : alertData.length === 0 ? (
+                      <tr>
+                        <td className="py-6 text-center" colSpan={8}>
+                          No alert to display
+                        </td>
+                      </tr>
+                    ) : (
+                      alertData.map((item: any, index: number) => {
+                        return (
+                          <tr
+                            key={item?.company_id || index}
+                            className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
+                          >
+                            <td className="px-6 py-4">{item?.company_name}</td>
+                            <td className="px-4 py-4">
+                              {item?.alert ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item?.week_date ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item?.owner_id ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              {item?.source ?? "N/A"}
+                            </td>
+                            <td className="px-6 py-4">
+                              <input
+                                type="checkbox"
+                                checked={item?.addressed}
+                                readOnly
+                                className="h-4 w-4 cursor-default"
+                              />
+                            </td>
+                          </tr>
+                        )
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
-                  const healthColorClass = getScoreColorClass(
-                    healthScore ?? 0,
-                    "health"
-                  )
-                  const oppColor = getScoreColorClass(oppScore ?? 0, "health")
-                  return (
-                    <tr
-                      key={customer.id || index}
-                      className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
-                    >
-                      <td className="px-6 py-4">{customer.name}</td>
-                      <td className="px-6 py-4">
-                        {healthScore ? (
-                          <Chip
-                            value={healthScore}
-                            otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${healthColorClass}`}
-                          />
-                        ) : (
-                          "N/A"
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {" "}
-                        {riskScore ? (
-                          <Chip
-                            value={riskScore}
-                            otherClasses={`text-white w-9 h-9  font-bold  text-white flex items-center justify-center ${healthColorClass}`}
-                          />
-                        ) : (
-                          "N/A"
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        {oppScore ? (
-                          <Chip
-                            value={oppScore}
-                            otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}
-                          />
-                        ) : (
-                          "N/A"
-                        )}
-                      </td>
-                      <td className="px-6 py-4">{customer.phase ?? "N/A"}</td>
-                      <td className="px-6 py-4">{customer.arr ?? "N/A"}</td>
-                      <td className="px-6 py-4">
-                        {customer.renewal_date ?? "N/A"}
-                      </td>
-                      <td className="px-6 py-4">
-                        <MdKeyboardArrowRight
-                          size={25}
-                          className="cursor-pointer"
-                          onClick={() => {
-                            // Track customer detail view
-                            // trackEvent("dashboard_customer_detail", {
-                            //   email: user_data?.email,
-                            //   organization: user_data?.organization,
-                            //   customer_id: customer._id,
-                            //   customer_name: customer.name,
-                            // })
-                            setSelectedCustomer(customer)
-                          }}
-                        />
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
+          {activeTab === "customer" && (
+            <>
+              {/* Customer Overview Table */}
+              <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <div className="mb-4 text-lg font-semibold">
+                  Customer Overview
+                </div>
+
+                <input
+                  type="text"
+                  placeholder="Search customers..."
+                  className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="border-b text-gray-600">
+                      <tr>
+                        <th className="p-2">Customer</th>
+                        <th className="p-2">Health Score</th>
+                        <th className="p-2">Churn Risk</th>
+                        <th className="p-2">Expansion Opportunity</th>
+                        <th className="p-2">Phase</th>
+                        <th className="p-2">ARR</th>
+                        <th className="p-2">Renewal Date</th>
+                        <th className="p-2"></th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-gray-700">
+                      {loading ? (
+                        <>
+                          {[...Array(5)].map((_, index) => (
+                            <tr key={index} className="animate-pulse border-b">
+                              <td className="px-6 py-4">
+                                <div className="h-4 w-32 rounded bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-8 w-8 rounded-full bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-4 w-16 rounded bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-4 w-20 rounded bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-4 w-24 rounded bg-gray-200"></div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="h-6 w-6 rounded bg-gray-200"></div>
+                              </td>
+                            </tr>
+                          ))}
+                        </>
+                      ) : filteredCustomers.length === 0 ? (
+                        <tr>
+                          <td className="py-6 text-center" colSpan={8}>
+                            No customers to display
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredCustomers.map(
+                          (customer: any, index: number) => {
+                            const healthScore = customer?.health_score
+                            const riskScore = customer?.churn_risk_score
+                            const oppScore = customer?.expansion_opp_score
+
+                            const healthColorClass = getScoreColorClass(
+                              healthScore ?? 0,
+                              "health"
+                            )
+                            const oppColor = getScoreColorClass(
+                              oppScore ?? 0,
+                              "health"
+                            )
+                            return (
+                              <tr
+                                key={customer.id || index}
+                                className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
+                              >
+                                <td className="px-6 py-4">{customer.name}</td>
+                                <td className="px-6 py-4">
+                                  {healthScore ? (
+                                    <Chip
+                                      value={healthScore}
+                                      otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${healthColorClass}`}
+                                    />
+                                  ) : (
+                                    "N/A"
+                                  )}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {" "}
+                                  {riskScore ? (
+                                    <Chip
+                                      value={riskScore}
+                                      otherClasses={`text-white w-9 h-9  font-bold  text-white flex items-center justify-center ${healthColorClass}`}
+                                    />
+                                  ) : (
+                                    "N/A"
+                                  )}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {oppScore ? (
+                                    <Chip
+                                      value={oppScore}
+                                      otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}
+                                    />
+                                  ) : (
+                                    "N/A"
+                                  )}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {customer.phase ?? "N/A"}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {customer.arr ?? "N/A"}
+                                </td>
+                                <td className="px-6 py-4">
+                                  {customer.renewal_date ?? "N/A"}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <MdKeyboardArrowRight
+                                    size={25}
+                                    className="cursor-pointer"
+                                    onClick={() => {
+                                      // Track customer detail view
+                                      // trackEvent("dashboard_customer_detail", {
+                                      //   email: user_data?.email,
+                                      //   organization: user_data?.organization,
+                                      //   customer_id: customer._id,
+                                      //   customer_name: customer.name,
+                                      // })
+                                      setSelectedCustomer(customer)
+                                    }}
+                                  />
+                                </td>
+                              </tr>
+                            )
+                          }
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <CustomerSlideIn
+                customer={selectedCustomer}
+                onClose={() => {
+                  setSelectedCustomer(null)
+                }}
+                sendCustomerChat={sendCustomerMessageToBackend}
+              />
+            </>
+          )}
         </div>
       </div>
-      <CustomerSlideIn
-        customer={selectedCustomer}
-        onClose={() => {
-          setSelectedCustomer(null)
-        }}
-        sendCustomerChat={sendCustomerMessageToBackend}
-      />
     </div>
   )
 }
