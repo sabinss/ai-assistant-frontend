@@ -163,7 +163,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
     const selectedStatus = status?.find((item) => item?.name === data?.status)
     const updatedData = { ...data, status: selectedStatus?.id }
     try {
-      await http.patch(`/user/profile/update`, updatedData, {
+      await http.put(`/user/profile/update`, updatedData, {
         headers: {
           Authorization: `Bearer ${access_token}`,
         },
