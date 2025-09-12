@@ -169,7 +169,7 @@ export default function Page() {
         orgDbSetting: { ...orgSetting },
         whatsappConfig,
       }
-      await http.patch("/organization", data, {
+      await http.put("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       toast.success("Organization data updated successfully")
@@ -185,7 +185,7 @@ export default function Page() {
       if (updatingWorkflow) return
       setUpdatingWorkflow(true)
 
-      const res = await http.patch(
+      const res = await http.put(
         "/organization/support-workflow",
         {
           org_id: organizationData._id,
