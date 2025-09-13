@@ -97,7 +97,7 @@ export const Configuration = () => {
       fetchOrganizationTaskAgents(organization_id)
     }
   }, [organization_id])
-  const fetchOrganizationTaskAgents = async (organization_id) => {
+  const fetchOrganizationTaskAgents = async (organization_id: string) => {
     try {
       setIsLoading(true)
       const res = await http.get(
@@ -114,7 +114,7 @@ export const Configuration = () => {
     }
   }
   const handleChangeAdditionalPrompt = (field: string) => (event: any) => {
-    setAdditionalPrompt((prev) => ({
+    setAdditionalPrompt((prev: any) => ({
       ...prev,
       [field]: event.target.value,
     }))
@@ -142,6 +142,7 @@ export const Configuration = () => {
         }
       )
       toast.success("Organization data updated successfully")
+      setIsLoading(false)
     } catch (err) {
       setIsLoading(false)
       console.log("Orgnaization update error", err)
@@ -207,7 +208,7 @@ export const Configuration = () => {
       }
       setActiveTab("task_agent")
       toast.success(toasMsg)
-    } catch (err) {
+    } catch (err: any) {
       console.log("Failed saveOrUpdateTaskAgent", err)
       toast.error(err?.response?.data?.message ?? "Something went wrong")
     }
@@ -337,12 +338,19 @@ export const Configuration = () => {
                   onChange={handleChangeAdditionalPrompt("nltosql_prompt")}
                 />
               </li>
+
               <div className="flex justify-end p-3">
                 <button
+                  disabled={isLoading} // ADD THIS
                   onClick={() => savePrompts("customer_insights")}
-                  className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 hover:from-blue-800 hover:to-blue-600"
+                  className={`rounded-lg px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 ${
+                    isLoading
+                      ? "cursor-not-allowed bg-gray-400" // ADD LOADING STYLES
+                      : "bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600"
+                  }`}
                 >
-                  Update
+                  {isLoading ? "Updating..." : "Update"}{" "}
+                  {/* ADD LOADING TEXT */}
                 </button>
               </div>
             </ul>
