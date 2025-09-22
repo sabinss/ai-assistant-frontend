@@ -13,6 +13,8 @@ import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { formatCurrency } from "@/utility"
 import { AlertCircle } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { useDebounce } from "@/hooks/useDebounce"
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("alert")
@@ -32,7 +34,21 @@ export default function Dashboard() {
   const fetchHighRiskChurnStats = useChurnDashboardStore(
     (s) => s.fetchHighRiskChurnStats
   )
+
+  // pagination
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const limit = 10 // records per page
+  const [pagination, setPagination] = useState<any>({
+    currentPage: 1,
+    totalPages: 1,
+    totalRecords: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  })
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 2000)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [alertData, setAlertData] = useState<any>([])
@@ -65,6 +81,10 @@ export default function Dashboard() {
       subtitle: "",
     },
   ])
+
+  useEffect(() => {
+    console.log("Debounce Search Term", debouncedSearchTerm)
+  }, [debouncedSearchTerm])
 
   const filteredCustomers = useMemo(() => {
     if (!orgCustomerData?.customers) return []
@@ -166,14 +186,36 @@ export default function Dashboard() {
         setLoading(true)
 
         // Now only fetch from redshift as it contains all customer data
-        const redshiftRes = await http.get(`/customer/redshift`, {
-          headers: { Authorization: `Bearer ${access_token}` },
-        })
-
-        console.log("redshiftRes > customers", redshiftRes)
+        const redshiftRes = await http.get(
+          `/customer/redshift?page=${page}&limit=${limit}&search=${debouncedSearchTerm}`,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
 
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
-        console.log("Redshift customer details:", redshiftCustomerDetails)
+        console.log(
+          "redshiftCustomerDetails",
+          redshiftCustomerDetails,
+          redshiftRes?.data?.pagination
+        )
+        const {
+          totalPages,
+          totalRecords,
+          hasNextPage,
+          hasPrevPage,
+          nextPage,
+          prevPage,
+        } = redshiftRes?.data?.pagination
+
+        setPagination({
+          totalPages,
+          totalRecords,
+          hasNextPage,
+          hasPrevPage,
+          nextPage,
+          prevPage,
+        })
 
         // Add _id field to each customer object for compatibility
         const customersWithId = redshiftCustomerDetails.map(
@@ -188,7 +230,6 @@ export default function Dashboard() {
           customers: customersWithId,
         }
 
-        console.log("Customer list Dashboard", orgCustomerData)
         setOrgCustomerData(orgCustomerData)
       } catch (err) {
         console.error("Error fetching customers:", err)
@@ -198,7 +239,7 @@ export default function Dashboard() {
     }
 
     getOrgCustomers()
-  }, [user_data?.organization, access_token])
+  }, [user_data?.organization, access_token, page, debouncedSearchTerm])
 
   useEffect(() => {
     if (!orgCustomerData?.customers?.length) return
@@ -319,7 +360,6 @@ export default function Dashboard() {
           body: JSON.stringify(messagePayload),
         }
       )
-      console.log("response", response)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
@@ -369,7 +409,6 @@ export default function Dashboard() {
           customer: selectedCustomer._id,
           chatSession: 1,
         }
-        console.log("responseMessage", responseMessage)
         // ✅ Append response message to store
         appendCustomerConversationMessage(responseMessage)
         setCustomerMessageStatus(false)
@@ -493,6 +532,13 @@ export default function Dashboard() {
         <div className="mt-4">
           {activeTab === "alert" && (
             <div className="rounded-xl border bg-white p-4 shadow-sm">
+              <input
+                type="text"
+                placeholder="Search..."
+                className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b text-gray-600">
@@ -736,6 +782,34 @@ export default function Dashboard() {
                   </table>
                 </div>
               </div>
+              <div className="mb-20 mt-4 flex items-center justify-between">
+                <Button
+                  className="disabled bg-[#174894] hover:bg-[#173094]"
+                  disabled={!pagination.hasNextPage}
+                  onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm font-bold text-gray-500">
+                  Page {page} of {totalPages}
+                </span>
+
+                {/* <button
+                  disabled={!pagination.hasNextPage}
+                  onClick={() => setPage((prev) => prev + 1)}
+                  className="disabled bg-[#174894] hover:bg-[#173094]"
+                >
+                  Next
+                </button> */}
+                <Button
+                  className="disabled bg-[#174894] hover:bg-[#173094]"
+                  disabled={!pagination.hasNextPage}
+                  onClick={() => setPage((prev) => prev + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+
               <CustomerSlideIn
                 customer={selectedCustomer}
                 onClose={() => {
