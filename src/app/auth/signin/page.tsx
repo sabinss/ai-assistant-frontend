@@ -128,8 +128,16 @@ export default function page() {
           </span>
         )}
 
-        <div className="flex items-center text-xs">
-          <Checkbox /> <span className="ml-2">Remember me</span>
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center">
+            <Checkbox /> <span className="ml-2">Remember me</span>
+          </div>
+          <Link
+            href="/auth/forgot-password"
+            className="text-blue-500 hover:underline"
+          >
+            Forgot Password?
+          </Link>
         </div>
 
         {isSubmitting && (
