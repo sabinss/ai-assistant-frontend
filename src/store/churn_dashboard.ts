@@ -137,15 +137,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         JSON.stringify(data, null, 2)
       )
 
-      // Debug distribution data
-      console.log("Distribution data sources:", {
-        distributionData: data.distributionData,
-        riskDistribution: data.riskDistribution,
-        previousMonthChurnRiskDistribution:
-          data.previousMonth?.churnRiskDistribution,
-        insightsRiskDistribution: data.insights?.riskDistribution,
-      })
-
       // Store the raw API data
       set({ apiData: data })
 
@@ -260,7 +251,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
             },
           ]
           set({ metricsData: metrics })
-
+          console.log("metricsData", metrics)
           // Also set distribution data for pie chart
           if (data.riskDistribution) {
             const distribution = [
