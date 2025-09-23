@@ -29,6 +29,7 @@ export default function Dashboard() {
     appendCustomerConversationMessage,
     clearCustomerConversationMessages,
   } = useOrgCustomer()
+  const [scoreDashboardData, setScoreDashboardData] = useState<any>([])
   const { botName } = useNavBarStore()
   const router = useRouter()
   const fetchHighRiskChurnStats = useChurnDashboardStore(
@@ -81,10 +82,6 @@ export default function Dashboard() {
       subtitle: "",
     },
   ])
-
-  useEffect(() => {
-    console.log("Debounce Search Term", debouncedSearchTerm)
-  }, [debouncedSearchTerm])
 
   const filteredCustomers = useMemo(() => {
     if (!orgCustomerData?.customers) return []
@@ -194,6 +191,8 @@ export default function Dashboard() {
         )
 
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
+        const scoreDashboardData = redshiftRes?.data?.scoreDashboardData || []
+        setScoreDashboardData(scoreDashboardData)
         console.log(
           "redshiftCustomerDetails",
           redshiftCustomerDetails,
@@ -245,84 +244,84 @@ export default function Dashboard() {
     if (!orgCustomerData?.customers?.length) return
 
     const customers = orgCustomerData.customers
-    const totalCustomers = customers.length
-    const threshold = 40
-    // Calculate all metrics in a single pass for better performance
-    let totalHealthScore = 0
-    let customersWithHealthScore = 0
-    let atRiskCustomers = 0
+    console.log("customers---", scoreDashboardData)
+    const totalCustomers = scoreDashboardData?.customer_count
+
     let expansionCount = 0
     let atRiskCustomersARR = 0
     let atRiskCustomersWithARR = 0
-    customers.forEach((customer: any) => {
-      // Now customer data comes directly from redshift, so no need for redShiftCustomer property
-      // Health score calculation
-      if (customer.health_score) {
-        totalHealthScore += customer.health_score
-        customersWithHealthScore++
-      }
+    // customers.forEach((customer: any) => {
+    //   // Now customer data comes directly from redshift, so no need for redShiftCustomer property
+    //   // Health score calculation
+    //   if (customer.health_score) {
+    //     totalHealthScore += customer.health_score
+    //     customersWithHealthScore++
+    //   }
 
-      // Risk calculation
-      if (customer.churn_risk_score > threshold) {
-        atRiskCustomers++
-        // Calculate ARR for at-risk customers
-        if (customer.arr && !isNaN(parseFloat(customer.arr))) {
-          atRiskCustomersARR += parseFloat(customer.arr)
-          atRiskCustomersWithARR++
-        }
-      }
+    //   // Risk calculation
+    //   if (customer.churn_risk_score > threshold) {
+    //     atRiskCustomers++
+    //     // Calculate ARR for at-risk customers
+    //     if (customer.arr && !isNaN(parseFloat(customer.arr))) {
+    //       atRiskCustomersARR += parseFloat(customer.arr)
+    //       atRiskCustomersWithARR++
+    //     }
+    //   }
 
-      // Expansion calculation
-      if (customer.expansion_opp_score >= 70) {
-        expansionCount++
-      }
-    })
+    //   // Expansion calculation
+    //   if (customer.expansion_opp_score >= 70) {
+    //     expansionCount++
+    //   }
+    // })
 
-    const healthScoreAverage =
-      customersWithHealthScore > 0
-        ? (totalHealthScore / customersWithHealthScore).toFixed(1)
-        : "0"
-    const threasoldCustomer = customers.filter((x: any) => {
-      if (x.churn_risk_score > threshold) {
-        return true
-      }
-    })
+    // const healthScoreAverage =
+    //   customersWithHealthScore > 0
+    //     ? (totalHealthScore / customersWithHealthScore).toFixed(1)
+    //     : "0"
+    const healthScoreAverage = scoreDashboardData?.avg_health_score
+    // const threasoldCustomer = customers.filter((x: any) => {
+    //   if (x.churn_risk_score > threshold) {
+    //     return true
+    //   }
+    // })
 
-    const atRiskAverageARR = threasoldCustomer.reduce(
-      (acc: number, customer: any) => {
-        return +customer.arr + acc
-      },
-      0
-    )
+    // const atRiskAverageARR = threasoldCustomer.reduce(
+    //   (acc: number, customer: any) => {
+    //     return +customer.arr + acc
+    //   },
+    //   0
+    // )
+    const atRiskAverageARR = scoreDashboardData?.churned_customer_arr
     setStats([
       {
         id: "total",
         title: "Total Customers",
-        value: totalCustomers.toString(),
+        value: scoreDashboardData?.customer_count.toString(),
         subtitle: "Active accounts",
       },
       {
         id: "healthAvg",
         title: "Health Score Average",
-        value: healthScoreAverage,
+        value: scoreDashboardData?.avg_health_score,
         subtitle: "",
         // 5 points vs last month
       },
       {
         id: "atRisk",
         title: "At-Risk Customers",
-        value: atRiskCustomers.toString(),
-        subtitle: `${((atRiskCustomers / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
-        arrValue: `${atRiskAverageARR}`,
+        // value: atRiskCustomers.toString(),
+        value: scoreDashboardData?.churned_customer_count,
+        subtitle: `${((scoreDashboardData?.churned_customer_count / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+        arrValue: `${scoreDashboardData?.churned_customer_arr}`,
       },
       {
         id: "expansion",
         title: "Expansion Opportunities",
-        value: expansionCount.toString(),
-        subtitle: `${((expansionCount / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+        value: scoreDashboardData?.expansion_account_count.toString(),
+        subtitle: `${((scoreDashboardData?.expansion_account_count / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
       },
     ])
-  }, [orgCustomerData])
+  }, [orgCustomerData, scoreDashboardData])
   function getClockTime() {
     return new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
