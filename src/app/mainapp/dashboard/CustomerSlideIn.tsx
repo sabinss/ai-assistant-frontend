@@ -14,6 +14,7 @@ export default function CustomerSlideIn({
   sendCustomerChat,
 }: any) {
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
+  console.log("customer in slide in --", customer)
   const { clearCustomerConversationMessages, resetCustomerInsightsState } =
     useOrgCustomer()
   const [loading, setLoading] = useState(false)
@@ -45,6 +46,9 @@ export default function CustomerSlideIn({
         let healthDrivers: any[] = []
         let churnDrivers: any[] = []
         let expansionDrivers: any[] = []
+
+        console.log("detailResp---", detailResp)
+        console.log("scoreResp---", scoreResp)
 
         if (detailResp?.data?.data?.length > 0) {
           const grouped = detailResp.data.data.reduce((acc: any, item: any) => {

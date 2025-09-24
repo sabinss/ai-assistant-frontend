@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { FaEdit, FaPlus, FaPlusCircle } from "react-icons/fa"
+import { FaEdit, FaPlus, FaPlusCircle, FaPlay } from "react-icons/fa"
 import { FaRegSave } from "react-icons/fa"
 import { MdDelete, MdOutlineCancel } from "react-icons/md"
 import http from "@/config/http"
@@ -17,10 +17,19 @@ import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { ImSpinner2 } from "react-icons/im" // Import spinner icon
 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Objective", sortable: false },
-  { name: "", sortable: false },
+  { name: "Actions", sortable: false },
 ]
 
 export const AgentTable = () => {
@@ -30,6 +39,10 @@ export const AgentTable = () => {
   const [isAgent, setIsAgent] = useState(false)
   const [frequency, setFrequency] = useState("")
   const [dayTime, setDayTime] = useState("")
+  // Add state for confirmation dialog
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<any>(null)
+
   useEffect(() => {
     async function getOrgAgentList() {
       await fetchOrgAgentInstructions()
@@ -182,8 +195,64 @@ export const AgentTable = () => {
   const handleCancel = () => {
     setIsEditing(false)
   }
+
+  const handleStartAgent = async (agent: any) => {
+    // Show custom confirmation dialog
+    setSelectedAgent(agent)
+    setShowConfirmDialog(true)
+  }
+  const cancelStartAgent = () => {
+    setShowConfirmDialog(false)
+    setSelectedAgent(null)
+  }
+  const confirmStartAgent = async () => {
+    if (!selectedAgent) return
+
+    try {
+      console.log("Starting agent:", selectedAgent)
+      toast.success(`Starting agent: ${selectedAgent.name}`)
+      await http.get(
+        `/organization/agent/${selectedAgent._id}/start?agent_name=${selectedAgent.name}&org_id=${selectedAgent.organization}`,
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      )
+      toast.success(`Agent "${selectedAgent.name}" started successfully!`)
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to start agent")
+    } finally {
+      setShowConfirmDialog(false)
+      setSelectedAgent(null)
+    }
+  }
   return (
     <div className="relative mb-10 w-full overflow-y-auto rounded-md bg-white p-4 text-[#333333]">
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Agent Start</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to start the agent "{selectedAgent?.name}"?
+              This action will initiate the agent process.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              onClick={cancelStartAgent}
+              variant="outline"
+              className="mr-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmStartAgent}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              Start Agent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       {isEditing ? (
         <div className="rounded-lg bg-gray-100 p-4">
           <h2 className="text-lg font-semibold">
@@ -569,12 +638,24 @@ export const AgentTable = () => {
                     <TableCell className="py-3">{agent.name}</TableCell>
                     <TableCell className="py-3">{agent.objective}</TableCell>
                     <TableCell className="py-3">
-                      <button onClick={() => handleEdit(agent)}>
-                        <FaEdit size={20} />
-                      </button>
-                      <button onClick={() => handleDelete(agent)}>
-                        <MdDelete size={20} />
-                      </button>
+                      <div className="flex  justify-start gap-2">
+                        {agent.isAgent && (
+                          <button
+                            onClick={() => handleStartAgent(agent)}
+                            className="flex items-center gap-1 rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
+                            title="Start Agent"
+                          >
+                            <FaPlay size={12} />
+                            Start
+                          </button>
+                        )}
+                        <button onClick={() => handleEdit(agent)}>
+                          <FaEdit size={20} />
+                        </button>
+                        <button onClick={() => handleDelete(agent)}>
+                          <MdDelete size={20} />
+                        </button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
