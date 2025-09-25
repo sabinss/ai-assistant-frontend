@@ -83,6 +83,9 @@ export default function CustomerScoreOverview2() {
   const scoreAnalysisData = useChurnDashboardStore(
     (s) => s.scoreAnalysisData?.data
   )
+  const scoreAnalysisCustomers = useChurnDashboardStore(
+    (s) => s.scoreAnalysisData?.customers
+  )
   const scoreAnalysisDataLoading = useChurnDashboardStore(
     (s) => s.scoreAnalysisDataLoading
   )
@@ -251,7 +254,7 @@ export default function CustomerScoreOverview2() {
 
       <ChurnScoreAnalysis
         isLoading={scoreAnalysisDataLoading}
-        riskMatrixData={scoreAnalysisData}
+        companies={scoreAnalysisCustomers}
       />
 
       {/* Immediate Actions */}
