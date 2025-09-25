@@ -108,11 +108,14 @@ interface ChurnDashboardState {
   fetchCustomerScoreData: (accessToken: string) => Promise<void>
   fetchChurnRiskDistribution: (accessToken: string) => Promise<void>
   fetchImmediateActionsData: (accessToken: string) => Promise<void>
+  fetchTrendData: (accessToken: string) => Promise<void>
   customerScoreData: ChurnDataI | null
   churnRiskDistribution: ChurnDataI | null
   churnRiskDistributionLoading: boolean
   immediateActionsDataLoading: boolean
   immediateActionsData: ChurnDataI | null
+  trendDataLoading: boolean
+  trendDataNew: ChurnDataI | null
   // populateWithDemoData: () => void
 }
 
@@ -134,6 +137,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   immediateActionsData: null,
   metricsData: [],
   trendData: [],
+  trendDataNew: null,
+  trendDataLoading: false,
   distributionData: [],
   riskMatrixData: [],
   highRiskCustomers: [],
@@ -155,11 +160,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       const data = res?.data?.data || {}
-
-      console.log(
-        "Complete API response structure:",
-        JSON.stringify(data, null, 2)
-      )
 
       // Store the raw API data
       set({ apiData: data })
@@ -369,7 +369,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       state.customerScoreData &&
       isCacheValid(state.customerScoreData?.timestamp)
     ) {
-      console.log("Using cached customerScoreData")
       return state.customerScoreData
     } else {
       set({ isLoading: true, error: null })
@@ -394,7 +393,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       state.churnRiskDistribution &&
       isCacheValid(state.churnRiskDistribution?.timestamp)
     ) {
-      console.log("Using cached customerScoreData")
       return state.churnRiskDistribution
     } else {
       set({ churnRiskDistributionLoading: true, error: null })
@@ -428,7 +426,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         const res = await http.get(`/customer/immediate-actions`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
-        console.log("Immediate actions data", res.data.data)
         set({
           immediateActionsData: {
             data: [...res.data.data],
@@ -438,6 +435,31 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         set({ immediateActionsDataLoading: false })
       } catch (err: any) {
         set({ immediateActionsDataLoading: false, error: err })
+      }
+    }
+  },
+  fetchTrendData: async (accessToken: string) => {
+    const state: any = useChurnDashboardStore.getState()
+    console.log("Fetching Trend data")
+    if (state.trendData && isCacheValid(state.trendData?.timestamp)) {
+      console.log("Using cached immediateActionsData")
+      return state.trendData
+    } else {
+      set({ trendDataLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/churn-risk-trend`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        console.log("Trend data response-->", res.data.data)
+        set({
+          trendDataNew: {
+            data: res.data.data,
+            timestamp: Date.now(),
+          },
+        })
+        set({ trendDataLoading: false })
+      } catch (err: any) {
+        set({ trendDataLoading: false, error: err })
       }
     }
   },

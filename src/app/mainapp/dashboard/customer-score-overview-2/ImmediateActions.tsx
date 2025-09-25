@@ -3,7 +3,6 @@ import { formatCurrency } from "@/utility"
 import { ChevronRight } from "lucide-react"
 
 export default function ImmediateActions({ highRiskCustomers }: any) {
-  console.log("highRiskCustomers---", highRiskCustomers)
   return (
     <div className="rounded-xl bg-white p-6 shadow">
       {renderSectionTitle("Immediate Actions Required")}
