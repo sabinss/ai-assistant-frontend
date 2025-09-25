@@ -106,18 +106,39 @@ interface ChurnDashboardState {
   setApiData: (data: ChurnDashboardAPIResponse) => void
   fetchHighRiskChurnStats: (accessToken: string) => Promise<void>
   fetchCustomerScoreData: (accessToken: string) => Promise<void>
-  customerScoreData: null
+  fetchChurnRiskDistribution: (accessToken: string) => Promise<void>
+  fetchImmediateActionsData: (accessToken: string) => Promise<void>
+  customerScoreData: ChurnDataI | null
+  churnRiskDistribution: ChurnDataI | null
+  churnRiskDistributionLoading: boolean
+  immediateActionsDataLoading: boolean
+  immediateActionsData: ChurnDataI | null
   // populateWithDemoData: () => void
+}
+
+interface ChurnDataI {
+  [key: string]: any
+  timestamp?: any
+}
+
+// Add cache expiration check (e.g., 5 minutes)
+const isCacheValid = (timestamp: number) => {
+  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+  return Date.now() - timestamp < CACHE_DURATION
 }
 
 export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   customerScoreData: null,
+  churnRiskDistribution: null,
+  immediateActionsDataLoading: false,
+  immediateActionsData: null,
   metricsData: [],
   trendData: [],
   distributionData: [],
   riskMatrixData: [],
   highRiskCustomers: [],
   isLoading: false,
+  churnRiskDistributionLoading: false,
   error: null,
   apiData: null,
   setMetricsData: (metrics) => set({ metricsData: metrics }),
@@ -343,15 +364,81 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
     }
   },
   fetchCustomerScoreData: async (accessToken: string) => {
-    set({ isLoading: true, error: null })
-    try {
-      const res = await http.get(`/customer/score-dashboard`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      console.log("res", res)
-      set({ customerScoreData: res.data.data })
-    } catch (err: any) {
-      set({ isLoading: false, error: err })
+    const state: any = useChurnDashboardStore.getState()
+    if (
+      state.customerScoreData &&
+      isCacheValid(state.customerScoreData?.timestamp)
+    ) {
+      console.log("Using cached customerScoreData")
+      return state.customerScoreData
+    } else {
+      set({ isLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/score-dashboard`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        set({
+          customerScoreData: {
+            ...res.data.data,
+            timestamp: Date.now(),
+          },
+        })
+      } catch (err: any) {
+        set({ isLoading: false, error: err })
+      }
+    }
+  },
+  fetchChurnRiskDistribution: async (accessToken: string) => {
+    const state: any = useChurnDashboardStore.getState()
+    if (
+      state.churnRiskDistribution &&
+      isCacheValid(state.churnRiskDistribution?.timestamp)
+    ) {
+      console.log("Using cached customerScoreData")
+      return state.churnRiskDistribution
+    } else {
+      set({ churnRiskDistributionLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/churn-risk-distribution`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        set({
+          churnRiskDistribution: {
+            data: [...res.data.data],
+            timestamp: Date.now(),
+          },
+        })
+        set({ churnRiskDistributionLoading: false })
+      } catch (err: any) {
+        set({ churnRiskDistributionLoading: false, error: err })
+      }
+    }
+  },
+  fetchImmediateActionsData: async (accessToken: string) => {
+    const state: any = useChurnDashboardStore.getState()
+    if (
+      state.immediateActionsData &&
+      isCacheValid(state.immediateActionsData?.timestamp)
+    ) {
+      console.log("Using cached immediateActionsData")
+      return state.immediateActionsData
+    } else {
+      set({ immediateActionsDataLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/immediate-actions`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        console.log("Immediate actions data", res.data.data)
+        set({
+          immediateActionsData: {
+            data: [...res.data.data],
+            timestamp: Date.now(),
+          },
+        })
+        set({ immediateActionsDataLoading: false })
+      } catch (err: any) {
+        set({ immediateActionsDataLoading: false, error: err })
+      }
     }
   },
 }))

@@ -5,6 +5,18 @@ import { useRouter } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import useAuth from "@/store/user"
+import ChurnRiskChart from "./ChurnRiskDistribution/ChurnRiskChart"
+import ChurnRiskChartSkeleton from "./ChurnRiskDistribution/ChurnRiskSkeleton"
+import ImmediateActions from "./ImmediateActions"
+
+const COLORS = {
+  "Very Low (0-20)": "#2ecc71", // green
+  "Low (21-40)": "#27ae60", // darker green
+  "Medium (41-60)": "#f1c40f", // yellow
+  "High (61-80)": "#e67e22", // orange
+  "Critical (81-100)": "#e74c3c", // red
+  Other: "#95a5a6", // gray fallback
+}
 
 export default function CustomerScoreOverview2() {
   const router = useRouter()
@@ -42,15 +54,33 @@ export default function CustomerScoreOverview2() {
     )
   }
 
-  // Example usage:
-  // { percentage: '536.44', direction: 'up' }
-
-  // { percentage: '-20.00', direction: 'down' }
-
   const fetchCustomerScoreData = useChurnDashboardStore(
     (s) => s.fetchCustomerScoreData
   )
-  console.log("customerScoreData", customerScoreData)
+  const fetchChurnRiskDistribution = useChurnDashboardStore(
+    (s) => s.fetchChurnRiskDistribution
+  )
+  const churnRiskDistribution = useChurnDashboardStore(
+    (s) => s.churnRiskDistribution?.data
+  )
+
+  const churnRiskDistributionLoading = useChurnDashboardStore(
+    (s) => s.churnRiskDistributionLoading
+  )
+
+  const immediateActionsData = useChurnDashboardStore(
+    (s) => s.immediateActionsData?.data
+  )
+  console.log("immediateActionsData---", immediateActionsData)
+  const immediateActionsDataLoading = useChurnDashboardStore(
+    (s) => s.immediateActionsDataLoading
+  )
+
+  const fetchImmediateActionsData = useChurnDashboardStore(
+    (s) => s.fetchImmediateActionsData
+  )
+
+  console.log("churnRiskDistribution", churnRiskDistribution)
   useEffect(() => {
     const fetchData = async () => {
       if (!access_token) return
@@ -74,6 +104,24 @@ export default function CustomerScoreOverview2() {
     fetchData()
   }, [access_token, fetchCustomerScoreData])
 
+  useEffect(() => {
+    try {
+      console.log("fetchChurnRiskDistribution > access_token", access_token)
+      if (access_token) {
+        console.log("Fetching Churn risk distribution...")
+        fetchChurnRiskDistribution(access_token)
+      }
+    } catch (err) {
+      console.log("Error loading churn risk distribution data", err)
+    }
+  }, [access_token, fetchChurnRiskDistribution])
+
+  useEffect(() => {
+    if (access_token) {
+      fetchImmediateActionsData(access_token)
+    }
+  }, [access_token, fetchImmediateActionsData])
+
   return (
     <div className="relative space-y-6 p-6">
       {/* Back Button */}
@@ -94,7 +142,7 @@ export default function CustomerScoreOverview2() {
         </div>
       </div>
 
-      {loading && (
+      {/* {loading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
             <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
@@ -103,7 +151,7 @@ export default function CustomerScoreOverview2() {
             </p>
           </div>
         </div>
-      )}
+      )} */}
 
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
@@ -112,7 +160,7 @@ export default function CustomerScoreOverview2() {
       )}
 
       {/* Display Customer Score Data */}
-      {customerScoreData && (
+      {/* {customerScoreData && (
         <div className="rounded-xl bg-white p-6 shadow">
           <h2 className="mb-4 text-lg font-semibold text-gray-800">
             Customer Score Data
@@ -123,7 +171,7 @@ export default function CustomerScoreOverview2() {
             </pre>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Show message if no data */}
       {!loading && !error && !customerScoreData && (
@@ -135,10 +183,7 @@ export default function CustomerScoreOverview2() {
       )}
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-        <div
-          key={1}
-          className="flex flex-col items-center rounded-xl bg-white p-6 shadow"
-        >
+        <div className="flex flex-col items-center rounded-xl bg-white p-6 shadow">
           <h3 className="text-sm text-gray-600">High Risk Customers</h3>
           <p className="text-3xl font-bold">
             {customerScoreData?.customer_count}
@@ -149,10 +194,7 @@ export default function CustomerScoreOverview2() {
             previous={customerScoreData?.prev_month_churned_customer_count}
           />
         </div>
-        <div
-          key={1}
-          className="flex flex-col items-center rounded-xl bg-white p-6 shadow"
-        >
+        <div className="flex flex-col items-center rounded-xl bg-white p-6 shadow">
           <h3 className="text-sm text-gray-600">Revenue At Risk</h3>
           <p className="text-3xl font-bold">
             {customerScoreData?.churned_customer_arr}
@@ -162,10 +204,7 @@ export default function CustomerScoreOverview2() {
             previous={customerScoreData?.prev_month_churned_customer_arr}
           />
         </div>
-        <div
-          key={1}
-          className="flex flex-col items-center rounded-xl bg-white p-6 shadow"
-        >
+        <div className="flex flex-col items-center rounded-xl bg-white p-6 shadow">
           <h3 className="text-sm text-gray-600">Avg Churn Score</h3>
           <p className="text-3xl font-bold">
             {customerScoreData?.avg_churn_risk_score}
@@ -176,6 +215,26 @@ export default function CustomerScoreOverview2() {
           />
         </div>
       </div>
+
+      {/* Churn risk distribution data */}
+      <div>
+        {churnRiskDistributionLoading ? (
+          <ChurnRiskChartSkeleton />
+        ) : churnRiskDistribution && churnRiskDistribution.length > 0 ? (
+          <ChurnRiskChart churnRiskDistribution={churnRiskDistribution} />
+        ) : (
+          <div className="rounded-xl bg-white p-6 text-center text-gray-500 shadow">
+            <p>No churn risk distribution data available</p>
+          </div>
+        )}
+      </div>
+
+      {/* Immediate Actions */}
+      {!immediateActionsDataLoading &&
+        immediateActionsData &&
+        immediateActionsData.length > 0 && (
+          <ImmediateActions highRiskCustomers={immediateActionsData} />
+        )}
     </div>
   )
 }
