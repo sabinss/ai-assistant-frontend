@@ -448,12 +448,20 @@ export default function Dashboard() {
             onClick={async () => {
               if (stat.id === "atRisk") {
                 try {
-                  await useChurnDashboardStore
-                    .getState()
-                    .fetchHighRiskChurnStats(access_token || "")
-                  router.push("/mainapp/dashboard/customer-score-overview")
+                  const customerScoreData =
+                    useChurnDashboardStore.getState().customerScoreData
+                  console.log("customerScoreData", customerScoreData)
+                  if (!customerScoreData) {
+                    await useChurnDashboardStore
+                      .getState()
+                      .fetchCustomerScoreData(access_token || "")
+                  }
+                  // await useChurnDashboardStore
+                  //   .getState()
+                  //   .fetchHighRiskChurnStats(access_token || "")
+                  router.push("/mainapp/dashboard/customer-score-overview-2")
                 } catch (e) {
-                  router.push("/mainapp/dashboard/customer-score-overview")
+                  router.push("/mainapp/dashboard/customer-score-overview-2")
                 }
               } else if (stat.id === "total") {
                 setSelectedCustomer(null)
@@ -471,9 +479,10 @@ export default function Dashboard() {
 
                 <div className="flex items-center justify-between">
                   <div className="m-2 text-2xl font-bold">
-                    {stat.id === "atRisk" && churnLoading
+                    {stat.value}
+                    {/* {stat.id === "atRisk" && churnLoading
                       ? "Loading..."
-                      : stat.value}
+                      : stat.value} */}
                   </div>
                   {/* <div>{stat.arrValue}</div> */}
                   <div>
