@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import http from "@/config/http"
-import { formatCurrency, getBubbleSize, getHoverSize } from "@/utility"
+import { formatCurrency } from "@/utility"
 
 export interface ChurnMetricItem {
   label: string
@@ -106,49 +106,17 @@ interface ChurnDashboardState {
   setApiData: (data: ChurnDashboardAPIResponse) => void
   fetchHighRiskChurnStats: (accessToken: string) => Promise<void>
   fetchCustomerScoreData: (accessToken: string) => Promise<void>
-  fetchChurnRiskDistribution: (accessToken: string) => Promise<void>
-  fetchImmediateActionsData: (accessToken: string) => Promise<void>
-  fetchTrendData: (accessToken: string) => Promise<void>
-  fetchScoreAnalysisData: (accessToken: string) => Promise<void>
-  customerScoreData: ChurnDataI | null
-  churnRiskDistribution: ChurnDataI | null
-  churnRiskDistributionLoading: boolean
-  immediateActionsDataLoading: boolean
-  immediateActionsData: ChurnDataI | null
-  trendDataLoading: boolean
-  trendDataNew: ChurnDataI | null
-  scoreAnalysisDataLoading: boolean
-  scoreAnalysisData: ChurnDataI | null
   // populateWithDemoData: () => void
-}
-
-interface ChurnDataI {
-  [key: string]: any
-  timestamp?: any
-}
-
-// Add cache expiration check (e.g., 5 minutes)
-const isCacheValid = (timestamp: number) => {
-  const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
-  return Date.now() - timestamp < CACHE_DURATION
 }
 
 export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   customerScoreData: null,
-  churnRiskDistribution: null,
-  scoreAnalysisData: null,
-  scoreAnalysisDataLoading: false,
-  immediateActionsDataLoading: false,
-  immediateActionsData: null,
   metricsData: [],
   trendData: [],
-  trendDataNew: null,
-  trendDataLoading: false,
   distributionData: [],
   riskMatrixData: [],
   highRiskCustomers: [],
   isLoading: false,
-  churnRiskDistributionLoading: false,
   error: null,
   apiData: null,
   setMetricsData: (metrics) => set({ metricsData: metrics }),
@@ -165,6 +133,11 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       const data = res?.data?.data || {}
+
+      console.log(
+        "Complete API response structure:",
+        JSON.stringify(data, null, 2)
+      )
 
       // Store the raw API data
       set({ apiData: data })
@@ -280,6 +253,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
             },
           ]
           set({ metricsData: metrics })
+          console.log("metricsData", metrics)
           // Also set distribution data for pie chart
           if (data.riskDistribution) {
             const distribution = [
@@ -334,6 +308,10 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         data.riskMatrix.customers &&
         Array.isArray(data.riskMatrix.customers)
       ) {
+        console.log(
+          "customers data for risk matrix----",
+          data.riskMatrix.customers
+        )
         let customers = data.riskMatrix.customers
 
         // Transform customers data to risk matrix format
@@ -364,130 +342,22 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
     }
   },
   fetchCustomerScoreData: async (accessToken: string) => {
-    const state: any = useChurnDashboardStore.getState()
-    if (
-      state.customerScoreData &&
-      isCacheValid(state.customerScoreData?.timestamp)
-    ) {
-      return state.customerScoreData
-    } else {
-      set({ isLoading: true, error: null })
-      try {
-        const res = await http.get(`/customer/score-dashboard`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        set({
-          customerScoreData: {
-            ...res.data.data,
-            timestamp: Date.now(),
-          },
-        })
-      } catch (err: any) {
-        set({ isLoading: false, error: err })
-      }
+    set({ isLoading: true, error: null })
+    try {
+      const res = await http.get(`/customer/score-dashboard`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      console.log("Customer Score Data Response:", res.data)
+      const data = res?.data?.data || res?.data
+      set({ customerScoreData: data, isLoading: false })
+    } catch (err: any) {
+      console.error("Error fetching customer score data:", err)
+      set({ isLoading: false, error: err?.message || "Failed to fetch customer score data" })
     }
-  },
-  fetchChurnRiskDistribution: async (accessToken: string) => {
-    const state: any = useChurnDashboardStore.getState()
-    if (
-      state.churnRiskDistribution &&
-      isCacheValid(state.churnRiskDistribution?.timestamp)
-    ) {
-      return state.churnRiskDistribution
-    } else {
-      set({ churnRiskDistributionLoading: true, error: null })
-      try {
-        const res = await http.get(`/customer/churn-risk-distribution`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        set({
-          churnRiskDistribution: {
-            data: [...res.data.data],
-            timestamp: Date.now(),
-          },
-        })
-        set({ churnRiskDistributionLoading: false })
-      } catch (err: any) {
-        set({ churnRiskDistributionLoading: false, error: err })
-      }
-    }
-  },
-  fetchImmediateActionsData: async (accessToken: string) => {
-    const state: any = useChurnDashboardStore.getState()
-    if (
-      state.immediateActionsData &&
-      isCacheValid(state.immediateActionsData?.timestamp)
-    ) {
-      console.log("Using cached immediateActionsData")
-      return state.immediateActionsData
-    } else {
-      set({ immediateActionsDataLoading: true, error: null })
-      try {
-        const res = await http.get(`/customer/immediate-actions`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        set({
-          immediateActionsData: {
-            data: [...res.data.data],
-            timestamp: Date.now(),
-          },
-        })
-        set({ immediateActionsDataLoading: false })
-      } catch (err: any) {
-        set({ immediateActionsDataLoading: false, error: err })
-      }
-    }
-  },
-  fetchTrendData: async (accessToken: string) => {
-    const state: any = useChurnDashboardStore.getState()
-    if (state.trendData && isCacheValid(state.trendData?.timestamp)) {
-      console.log("Using cached immediateActionsData")
-      return state.trendData
-    } else {
-      set({ trendDataLoading: true, error: null })
-      try {
-        const res = await http.get(`/customer/churn-risk-trend`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        set({
-          trendDataNew: {
-            data: res.data.data,
-            timestamp: Date.now(),
-          },
-        })
-        set({ trendDataLoading: false })
-      } catch (err: any) {
-        set({ trendDataLoading: false, error: err })
-      }
-    }
-  },
-  fetchScoreAnalysisData: async (accessToken: string) => {
-    const state: any = useChurnDashboardStore.getState()
-    if (
-      state.scoreAnalysisData &&
-      isCacheValid(state.scoreAnalysisData?.timestamp)
-    ) {
-      return state.scoreAnalysisData
-    } else {
-      set({ scoreAnalysisDataLoading: true, error: null })
-      try {
-        const res = await http.get(`/customer/customer-score-analysis`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        console.log("Score analysis data response-->", res.data.data?.customers)
-        const customers = res.data.data?.customers
-
-        set({
-          scoreAnalysisData: {
-            data: res.data.data,
-            customers: res.data.data?.customers,
-            timestamp: Date.now(),
-          },
-        })
-        set({ scoreAnalysisDataLoading: false })
-      } catch (err: any) {
-        set({ scoreAnalysisDataLoading: false, error: err })
-      }
+  },      })
+      console.log("res", res)
+    } catch (err: any) {
+      set({ isLoading: false, error: err })
     }
   },
 }))
