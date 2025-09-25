@@ -70,4 +70,25 @@ const formUrlQuery = ({ params, key, value }: UrlQueryParams) => {
   )
 }
 
-export { parseMarkup, timeAgo, formUrlQuery, formatCurrency }
+const getBubbleSize = (arr: number) => {
+  // Base size: 6px, max size: 18px
+  // Higher ARR values = bigger bubbles
+  if (!arr || arr <= 0) return 6
+  // Normalize ARR to a reasonable range (assuming max ARR is around 1M)
+  const normalizedArr = Math.min(arr / 1000000, 1) // Cap at 1M
+  return Math.max(6, Math.min(18, 6 + normalizedArr * 12))
+}
+
+const getHoverSize = (arr: number) => {
+  // Hover size is 1.5x the base size
+  return getBubbleSize(arr) * 1.5
+}
+
+export {
+  parseMarkup,
+  timeAgo,
+  formUrlQuery,
+  formatCurrency,
+  getBubbleSize,
+  getHoverSize,
+}
