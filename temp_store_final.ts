@@ -106,7 +106,7 @@ interface ChurnDashboardState {
   setApiData: (data: ChurnDashboardAPIResponse) => void
   fetchHighRiskChurnStats: (accessToken: string) => Promise<void>
   fetchCustomerScoreData: (accessToken: string) => Promise<void>
-  customerScoreData: null
+  customerScoreData: any
   // populateWithDemoData: () => void
 }
 
@@ -342,16 +342,3 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       set({ isLoading: false })
     }
   },
-  fetchCustomerScoreData: async (accessToken: string) => {
-    set({ isLoading: true, error: null })
-    try {
-      const res = await http.get(`/customer/score-dashboard`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      })
-      console.log("res", res)
-      set({ customerScoreData: res.data.data })
-    } catch (err: any) {
-      set({ isLoading: false, error: err })
-    }
-  },
-}))
