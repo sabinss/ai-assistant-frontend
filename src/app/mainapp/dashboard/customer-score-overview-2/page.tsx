@@ -8,15 +8,8 @@ import useAuth from "@/store/user"
 import ChurnRiskChart from "./ChurnRiskDistribution/ChurnRiskChart"
 import ChurnRiskChartSkeleton from "./ChurnRiskDistribution/ChurnRiskSkeleton"
 import ImmediateActions from "./ImmediateActions"
-
-const COLORS = {
-  "Very Low (0-20)": "#2ecc71", // green
-  "Low (21-40)": "#27ae60", // darker green
-  "Medium (41-60)": "#f1c40f", // yellow
-  "High (61-80)": "#e67e22", // orange
-  "Critical (81-100)": "#e74c3c", // red
-  Other: "#95a5a6", // gray fallback
-}
+import ChurnRiskTrend from "./ChurnRiskTrend"
+import ChurnRiskTrendChart from "./ChurnRiskTrend"
 
 export default function CustomerScoreOverview2() {
   const router = useRouter()
@@ -71,7 +64,6 @@ export default function CustomerScoreOverview2() {
   const immediateActionsData = useChurnDashboardStore(
     (s) => s.immediateActionsData?.data
   )
-  console.log("immediateActionsData---", immediateActionsData)
   const immediateActionsDataLoading = useChurnDashboardStore(
     (s) => s.immediateActionsDataLoading
   )
@@ -80,7 +72,10 @@ export default function CustomerScoreOverview2() {
     (s) => s.fetchImmediateActionsData
   )
 
-  console.log("churnRiskDistribution", churnRiskDistribution)
+  const fetchTrendData = useChurnDashboardStore((s) => s.fetchTrendData)
+  const trendData = useChurnDashboardStore((s) => s.trendDataNew?.data)
+  const trendDataLoading = useChurnDashboardStore((s) => s.trendDataLoading)
+
   useEffect(() => {
     const fetchData = async () => {
       if (!access_token) return
@@ -106,7 +101,6 @@ export default function CustomerScoreOverview2() {
 
   useEffect(() => {
     try {
-      console.log("fetchChurnRiskDistribution > access_token", access_token)
       if (access_token) {
         console.log("Fetching Churn risk distribution...")
         fetchChurnRiskDistribution(access_token)
@@ -121,6 +115,12 @@ export default function CustomerScoreOverview2() {
       fetchImmediateActionsData(access_token)
     }
   }, [access_token, fetchImmediateActionsData])
+
+  useEffect(() => {
+    if (access_token) {
+      fetchTrendData(access_token)
+    }
+  }, [access_token, fetchTrendData])
 
   return (
     <div className="relative space-y-6 p-6">
@@ -228,6 +228,9 @@ export default function CustomerScoreOverview2() {
           </div>
         )}
       </div>
+
+      {/* Churn Risk Trend */}
+      <ChurnRiskTrendChart isLoading={trendDataLoading} trendData={trendData} />
 
       {/* Immediate Actions */}
       {!immediateActionsDataLoading &&
