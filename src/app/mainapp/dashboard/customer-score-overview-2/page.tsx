@@ -10,6 +10,7 @@ import ChurnRiskChartSkeleton from "./ChurnRiskDistribution/ChurnRiskSkeleton"
 import ImmediateActions from "./ImmediateActions"
 import ChurnRiskTrend from "./ChurnRiskTrend"
 import ChurnRiskTrendChart from "./ChurnRiskTrend"
+import ChurnScoreAnalysis from "./ChurnScoreAnalysis"
 
 export default function CustomerScoreOverview2() {
   const router = useRouter()
@@ -76,6 +77,16 @@ export default function CustomerScoreOverview2() {
   const trendData = useChurnDashboardStore((s) => s.trendDataNew?.data)
   const trendDataLoading = useChurnDashboardStore((s) => s.trendDataLoading)
 
+  const fetchScoreAnalysisData = useChurnDashboardStore(
+    (s) => s.fetchScoreAnalysisData
+  )
+  const scoreAnalysisData = useChurnDashboardStore(
+    (s) => s.scoreAnalysisData?.data
+  )
+  const scoreAnalysisDataLoading = useChurnDashboardStore(
+    (s) => s.scoreAnalysisDataLoading
+  )
+
   useEffect(() => {
     const fetchData = async () => {
       if (!access_token) return
@@ -121,6 +132,12 @@ export default function CustomerScoreOverview2() {
       fetchTrendData(access_token)
     }
   }, [access_token, fetchTrendData])
+
+  useEffect(() => {
+    if (access_token) {
+      fetchScoreAnalysisData(access_token)
+    }
+  }, [access_token, fetchScoreAnalysisData])
 
   return (
     <div className="relative space-y-6 p-6">
@@ -231,6 +248,11 @@ export default function CustomerScoreOverview2() {
 
       {/* Churn Risk Trend */}
       <ChurnRiskTrendChart isLoading={trendDataLoading} trendData={trendData} />
+
+      <ChurnScoreAnalysis
+        isLoading={scoreAnalysisDataLoading}
+        riskMatrixData={scoreAnalysisData}
+      />
 
       {/* Immediate Actions */}
       {!immediateActionsDataLoading &&
