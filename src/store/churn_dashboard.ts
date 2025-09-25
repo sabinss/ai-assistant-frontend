@@ -1,6 +1,6 @@
 import { create } from "zustand"
 import http from "@/config/http"
-import { formatCurrency } from "@/utility"
+import { formatCurrency, getBubbleSize, getHoverSize } from "@/utility"
 
 export interface ChurnMetricItem {
   label: string
@@ -474,10 +474,13 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         const res = await http.get(`/customer/customer-score-analysis`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
-        console.log("Score analysis data response-->", res.data.data)
+        console.log("Score analysis data response-->", res.data.data?.customers)
+        const customers = res.data.data?.customers
+
         set({
           scoreAnalysisData: {
             data: res.data.data,
+            customers: res.data.data?.customers,
             timestamp: Date.now(),
           },
         })
