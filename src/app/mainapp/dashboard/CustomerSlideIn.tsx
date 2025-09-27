@@ -8,6 +8,13 @@ import { Loader2 } from "lucide-react" // spinner icon from lucide-react
 import InsightsPanel from "./CustomeInsightsChat"
 import useOrgCustomer from "@/store/organization_customer"
 
+interface ScoreDriver {
+  name: string
+  impact: number
+  score: number
+  trend: string
+}
+
 export default function CustomerSlideIn({
   customer,
   onClose,
@@ -15,8 +22,14 @@ export default function CustomerSlideIn({
 }: any) {
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
   console.log("customer in slide in --", customer)
-  const { clearCustomerConversationMessages, resetCustomerInsightsState } =
-    useOrgCustomer()
+  const {
+    clearCustomerConversationMessages,
+    resetCustomerInsightsState,
+    getCustomerScoreCache,
+    setCustomerScoreCache,
+    isCacheValid,
+  } = useOrgCustomer()
+
   const [loading, setLoading] = useState(false)
   const [score, setScore] = useState<any[]>([])
   const [scoreDetails, setScoreDetails] = useState<any[]>([])
@@ -30,11 +43,24 @@ export default function CustomerSlideIn({
   console.log("selected customer---", customer)
 
   useEffect(() => {
+    console.log("customer in slide in useEffect---", customer)
     if (!customer?._id) return
 
     async function fetchCustomerScoreData() {
       try {
         setLoading(true)
+
+        // Check if we have valid cached data
+        const cachedData = getCustomerScoreCache(customer._id)
+
+        if (cachedData && isCacheValid(customer._id)) {
+          console.log("Using cached data for customer:", customer._id)
+          processScoreData(cachedData.scoreData, cachedData.detailsData)
+          setLoading(false)
+          return
+        }
+
+        console.log("Fetching fresh data for customer:", customer._id)
         const [scoreResp, detailResp] = await Promise.all([
           http.get(`/customer/${customer._id}/score`, {
             headers: { Authorization: `Bearer ${access_token}` },
@@ -43,144 +69,11 @@ export default function CustomerSlideIn({
             headers: { Authorization: `Bearer ${access_token}` },
           }),
         ])
-        let healthDrivers: any[] = []
-        let churnDrivers: any[] = []
-        let expansionDrivers: any[] = []
 
-        console.log("detailResp---", detailResp)
-        console.log("scoreResp---", scoreResp)
+        // Cache the fresh data
+        setCustomerScoreCache(customer._id, scoreResp.data, detailResp.data)
 
-        if (detailResp?.data?.data?.length > 0) {
-          const grouped = detailResp.data.data.reduce((acc: any, item: any) => {
-            const key = item.score_type
-            if (!acc[key]) acc[key] = []
-            acc[key].push(item)
-            return acc
-          }, {})
-
-          healthDrivers = (grouped["Health"] || []).map((d) => ({
-            name: d.score_driver_id,
-            impact: d.score,
-            score: d.score,
-            trend: "",
-          }))
-
-          churnDrivers = (grouped["Churn"] || []).map((d) => ({
-            name: d.score_driver_id,
-            impact: d.score,
-            score: d.score,
-            trend: "",
-          }))
-
-          expansionDrivers = (grouped["Expansion"] || []).map((d) => ({
-            name: d.score_driver_id,
-            impact: d.score,
-            score: d.score,
-            trend: "",
-          }))
-        }
-
-        if (scoreResp.data?.data?.length > 0) {
-          const {
-            health_score,
-            churn_risk_score,
-            expansion_opp_score,
-            churn_score_analysis,
-            expansion_score_analysis,
-            health_score_analysis,
-            recommendation,
-          } = scoreResp.data.data[0]
-
-          // ✅ Set keyDrivers here using mapped arrays
-          console.log("final tab data", [
-            {
-              title: "Health Score",
-              value: health_score,
-              keyDrivers: healthDrivers,
-            },
-            {
-              title: "Churn Risk",
-              value: churn_risk_score,
-              keyDrivers: churnDrivers,
-            },
-            {
-              title: "Expansion Opp Score",
-              value: expansion_opp_score,
-              keyDrivers: expansionDrivers,
-            },
-          ])
-          setScoreTabData([
-            {
-              title: "Health Score",
-              value: health_score,
-              keyDrivers: healthDrivers,
-            },
-            {
-              title: "Churn Risk",
-              value: churn_risk_score,
-              keyDrivers: churnDrivers,
-            },
-            {
-              title: "Expansion Opp Score",
-              value: expansion_opp_score,
-              keyDrivers: expansionDrivers,
-            },
-          ])
-
-          setRecommendedActions([recommendation])
-
-          setScoreAnalysis([
-            {
-              title: "Health Score Analysis",
-              growthIndicators: [health_score_analysis],
-              recommendedActions: [],
-            },
-            {
-              title: "Churn Risk Analysis",
-              growthIndicators: [churn_score_analysis],
-              recommendedActions: [],
-            },
-            {
-              title: "Expansion Opportunity Analysis",
-              growthIndicators: [expansion_score_analysis],
-            },
-          ])
-        } else {
-          // No scores available
-          setScoreTabData([
-            {
-              title: "Health Score",
-              value: 0,
-              keyDrivers: [],
-            },
-            {
-              title: "Churn Risk",
-              value: 0,
-              keyDrivers: [],
-            },
-            {
-              title: "Expansion Opp Score",
-              value: 0,
-              keyDrivers: [],
-            },
-          ])
-          setScoreAnalysis([
-            {
-              title: "Health Score Analysis",
-              growthIndicators: [],
-              recommendedActions: [],
-            },
-            {
-              title: "Churn Risk Analysis",
-              growthIndicators: [],
-              recommendedActions: [],
-            },
-            {
-              title: "Expansion Opportunity Analysis",
-              growthIndicators: [],
-            },
-          ])
-        }
+        processScoreData(scoreResp.data, detailResp.data)
       } catch (error) {
         console.error("Error fetching customer score data", error)
       } finally {
@@ -188,8 +81,155 @@ export default function CustomerSlideIn({
       }
     }
 
+    function processScoreData(scoreData: any, detailData: any) {
+      let healthDrivers: ScoreDriver[] = []
+      let churnDrivers: ScoreDriver[] = []
+      let expansionDrivers: ScoreDriver[] = []
+
+      console.log("detailData---", detailData)
+      console.log("scoreData---", scoreData)
+
+      if (detailData?.data?.length > 0) {
+        const grouped = detailData.data.reduce((acc: any, item: any) => {
+          const key = item.score_type
+          if (!acc[key]) acc[key] = []
+          acc[key].push(item)
+          return acc
+        }, {})
+
+        healthDrivers = (grouped["Health"] || []).map((d: any) => ({
+          name: d.score_driver_id,
+          impact: d.score,
+          score: d.score,
+          trend: "",
+        }))
+
+        churnDrivers = (grouped["Churn"] || []).map((d: any) => ({
+          name: d.score_driver_id,
+          impact: d.score,
+          score: d.score,
+          trend: "",
+        }))
+
+        expansionDrivers = (grouped["Expansion"] || []).map((d: any) => ({
+          name: d.score_driver_id,
+          impact: d.score,
+          score: d.score,
+          trend: "",
+        }))
+      }
+
+      if (scoreData?.data?.length > 0) {
+        const {
+          health_score,
+          churn_risk_score,
+          expansion_opp_score,
+          churn_score_analysis,
+          expansion_score_analysis,
+          health_score_analysis,
+          recommendation,
+        } = scoreData.data[0]
+
+        // ✅ Set keyDrivers here using mapped arrays
+        console.log("final tab data", [
+          {
+            title: "Health Score",
+            value: health_score,
+            keyDrivers: healthDrivers,
+          },
+          {
+            title: "Churn Risk",
+            value: churn_risk_score,
+            keyDrivers: churnDrivers,
+          },
+          {
+            title: "Expansion Opp Score",
+            value: expansion_opp_score,
+            keyDrivers: expansionDrivers,
+          },
+        ])
+        setScoreTabData([
+          {
+            title: "Health Score",
+            value: health_score,
+            keyDrivers: healthDrivers,
+          },
+          {
+            title: "Churn Risk",
+            value: churn_risk_score,
+            keyDrivers: churnDrivers,
+          },
+          {
+            title: "Expansion Opp Score",
+            value: expansion_opp_score,
+            keyDrivers: expansionDrivers,
+          },
+        ])
+
+        setRecommendedActions([recommendation])
+
+        setScoreAnalysis([
+          {
+            title: "Health Score Analysis",
+            growthIndicators: [health_score_analysis],
+            recommendedActions: [],
+          },
+          {
+            title: "Churn Risk Analysis",
+            growthIndicators: [churn_score_analysis],
+            recommendedActions: [],
+          },
+          {
+            title: "Expansion Opportunity Analysis",
+            growthIndicators: [expansion_score_analysis],
+          },
+        ])
+      } else {
+        // No scores available
+        setScoreTabData([
+          {
+            title: "Health Score",
+            value: 0,
+            keyDrivers: [],
+          },
+          {
+            title: "Churn Risk",
+            value: 0,
+            keyDrivers: [],
+          },
+          {
+            title: "Expansion Opp Score",
+            value: 0,
+            keyDrivers: [],
+          },
+        ])
+        setScoreAnalysis([
+          {
+            title: "Health Score Analysis",
+            growthIndicators: [],
+            recommendedActions: [],
+          },
+          {
+            title: "Churn Risk Analysis",
+            growthIndicators: [],
+            recommendedActions: [],
+          },
+          {
+            title: "Expansion Opportunity Analysis",
+            growthIndicators: [],
+          },
+        ])
+      }
+    }
+
     fetchCustomerScoreData()
-  }, [customer?._id])
+  }, [
+    customer?._id,
+    access_token,
+    getCustomerScoreCache,
+    setCustomerScoreCache,
+    isCacheValid,
+  ])
 
   // Reset CustomerInsightsChat state when customer changes or component unmounts
   useEffect(() => {
@@ -256,7 +296,7 @@ export default function CustomerSlideIn({
             )}
           </div>
 
-          {/* 👉 Fixed Insights Panel (floating on the right) */}
+          {/*  Fixed Insights Panel (floating on the right) */}
           <div className="h-screen w-[500px] shrink-0 overflow-y-auto border-l shadow-lg">
             <InsightsPanel
               key={customer?._id} // Force remount when customer changes

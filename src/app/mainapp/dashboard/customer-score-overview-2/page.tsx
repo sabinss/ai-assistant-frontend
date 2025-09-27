@@ -66,6 +66,9 @@ export default function CustomerScoreOverview2() {
   const immediateActionsData = useChurnDashboardStore(
     (s) => s.immediateActionsData?.data
   )
+  const immediateActionPagination = useChurnDashboardStore(
+    (s) => s.immediateActionsData?.pagination
+  )
   const immediateActionsDataLoading = useChurnDashboardStore(
     (s) => s.immediateActionsDataLoading
   )
@@ -90,6 +93,32 @@ export default function CustomerScoreOverview2() {
   const scoreAnalysisDataLoading = useChurnDashboardStore(
     (s) => s.scoreAnalysisDataLoading
   )
+
+  // Pagination handlers for ImmediateActions
+  const handlePageChange = async (page: number) => {
+    if (access_token) {
+      try {
+        console.log("Changing to page:", page)
+        // Get current limit from pagination or use default
+        const currentLimit = immediateActionPagination?.limit || 5
+        await fetchImmediateActionsData(access_token, page, currentLimit)
+      } catch (err) {
+        console.error("Error fetching page:", err)
+      }
+    }
+  }
+
+  const handlePageSizeChange = async (pageSize: number) => {
+    if (access_token) {
+      try {
+        console.log("Changing page size to:", pageSize)
+        // Reset to page 1 when changing page size
+        await fetchImmediateActionsData(access_token, 1, pageSize)
+      } catch (err) {
+        console.error("Error changing page size:", err)
+      }
+    }
+  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -127,7 +156,8 @@ export default function CustomerScoreOverview2() {
 
   useEffect(() => {
     if (access_token) {
-      fetchImmediateActionsData(access_token)
+      // Pass default pagination parameters for initial load
+      fetchImmediateActionsData(access_token, 1, 5)
     }
   }, [access_token, fetchImmediateActionsData])
 
@@ -163,36 +193,11 @@ export default function CustomerScoreOverview2() {
         </div>
       </div>
 
-      {/* {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-10 w-10 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-            <p className="text-sm text-gray-700">
-              Fetching customer score data…
-            </p>
-          </div>
-        </div>
-      )} */}
-
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
-
-      {/* Display Customer Score Data */}
-      {/* {customerScoreData && (
-        <div className="rounded-xl bg-white p-6 shadow">
-          <h2 className="mb-4 text-lg font-semibold text-gray-800">
-            Customer Score Data
-          </h2>
-          <div className="space-y-4">
-            <pre className="max-h-96 overflow-auto rounded bg-gray-100 p-4 text-xs">
-              {JSON.stringify(customerScoreData, null, 2)}
-            </pre>
-          </div>
-        </div>
-      )} */}
 
       {/* Show message if no data */}
       {!loading && !error && !customerScoreData && (
@@ -258,12 +263,14 @@ export default function CustomerScoreOverview2() {
         companies={scoreAnalysisCustomers}
       />
 
-      {/* Immediate Actions */}
-      {!immediateActionsDataLoading &&
-        immediateActionsData &&
-        immediateActionsData.length > 0 && (
-          <ImmediateActions highRiskCustomers={immediateActionsData} />
-        )}
+      {/* Immediate Actions with Pagination Handlers */}
+      <ImmediateActions
+        highRiskCustomers={immediateActionsData}
+        isLoading={immediateActionsDataLoading}
+        pagination={immediateActionPagination}
+        onPageChange={handlePageChange}
+        onPageSizeChange={handlePageSizeChange}
+      />
     </div>
   )
 }
