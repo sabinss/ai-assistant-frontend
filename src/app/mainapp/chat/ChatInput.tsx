@@ -860,7 +860,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50"
             onClick={handleBackgroundClick} // Close when clicking outside
           >
-            <div className="mr-20 w-[75%] max-w-[1200px] rounded-lg bg-white p-8 shadow-lg">
+            <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
               <h2 className="mb-4 text-center text-2xl font-semibold">
                 Select Prompt
               </h2>

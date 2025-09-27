@@ -5,7 +5,7 @@ export default function MasterSubscriptionAgreement() {
     <div className="min-h-screen bg-gray-50 px-4 py-10">
       <div className="mx-auto max-w-4xl rounded-lg bg-white p-8 shadow-lg">
         <h1 className="mb-2 text-3xl font-bold text-gray-800">
-          Master Subscription Agreement
+          Terms of Use Agreement
         </h1>
         <p className="mb-6 text-gray-500">Last Updated: May 1st 2025</p>
 

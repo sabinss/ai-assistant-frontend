@@ -180,7 +180,7 @@ export default function page() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              <b>Terms of Service</b>
+              <b>Terms of Use</b>
             </Link>
           </span>
           <span> and </span>
