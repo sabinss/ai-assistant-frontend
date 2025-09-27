@@ -70,7 +70,7 @@ export function AccountButton() {
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline"
           >
-            <span className="text-[12px] text-blue-600 hover:underline">
+            <span className="text-gray-450 text-[12px] hover:underline">
               Terms of Use
             </span>
           </Link>
@@ -80,7 +80,7 @@ export function AccountButton() {
             rel="noopener noreferrer"
             className="text-blue-600 hover:underline"
           >
-            <span className="text-[12px] text-blue-600 hover:underline">
+            <span className="text-gray-450 text-[12px] hover:underline">
               Privacy Policy
             </span>
           </Link>
