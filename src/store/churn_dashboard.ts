@@ -107,7 +107,11 @@ interface ChurnDashboardState {
   fetchHighRiskChurnStats: (accessToken: string) => Promise<void>
   fetchCustomerScoreData: (accessToken: string) => Promise<void>
   fetchChurnRiskDistribution: (accessToken: string) => Promise<void>
-  fetchImmediateActionsData: (accessToken: string) => Promise<void>
+  fetchImmediateActionsData: (
+    accessToken: string,
+    page: number,
+    limit: number
+  ) => Promise<void>
   fetchTrendData: (accessToken: string) => Promise<void>
   fetchScoreAnalysisData: (accessToken: string) => Promise<void>
   customerScoreData: ChurnDataI | null
@@ -412,30 +416,35 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       }
     }
   },
-  fetchImmediateActionsData: async (accessToken: string) => {
-    const state: any = useChurnDashboardStore.getState()
-    if (
-      state.immediateActionsData &&
-      isCacheValid(state.immediateActionsData?.timestamp)
-    ) {
-      console.log("Using cached immediateActionsData")
-      return state.immediateActionsData
-    } else {
-      set({ immediateActionsDataLoading: true, error: null })
-      try {
-        const res = await http.get(`/customer/immediate-actions`, {
-          headers: { Authorization: `Bearer ${accessToken}` },
-        })
-        set({
-          immediateActionsData: {
-            data: [...res.data.data],
-            timestamp: Date.now(),
-          },
-        })
-        set({ immediateActionsDataLoading: false })
-      } catch (err: any) {
-        set({ immediateActionsDataLoading: false, error: err })
-      }
+  fetchImmediateActionsData: async (
+    accessToken: string,
+    page: number = 1,
+    limit: number = 5
+  ) => {
+    set({ immediateActionsDataLoading: true, error: null })
+    try {
+      console.log(
+        `Fetching immediate actions data - Page: ${page}, Limit: ${limit}`
+      )
+      const res = await http.get(`/customer/immediate-actions`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: {
+          page: page,
+          limit: limit,
+        },
+      })
+      console.log("API Response:", res.data)
+      set({
+        immediateActionsData: {
+          data: [...res.data.data],
+          pagination: res.data.pagination,
+          timestamp: Date.now(),
+        },
+      })
+      set({ immediateActionsDataLoading: false })
+    } catch (err: any) {
+      console.error("Error fetching immediate actions data:", err)
+      set({ immediateActionsDataLoading: false, error: err })
     }
   },
   fetchTrendData: async (accessToken: string) => {
