@@ -43,6 +43,7 @@ export default function CustomerSlideIn({
   console.log("selected customer---", customer)
 
   useEffect(() => {
+    console.log("customer in slide in useEffect---", customer)
     if (!customer?._id) return
 
     async function fetchCustomerScoreData() {
