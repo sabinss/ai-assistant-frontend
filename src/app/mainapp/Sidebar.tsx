@@ -44,11 +44,11 @@ function getNavLinks(rolePermission: any, hideList = []) {
       path: "/mainapp/chat",
       icon: MessageCircleMore,
     },
-    {
-      name: "Customers",
-      path: "/mainapp/customers",
-      icon: UserRound,
-    },
+    // {
+    //   name: "Customers",
+    //   path: "/mainapp/customers",
+    //   icon: UserRound,
+    // },
   ]
 
   const otherLinks = [
@@ -94,12 +94,12 @@ function getNavLinks(rolePermission: any, hideList = []) {
       name: "Privacy Policy",
       path: "/mainapp/privacy-policy",
     },
+    // {
+    //   name: "Cookies Policy",
+    //   path: "/mainapp/cookies-policy",
+    // },
     {
-      name: "Cookies Policy",
-      path: "/mainapp/cookies-policy",
-    },
-    {
-      name: "Terms of Use",
+      name: "Terms",
       path: "/mainapp/terms-of-use",
     },
   ]
@@ -145,7 +145,7 @@ function Navbar() {
   const path = usePathname()
   const navLinks = getNavLinks([
     ...rolePermission,
-    "customers",
+    // "customers",
     "notification",
     "dashboard",
   ])
@@ -191,9 +191,9 @@ function Navbar() {
           name={`Logout`}
         />
 
-        {showSideBar && (
+        {/* {showSideBar && (
           <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
-        )}
+        )} */}
       </div>
     </div>
   )

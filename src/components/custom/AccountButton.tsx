@@ -60,6 +60,31 @@ export function AccountButton() {
             Logout
           </DropdownMenuRadioItem>
         </DropdownMenuRadioGroup>
+        {/* Divider below Logout */}
+        <DropdownMenuSeparator />
+        {/* Terms & Privacy links */}
+        <div className="flex items-center justify-between px-3 py-2 text-sm">
+          <Link
+            href="/master_agreement"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            <span className="text-[12px] text-blue-600 hover:underline">
+              Terms of Use
+            </span>
+          </Link>
+          <Link
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            <span className="text-[12px] text-blue-600 hover:underline">
+              Privacy Policy
+            </span>
+          </Link>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
