@@ -11,6 +11,7 @@ import ImmediateActions from "./ImmediateActions"
 import ChurnRiskTrend from "./ChurnRiskTrend"
 import ChurnRiskTrendChart from "./ChurnRiskTrend"
 import ChurnScoreAnalysis from "./ChurnScoreAnalysis"
+import { formatCurrency } from "@/utility"
 
 export default function CustomerScoreOverview2() {
   const router = useRouter()
