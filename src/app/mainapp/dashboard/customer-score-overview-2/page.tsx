@@ -11,6 +11,7 @@ import ImmediateActions from "./ImmediateActions"
 import ChurnRiskTrend from "./ChurnRiskTrend"
 import ChurnRiskTrendChart from "./ChurnRiskTrend"
 import ChurnScoreAnalysis from "./ChurnScoreAnalysis"
+import { formatCurrency } from "@/utility"
 
 export default function CustomerScoreOverview2() {
   const router = useRouter()
@@ -217,7 +218,7 @@ export default function CustomerScoreOverview2() {
         <div className="flex flex-col items-center rounded-xl bg-white p-6 shadow">
           <h3 className="text-sm text-gray-600">Revenue At Risk</h3>
           <p className="text-3xl font-bold">
-            {customerScoreData?.churned_customer_arr}
+            {formatCurrency(customerScoreData?.churned_customer_arr)}
           </p>
           <MetricChange
             current={customerScoreData?.churned_customer_arr}
