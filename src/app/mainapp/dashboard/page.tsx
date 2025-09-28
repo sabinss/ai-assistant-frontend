@@ -44,11 +44,13 @@ export default function Dashboard() {
     (s) => s.usageFunnelDataLoading
   )
   const usageFunnelData = useChurnDashboardStore((s) => s.usageFunnelData?.data)
-  const usageFunnelPagination = useChurnDashboardStore((s) => s.usageFunnelData?.pagination)
+  const usageFunnelPagination = useChurnDashboardStore(
+    (s) => s.usageFunnelData?.pagination
+  )
   console.log("usageFunnelData---", usageFunnelData)
   console.log("usageFunnelDataLoading", usageFunnelDataLoading)
   console.log("usageFunnelPagination---", usageFunnelPagination)
-  
+
   // pagination
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -60,13 +62,13 @@ export default function Dashboard() {
     hasNextPage: false,
     hasPrevPage: false,
   })
-  
+
   // Usage funnel pagination
   const [usageFunnelPage, setUsageFunnelPage] = useState(1)
-  
+
   // Stage filter for usage funnel
   const [selectedStage, setSelectedStage] = useState("all")
-  
+
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
@@ -114,7 +116,9 @@ export default function Dashboard() {
   // Get unique stages for filter dropdown - fix TypeScript Set iteration
   const uniqueStages = useMemo(() => {
     if (!usageFunnelData) return []
-    const stages = Array.from(new Set(usageFunnelData.map((item: any) => item.stage)))
+    const stages = Array.from(
+      new Set(usageFunnelData.map((item: any) => item.stage))
+    )
     return stages.filter(Boolean) as string[]
   }, [usageFunnelData])
 
@@ -146,7 +150,7 @@ export default function Dashboard() {
     }
     return new Intl.DateTimeFormat("en-US", options).format(date)
   }
-  
+
   useEffect(() => {
     async function getCustomerConversationMessage() {
       try {
@@ -210,11 +214,23 @@ export default function Dashboard() {
         page: usageFunnelPage,
         limit,
         search: debouncedSearchTerm,
-        stage: selectedStage
+        stage: selectedStage,
       })
-      fetchUsageFunnelData(access_token, usageFunnelPage, limit, debouncedSearchTerm, selectedStage)
+      fetchUsageFunnelData(
+        access_token,
+        usageFunnelPage,
+        limit,
+        debouncedSearchTerm,
+        selectedStage
+      )
     }
-  }, [user_data?.organization, activeTab, usageFunnelPage, debouncedSearchTerm, selectedStage])
+  }, [
+    user_data?.organization,
+    activeTab,
+    usageFunnelPage,
+    debouncedSearchTerm,
+    selectedStage,
+  ])
 
   useEffect(() => {
     async function getOrgCustomers() {
@@ -320,7 +336,7 @@ export default function Dashboard() {
       },
     ])
   }, [orgCustomerData, scoreDashboardData])
-  
+
   function getClockTime() {
     return new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -838,15 +854,13 @@ export default function Dashboard() {
 
           {activeTab === "usage_funnel" && (
             <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <div className="mb-4 text-lg font-semibold">
-                Usage Funnel
-              </div>
-              
+              <div className="mb-4 text-lg font-semibold">Usage Funnel</div>
+
               {/* Filters */}
               <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
                 <input
                   type="text"
-                  placeholder="Search companies..."
+                  placeholder="Search .."
                   className="w-full rounded border px-3 py-2 sm:w-1/3"
                   value={searchTerm}
                   onChange={(e) => {
@@ -854,7 +868,7 @@ export default function Dashboard() {
                     setUsageFunnelPage(1) // Reset to first page when search changes
                   }}
                 />
-                
+
                 <select
                   value={selectedStage}
                   onChange={(e) => {
@@ -926,13 +940,21 @@ export default function Dashboard() {
                           key={item?.company_id || index}
                           className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
                         >
-                          <td className="px-6 py-4">{item?.company_name || "N/A"}</td>
-                          <td className="px-6 py-4">{item?.company_id || "N/A"}</td>
+                          <td className="px-6 py-4">
+                            {item?.company_name || "N/A"}
+                          </td>
+                          <td className="px-6 py-4">
+                            {item?.company_id || "N/A"}
+                          </td>
                           <td className="px-6 py-4">{item?.bid_closed || 0}</td>
-                          <td className="px-6 py-4">{item?.bid_scheduled || 0}</td>
+                          <td className="px-6 py-4">
+                            {item?.bid_scheduled || 0}
+                          </td>
                           <td className="px-6 py-4">{item?.bid_sent || 0}</td>
                           <td className="px-6 py-4">{item?.login || 0}</td>
-                          <td className="px-6 py-4">{item?.month_week || "N/A"}</td>
+                          <td className="px-6 py-4">
+                            {item?.month_week || "N/A"}
+                          </td>
                         </tr>
                       ))
                     )}
@@ -945,13 +967,16 @@ export default function Dashboard() {
                 <Button
                   className="disabled bg-[#174894] hover:bg-[#173094]"
                   disabled={!usageFunnelPagination?.hasPrevPage}
-                  onClick={() => setUsageFunnelPage((prev) => Math.max(prev - 1, 1))}
+                  onClick={() =>
+                    setUsageFunnelPage((prev) => Math.max(prev - 1, 1))
+                  }
                 >
                   Previous
                 </Button>
                 <span className="text-sm font-bold text-gray-500">
-                  Page {usageFunnelPage} of {usageFunnelPagination?.totalPages || 1} 
-                  ({usageFunnelPagination?.totalRecords || 0} total records)
+                  Page {usageFunnelPage} of{" "}
+                  {usageFunnelPagination?.totalPages || 1}(
+                  {usageFunnelPagination?.totalRecords || 0} total records)
                 </span>
                 <Button
                   className="disabled bg-[#174894] hover:bg-[#173094]"
