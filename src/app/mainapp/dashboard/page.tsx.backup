@@ -44,11 +44,8 @@ export default function Dashboard() {
     (s) => s.usageFunnelDataLoading
   )
   const usageFunnelData = useChurnDashboardStore((s) => s.usageFunnelData?.data)
-  const usageFunnelPagination = useChurnDashboardStore((s) => s.usageFunnelData?.pagination)
   console.log("usageFunnelData---", usageFunnelData)
   console.log("usageFunnelDataLoading", usageFunnelDataLoading)
-  console.log("usageFunnelPagination---", usageFunnelPagination)
-  
   // pagination
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -60,16 +57,9 @@ export default function Dashboard() {
     hasNextPage: false,
     hasPrevPage: false,
   })
-  
-  // Usage funnel pagination
-  const [usageFunnelPage, setUsageFunnelPage] = useState(1)
-  
-  // Stage filter for usage funnel
-  const [selectedStage, setSelectedStage] = useState("all")
-  
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
-  const debouncedSearchTerm = useDebounce(searchTerm, 500)
+  const debouncedSearchTerm = useDebounce(searchTerm, 2000)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [alertData, setAlertData] = useState<any>([])
@@ -110,14 +100,6 @@ export default function Dashboard() {
       customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [orgCustomerData?.customers, searchTerm])
-
-  // Get unique stages for filter dropdown - fix TypeScript Set iteration
-  const uniqueStages = useMemo(() => {
-    if (!usageFunnelData) return []
-    const stages = Array.from(new Set(usageFunnelData.map((item: any) => item.stage)))
-    return stages.filter(Boolean) as string[]
-  }, [usageFunnelData])
-
   const getScoreColorClass = (
     score: number,
     type: "health" | "risk"
@@ -146,7 +128,6 @@ export default function Dashboard() {
     }
     return new Intl.DateTimeFormat("en-US", options).format(date)
   }
-  
   useEffect(() => {
     async function getCustomerConversationMessage() {
       try {
@@ -203,18 +184,11 @@ export default function Dashboard() {
     fetchCustomerAlertData()
   }, [user_data?.organization])
 
-  // Fetch usage funnel data with API pagination
   useEffect(() => {
     if (activeTab === "usage_funnel" && access_token) {
-      console.log("Fetching usage funnel data with params:", {
-        page: usageFunnelPage,
-        limit,
-        search: debouncedSearchTerm,
-        stage: selectedStage
-      })
-      fetchUsageFunnelData(access_token, usageFunnelPage, limit, debouncedSearchTerm, selectedStage)
+      fetchUsageFunnelData(access_token)
     }
-  }, [user_data?.organization, activeTab, usageFunnelPage, debouncedSearchTerm, selectedStage])
+  }, [user_data?.organization, activeTab])
 
   useEffect(() => {
     async function getOrgCustomers() {
@@ -320,7 +294,6 @@ export default function Dashboard() {
       },
     ])
   }, [orgCustomerData, scoreDashboardData])
-  
   function getClockTime() {
     return new Date().toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -837,130 +810,16 @@ export default function Dashboard() {
           )}
 
           {activeTab === "usage_funnel" && (
-            <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <div className="mb-4 text-lg font-semibold">
-                Usage Funnel
-              </div>
-              
+            <div>
+              <h1>Usage Funnel</h1>
               {/* Filters */}
-              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  placeholder="Search companies..."
-                  className="w-full rounded border px-3 py-2 sm:w-1/3"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    setUsageFunnelPage(1) // Reset to first page when search changes
-                  }}
-                />
-                
-                <select
-                  value={selectedStage}
-                  onChange={(e) => {
-                    setSelectedStage(e.target.value)
-                    setUsageFunnelPage(1) // Reset to first page when filter changes
-                  }}
-                  className="w-full rounded border px-3 py-2 sm:w-1/4"
-                >
-                  <option value="all">All Stages</option>
-                  {uniqueStages.map((stage: string) => (
-                    <option key={stage} value={stage}>
-                      {stage}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="border-b text-gray-600">
-                    <tr>
-                      <th className="p-2">Company Name</th>
-                      <th className="p-2">Company ID</th>
-                      <th className="p-2">Bid Closed</th>
-                      <th className="p-2">Bid Scheduled</th>
-                      <th className="p-2">Bid Sent</th>
-                      <th className="p-2">Login</th>
-                      <th className="p-2">Month/Week</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700">
-                    {usageFunnelDataLoading ? (
-                      <>
-                        {[...Array(5)].map((_, index) => (
-                          <tr key={index} className="animate-pulse border-b">
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-32 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-24 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-16 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-16 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-16 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-16 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-20 rounded bg-gray-200"></div>
-                            </td>
-                          </tr>
-                        ))}
-                      </>
-                    ) : !usageFunnelData || usageFunnelData.length === 0 ? (
-                      <tr>
-                        <td className="py-6 text-center" colSpan={7}>
-                          No usage funnel data to display
-                        </td>
-                      </tr>
-                    ) : (
-                      usageFunnelData.map((item: any, index: number) => (
-                        <tr
-                          key={item?.company_id || index}
-                          className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
-                        >
-                          <td className="px-6 py-4">{item?.company_name || "N/A"}</td>
-                          <td className="px-6 py-4">{item?.company_id || "N/A"}</td>
-                          <td className="px-6 py-4">{item?.bid_closed || 0}</td>
-                          <td className="px-6 py-4">{item?.bid_scheduled || 0}</td>
-                          <td className="px-6 py-4">{item?.bid_sent || 0}</td>
-                          <td className="px-6 py-4">{item?.login || 0}</td>
-                          <td className="px-6 py-4">{item?.month_week || "N/A"}</td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Usage Funnel Pagination */}
-              <div className="mb-20 mt-4 flex items-center justify-between">
-                <Button
-                  className="disabled bg-[#174894] hover:bg-[#173094]"
-                  disabled={!usageFunnelPagination?.hasPrevPage}
-                  onClick={() => setUsageFunnelPage((prev) => Math.max(prev - 1, 1))}
-                >
-                  Previous
-                </Button>
-                <span className="text-sm font-bold text-gray-500">
-                  Page {usageFunnelPage} of {usageFunnelPagination?.totalPages || 1} 
-                  ({usageFunnelPagination?.totalRecords || 0} total records)
-                </span>
-                <Button
-                  className="disabled bg-[#174894] hover:bg-[#173094]"
-                  disabled={!usageFunnelPagination?.hasNextPage}
-                  onClick={() => setUsageFunnelPage((prev) => prev + 1)}
-                >
-                  Next
-                </Button>
-              </div>
+              <input
+                type="text"
+                placeholder="Search customers..."
+                className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
           )}
         </div>

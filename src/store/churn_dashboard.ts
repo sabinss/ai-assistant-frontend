@@ -114,6 +114,7 @@ interface ChurnDashboardState {
   ) => Promise<void>
   fetchTrendData: (accessToken: string) => Promise<void>
   fetchScoreAnalysisData: (accessToken: string) => Promise<void>
+  fetchUsageFunnelData: (accessToken: string, page?: number, limit?: number, search?: string, stage?: string) => Promise<void>
   customerScoreData: ChurnDataI | null
   churnRiskDistribution: ChurnDataI | null
   churnRiskDistributionLoading: boolean
@@ -123,6 +124,8 @@ interface ChurnDashboardState {
   trendDataNew: ChurnDataI | null
   scoreAnalysisDataLoading: boolean
   scoreAnalysisData: ChurnDataI | null
+  usageFunnelData: ChurnDataI | null
+  usageFunnelDataLoading: boolean
   // populateWithDemoData: () => void
 }
 
@@ -143,6 +146,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   scoreAnalysisData: null,
   scoreAnalysisDataLoading: false,
   immediateActionsDataLoading: false,
+  usageFunnelData: null,
+  usageFunnelDataLoading: false,
   immediateActionsData: null,
   metricsData: [],
   trendData: [],
@@ -497,6 +502,39 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       } catch (err: any) {
         set({ scoreAnalysisDataLoading: false, error: err })
       }
+    }
+  },
+  fetchUsageFunnelData: async (accessToken: string, page: number = 1, limit: number = 10, search: string = "", stage: string = "all") => {
+    set({ usageFunnelDataLoading: true, error: null })
+    try {
+      const params: any = {
+        page: page,
+        limit: limit,
+      }
+      
+      if (search) {
+        params.search = search
+      }
+      
+      if (stage && stage !== "all") {
+        params.stage = stage
+      }
+
+      const res = await http.get(`/customer/usage-funnel`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        params: params,
+      })
+      console.log("Usage funnel data response-->", res.data.data)
+      set({
+        usageFunnelData: {
+          data: res.data.data,
+          pagination: res.data.pagination,
+          timestamp: Date.now(),
+        },
+      })
+      set({ usageFunnelDataLoading: false })
+    } catch (err: any) {
+      set({ usageFunnelDataLoading: false, error: err })
     }
   },
 }))
