@@ -114,7 +114,13 @@ interface ChurnDashboardState {
   ) => Promise<void>
   fetchTrendData: (accessToken: string) => Promise<void>
   fetchScoreAnalysisData: (accessToken: string) => Promise<void>
-  fetchUsageFunnelData: (accessToken: string, page?: number, limit?: number, search?: string, stage?: string) => Promise<void>
+  fetchUsageFunnelData: (
+    accessToken: string,
+    page?: number,
+    limit?: number,
+    search?: string,
+    stage?: string
+  ) => Promise<void>
   customerScoreData: ChurnDataI | null
   churnRiskDistribution: ChurnDataI | null
   churnRiskDistributionLoading: boolean
@@ -126,6 +132,7 @@ interface ChurnDashboardState {
   scoreAnalysisData: ChurnDataI | null
   usageFunnelData: ChurnDataI | null
   usageFunnelDataLoading: boolean
+  usageFunnelTableColumns: string[]
   // populateWithDemoData: () => void
 }
 
@@ -147,6 +154,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   scoreAnalysisDataLoading: false,
   immediateActionsDataLoading: false,
   usageFunnelData: null,
+  usageFunnelTableColumns: [],
   usageFunnelDataLoading: false,
   immediateActionsData: null,
   metricsData: [],
@@ -504,18 +512,24 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       }
     }
   },
-  fetchUsageFunnelData: async (accessToken: string, page: number = 1, limit: number = 10, search: string = "", stage: string = "all") => {
+  fetchUsageFunnelData: async (
+    accessToken: string,
+    page: number = 1,
+    limit: number = 10,
+    search: string = "",
+    stage: string = "all"
+  ) => {
     set({ usageFunnelDataLoading: true, error: null })
     try {
       const params: any = {
         page: page,
         limit: limit,
       }
-      
+
       if (search) {
         params.search = search
       }
-      
+
       if (stage && stage !== "all") {
         params.stage = stage
       }
@@ -524,7 +538,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         headers: { Authorization: `Bearer ${accessToken}` },
         params: params,
       })
-      console.log("Usage funnel data response-->", res.data.data)
+      console.log("Usage funnel data response-->", res.data)
       set({
         usageFunnelData: {
           data: res.data.data,
@@ -532,6 +546,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
           timestamp: Date.now(),
         },
       })
+      set({ usageFunnelTableColumns: res.data?.columns })
       set({ usageFunnelDataLoading: false })
     } catch (err: any) {
       set({ usageFunnelDataLoading: false, error: err })
