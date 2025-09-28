@@ -12,12 +12,13 @@ import { trackEvent } from "@/utility/tracking"
 import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { formatCurrency } from "@/utility"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/useDebounce"
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("alert")
+  const [usageFunnelSearchInput, setUsageFunnelSearchInput] = useState("") // New state for search input
 
   const [loading, setLoading] = useState(false)
   const { user_data, access_token } = useAuth()
@@ -47,9 +48,10 @@ export default function Dashboard() {
   const usageFunnelPagination = useChurnDashboardStore(
     (s) => s.usageFunnelData?.pagination
   )
-  console.log("usageFunnelData---", usageFunnelData)
-  console.log("usageFunnelDataLoading", usageFunnelDataLoading)
-  console.log("usageFunnelPagination---", usageFunnelPagination)
+  const usageFunnelTableColumns = useChurnDashboardStore(
+    (s) => s.usageFunnelTableColumns
+  )
+  console.log("usageFunnelTableColumns---", usageFunnelTableColumns)
 
   // pagination
   const [page, setPage] = useState(1)
@@ -436,7 +438,10 @@ export default function Dashboard() {
     // setCustomerConversation((prev) => [...prev, , messagePayload])
     // console.log("Sened message custoemr", customerConversation)
   }
-
+  const handleUsageFunnelSearch = () => {
+    setSearchTerm(usageFunnelSearchInput)
+    setUsageFunnelPage(1) // Reset to first page when searching
+  }
   return (
     <div className="space-y-6 p-6">
       <div className="mt-5 flex items-center justify-between rounded bg-white p-6 shadow">
@@ -858,16 +863,27 @@ export default function Dashboard() {
 
               {/* Filters */}
               <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  placeholder="Search .."
-                  className="w-full rounded border px-3 py-2 sm:w-1/3"
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    setUsageFunnelPage(1) // Reset to first page when search changes
-                  }}
-                />
+                <div className="relative w-full sm:w-1/3">
+                  <input
+                    type="text"
+                    placeholder="Search .."
+                    className="w-full rounded border px-3 py-2 pr-10"
+                    value={usageFunnelSearchInput}
+                    onChange={(e) => setUsageFunnelSearchInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        handleUsageFunnelSearch()
+                      }
+                    }}
+                  />
+                  <button
+                    onClick={handleUsageFunnelSearch}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 hover:bg-gray-100"
+                    type="button"
+                  >
+                    <Search size={16} className="text-gray-500" />
+                  </button>
+                </div>
 
                 <select
                   value={selectedStage}
@@ -889,14 +905,10 @@ export default function Dashboard() {
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b text-gray-600">
-                    <tr>
-                      <th className="p-2">Company Name</th>
-                      <th className="p-2">Company ID</th>
-                      <th className="p-2">Bid Closed</th>
-                      <th className="p-2">Bid Scheduled</th>
-                      <th className="p-2">Bid Sent</th>
-                      <th className="p-2">Login</th>
-                      <th className="p-2">Month/Week</th>
+                    <tr className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50">
+                      {usageFunnelTableColumns?.map((column: string) => (
+                        <th className="p-2">{column}</th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
@@ -906,9 +918,6 @@ export default function Dashboard() {
                           <tr key={index} className="animate-pulse border-b">
                             <td className="px-6 py-4">
                               <div className="h-4 w-32 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-24 rounded bg-gray-200"></div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="h-4 w-16 rounded bg-gray-200"></div>
@@ -935,26 +944,16 @@ export default function Dashboard() {
                         </td>
                       </tr>
                     ) : (
-                      usageFunnelData.map((item: any, index: number) => (
+                      usageFunnelData.map((row: any, index: any) => (
                         <tr
-                          key={item?.company_id || index}
+                          key={row?.company_id || index}
                           className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
                         >
-                          <td className="px-6 py-4">
-                            {item?.company_name || "N/A"}
-                          </td>
-                          <td className="px-6 py-4">
-                            {item?.company_id || "N/A"}
-                          </td>
-                          <td className="px-6 py-4">{item?.bid_closed || 0}</td>
-                          <td className="px-6 py-4">
-                            {item?.bid_scheduled || 0}
-                          </td>
-                          <td className="px-6 py-4">{item?.bid_sent || 0}</td>
-                          <td className="px-6 py-4">{item?.login || 0}</td>
-                          <td className="px-6 py-4">
-                            {item?.month_week || "N/A"}
-                          </td>
+                          {usageFunnelTableColumns.map((key) => (
+                            <td key={key} className="px-6 py-4">
+                              {row[key] ?? "N/A"}
+                            </td>
+                          ))}
                         </tr>
                       ))
                     )}
