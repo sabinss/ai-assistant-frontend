@@ -28,14 +28,10 @@ export default function Dashboard() {
     setCustomerConversationMessage,
     setCustomerMessageStatus,
     appendCustomerConversationMessage,
-    clearCustomerConversationMessages,
   } = useOrgCustomer()
   const [scoreDashboardData, setScoreDashboardData] = useState<any>([])
   const { botName } = useNavBarStore()
   const router = useRouter()
-  const fetchHighRiskChurnStats = useChurnDashboardStore(
-    (s) => s.fetchHighRiskChurnStats
-  )
 
   const fetchUsageFunnelData = useChurnDashboardStore(
     (s) => s.fetchUsageFunnelData
@@ -51,7 +47,6 @@ export default function Dashboard() {
   const usageFunnelTableColumns = useChurnDashboardStore(
     (s) => s.usageFunnelTableColumns
   )
-  console.log("usageFunnelTableColumns---", usageFunnelTableColumns)
 
   // pagination
   const [page, setPage] = useState(1)
