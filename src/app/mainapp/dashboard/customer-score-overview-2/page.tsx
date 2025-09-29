@@ -216,7 +216,7 @@ export default function CustomerScoreOverview2() {
           </p>
 
           <MetricChange
-            current={customerScoreData?.customer_count}
+            current={customerScoreData?.churned_customer_count}
             previous={customerScoreData?.prev_month_churned_customer_count}
           />
         </div>
