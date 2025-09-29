@@ -239,7 +239,8 @@ export default function ImmediateActions({
                       <span
                         className={`rounded-full px-3 py-1 text-xs ${pillClasses}`}
                       >
-                        {isCritical ? "Critical" : "High"}
+                        {/* {isCritical ? "Critical" : "High"} */}
+                        {item.scoreLabel}
                       </span>
                       <ChevronRight
                         size={20}
