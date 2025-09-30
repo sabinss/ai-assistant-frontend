@@ -21,7 +21,6 @@ export default function CustomerSlideIn({
   sendCustomerChat,
 }: any) {
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
-  console.log("customer in slide in --", customer)
   const {
     clearCustomerConversationMessages,
     resetCustomerInsightsState,
@@ -40,10 +39,8 @@ export default function CustomerSlideIn({
   const [scoreTabData, setScoreTabData] = useState<any>([])
   const [recommendedActions, setRecommendedActions] = useState<any>([])
   const [scoreAnalysis, setScoreAnalysis] = useState<any>([])
-  console.log("selected customer---", customer)
 
   useEffect(() => {
-    console.log("customer in slide in useEffect---", customer)
     if (!customer?._id) return
 
     async function fetchCustomerScoreData() {
@@ -54,13 +51,11 @@ export default function CustomerSlideIn({
         const cachedData = getCustomerScoreCache(customer._id)
 
         if (cachedData && isCacheValid(customer._id)) {
-          console.log("Using cached data for customer:", customer._id)
           processScoreData(cachedData.scoreData, cachedData.detailsData)
           setLoading(false)
           return
         }
 
-        console.log("Fetching fresh data for customer:", customer._id)
         const [scoreResp, detailResp] = await Promise.all([
           http.get(`/customer/${customer._id}/score`, {
             headers: { Authorization: `Bearer ${access_token}` },
