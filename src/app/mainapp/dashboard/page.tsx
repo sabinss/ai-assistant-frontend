@@ -15,6 +15,7 @@ import { formatCurrency } from "@/utility"
 import { AlertCircle, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/useDebounce"
+import { IoReturnUpBackOutline } from "react-icons/io5"
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("alert")
@@ -28,14 +29,10 @@ export default function Dashboard() {
     setCustomerConversationMessage,
     setCustomerMessageStatus,
     appendCustomerConversationMessage,
-    clearCustomerConversationMessages,
   } = useOrgCustomer()
   const [scoreDashboardData, setScoreDashboardData] = useState<any>([])
   const { botName } = useNavBarStore()
   const router = useRouter()
-  const fetchHighRiskChurnStats = useChurnDashboardStore(
-    (s) => s.fetchHighRiskChurnStats
-  )
 
   const fetchUsageFunnelData = useChurnDashboardStore(
     (s) => s.fetchUsageFunnelData
@@ -51,8 +48,11 @@ export default function Dashboard() {
   const usageFunnelTableColumns = useChurnDashboardStore(
     (s) => s.usageFunnelTableColumns
   )
-  console.log("usageFunnelTableColumns---", usageFunnelTableColumns)
 
+  const fetchCustomerScoreData = useChurnDashboardStore(
+    (s) => s.fetchCustomerScoreData
+  )
+  const customerScoreData = useChurnDashboardStore((s) => s.customerScoreData)
   // pagination
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
@@ -106,6 +106,11 @@ export default function Dashboard() {
       subtitle: "",
     },
   ])
+  useEffect(() => {
+    if (access_token && !customerScoreData) {
+      fetchCustomerScoreData(access_token)
+    }
+  }, [access_token])
 
   const filteredCustomers = useMemo(() => {
     if (!orgCustomerData?.customers) return []
@@ -196,6 +201,9 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchCustomerAlertData() {
       try {
+        if (alertData?.length > 0) {
+          return
+        }
         const res = await http.get(`/customer/alerts`, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
@@ -243,15 +251,15 @@ export default function Dashboard() {
 
         // Now only fetch from redshift as it contains all customer data
         const redshiftRes = await http.get(
-          `/customer/redshift?page=${page}&limit=${limit}&search=${debouncedSearchTerm}`,
+          `/customer/redshift?page=${page}&limit=${limit}&search=${debouncedSearchTerm ?? ""}`,
           {
             headers: { Authorization: `Bearer ${access_token}` },
           }
         )
 
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
-        const scoreDashboardData = redshiftRes?.data?.scoreDashboardData || []
-        setScoreDashboardData(scoreDashboardData)
+        // const scoreDashboardData = redshiftRes?.data?.scoreDashboardData || []
+        // setScoreDashboardData(scoreDashboardData)
 
         const {
           totalPages,
@@ -296,23 +304,15 @@ export default function Dashboard() {
   }, [user_data?.organization, access_token, page, debouncedSearchTerm])
 
   useEffect(() => {
-    if (!orgCustomerData?.customers?.length) return
+    let scoreDashboardData = { ...customerScoreData }
 
-    const customers = orgCustomerData.customers
     const totalCustomers = scoreDashboardData?.customer_count
 
-    let expansionCount = 0
-    let atRiskCustomersARR = 0
-    let atRiskCustomersWithARR = 0
-
-    const healthScoreAverage = scoreDashboardData?.avg_health_score
-
-    const atRiskAverageARR = scoreDashboardData?.churned_customer_arr
     setStats([
       {
         id: "total",
         title: "Total Customers",
-        value: scoreDashboardData?.customer_count.toString(),
+        value: scoreDashboardData?.customer_count?.toString(),
         subtitle: "Active accounts",
       },
       {
@@ -333,11 +333,11 @@ export default function Dashboard() {
       {
         id: "expansion",
         title: "Expansion Opportunities",
-        value: scoreDashboardData?.expansion_account_count.toString(),
+        value: scoreDashboardData?.expansion_account_count?.toString(),
         subtitle: `${((scoreDashboardData?.expansion_account_count / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
       },
     ])
-  }, [orgCustomerData, scoreDashboardData])
+  }, [customerScoreData])
 
   function getClockTime() {
     return new Date().toLocaleTimeString("en-US", {
@@ -906,9 +906,13 @@ export default function Dashboard() {
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b text-gray-600">
                     <tr className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50">
-                      {usageFunnelTableColumns?.map((column: string) => (
-                        <th className="p-2">{column}</th>
-                      ))}
+                      {usageFunnelTableColumns?.map(
+                        (column: string, index: number) => (
+                          <th className="p-2" key={index}>
+                            {column}
+                          </th>
+                        )
+                      )}
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">

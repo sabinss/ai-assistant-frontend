@@ -519,6 +519,19 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
     search: string = "",
     stage: string = "all"
   ) => {
+    const state: any = useChurnDashboardStore.getState()
+    // Check if we have cached data with the same parameters
+    const hasValidCache =
+      state.usageFunnelData?.data &&
+      state.usageFunnelData?.page === page &&
+      state.usageFunnelData?.limit === limit &&
+      state.usageFunnelData?.search === search &&
+      state.usageFunnelData?.stage === stage &&
+      isCacheValid(state.usageFunnelData?.timestamp)
+
+    if (hasValidCache) {
+      return state.usageFunnelData?.data
+    }
     set({ usageFunnelDataLoading: true, error: null })
     try {
       const params: any = {
@@ -538,11 +551,14 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         headers: { Authorization: `Bearer ${accessToken}` },
         params: params,
       })
-      console.log("Usage funnel data response-->", res.data)
       set({
         usageFunnelData: {
           data: res.data.data,
           pagination: res.data.pagination,
+          page: page,
+          limit: limit,
+          search: search,
+          stage: stage,
           timestamp: Date.now(),
         },
       })
