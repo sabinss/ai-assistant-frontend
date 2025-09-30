@@ -212,11 +212,11 @@ export default function CustomerScoreOverview2() {
         <div className="flex flex-col items-center rounded-xl bg-white p-6 shadow">
           <h3 className="text-sm text-gray-600">High Risk Customers</h3>
           <p className="text-3xl font-bold">
-            {customerScoreData?.customer_count}
+            {customerScoreData?.churned_customer_count}
           </p>
 
           <MetricChange
-            current={customerScoreData?.customer_count}
+            current={customerScoreData?.churned_customer_count}
             previous={customerScoreData?.prev_month_churned_customer_count}
           />
         </div>
