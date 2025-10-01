@@ -48,6 +48,15 @@ export default function Dashboard() {
   const usageFunnelTableColumns = useChurnDashboardStore(
     (s) => s.usageFunnelTableColumns
   )
+  const fetchCustomerAlertData = useChurnDashboardStore(
+    (s) => s.fetchCustomerAlertData
+  )
+  const customerAlertData = useChurnDashboardStore(
+    (s) => s.customerAlertData?.data
+  )
+  const customerAlertDataLoading = useChurnDashboardStore(
+    (s) => s.customerAlertDataLoading
+  )
 
   const fetchCustomerScoreData = useChurnDashboardStore(
     (s) => s.fetchCustomerScoreData
@@ -199,22 +208,9 @@ export default function Dashboard() {
   }, [selectedCustomer?._id])
 
   useEffect(() => {
-    async function fetchCustomerAlertData() {
-      try {
-        if (alertData?.length > 0) {
-          return
-        }
-        const res = await http.get(`/customer/alerts`, {
-          headers: { Authorization: `Bearer ${access_token}` },
-        })
-        if (res?.data?.data?.length > 0) {
-          setAlertData(res?.data?.data)
-        }
-      } catch (err) {
-        console.log("Fetch alert data error", err)
-      }
+    if (access_token && !customerAlertData) {
+      fetchCustomerAlertData(access_token)
     }
-    fetchCustomerAlertData()
   }, [user_data?.organization])
 
   // Fetch usage funnel data with API pagination
@@ -590,7 +586,7 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
-                    {loading ? (
+                    {customerAlertDataLoading ? (
                       <>
                         {[...Array(5)].map((_, index) => (
                           <tr key={index} className="animate-pulse border-b">
@@ -621,14 +617,14 @@ export default function Dashboard() {
                           </tr>
                         ))}
                       </>
-                    ) : alertData.length === 0 ? (
+                    ) : customerAlertData?.length === 0 ? (
                       <tr>
                         <td className="py-6 text-center" colSpan={8}>
                           No alert to display
                         </td>
                       </tr>
                     ) : (
-                      alertData.map((item: any, index: number) => {
+                      customerAlertData?.map((item: any, index: number) => {
                         return (
                           <tr
                             key={item?.company_id || index}
