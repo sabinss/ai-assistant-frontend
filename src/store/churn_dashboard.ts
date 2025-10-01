@@ -121,6 +121,7 @@ interface ChurnDashboardState {
     search?: string,
     stage?: string
   ) => Promise<void>
+  fetchCustomerAlertData: (accessToken: string) => Promise<void>
   customerScoreData: ChurnDataI | null
   churnRiskDistribution: ChurnDataI | null
   churnRiskDistributionLoading: boolean
@@ -133,6 +134,8 @@ interface ChurnDashboardState {
   usageFunnelData: ChurnDataI | null
   usageFunnelDataLoading: boolean
   usageFunnelTableColumns: string[]
+  customerAlertData: ChurnDataI | null
+  customerAlertDataLoading: boolean
   // populateWithDemoData: () => void
 }
 
@@ -151,6 +154,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   customerScoreData: null,
   churnRiskDistribution: null,
   scoreAnalysisData: null,
+  customerAlertData: null,
+  customerAlertDataLoading: false,
   scoreAnalysisDataLoading: false,
   immediateActionsDataLoading: false,
   usageFunnelData: null,
@@ -566,6 +571,31 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       set({ usageFunnelDataLoading: false })
     } catch (err: any) {
       set({ usageFunnelDataLoading: false, error: err })
+    }
+  },
+  fetchCustomerAlertData: async (accessToken: string) => {
+    const state: any = useChurnDashboardStore.getState()
+    if (
+      state.customerAlertData &&
+      isCacheValid(state.customerAlertData?.timestamp)
+    ) {
+      return state.customerAlertData
+    } else {
+      set({ customerAlertDataLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/alerts`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        set({
+          customerAlertData: {
+            data: res.data.data,
+            timestamp: Date.now(),
+          },
+        })
+        set({ customerAlertDataLoading: false })
+      } catch (err: any) {
+        set({ customerAlertDataLoading: false, error: err })
+      }
     }
   },
 }))
