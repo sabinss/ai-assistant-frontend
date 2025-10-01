@@ -546,7 +546,6 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       if (stage && stage !== "all") {
         params.stage = stage
       }
-
       const res = await http.get(`/customer/usage-funnel`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: params,
