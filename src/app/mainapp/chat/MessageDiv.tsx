@@ -180,7 +180,7 @@ export const MessageDiv = ({ msg }: any) => {
       //   user_data?.organization || publicChatHeaders?.org_id,
       //   feedbackType
       // )
-      // toast.success("Successfully sent the feedback")
+      toast.success("Successfully sent the feedback")
       return res
     } catch (error) {
       console.error("Error sending feedback:", error)
