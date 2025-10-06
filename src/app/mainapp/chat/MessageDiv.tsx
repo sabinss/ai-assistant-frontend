@@ -175,12 +175,12 @@ export const MessageDiv = ({ msg }: any) => {
       }
 
       //send to our third api
-      const result = await http.sendFeedback(
-        feedbackId,
-        user_data?.organization || publicChatHeaders?.org_id,
-        feedbackType
-      )
-      toast.success("Successfully sent the feedback")
+      // const result = await http.sendFeedback(
+      //   feedbackId,
+      //   user_data?.organization || publicChatHeaders?.org_id,
+      //   feedbackType
+      // )
+      // toast.success("Successfully sent the feedback")
       return res
     } catch (error) {
       console.error("Error sending feedback:", error)
