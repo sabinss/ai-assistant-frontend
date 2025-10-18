@@ -59,6 +59,8 @@ export const AgentTable = () => {
     primary_instruction: "",
     frequency: null,
     dayTime: null,
+    scheduleTime: null, // Add time field for scheduling
+    timezone: "EST", // Add timezone field with EST as default
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
     active: false,
@@ -80,16 +82,55 @@ export const AgentTable = () => {
   const getDayTimeOptions = () => {
     switch (formData.frequency) {
       case "Daily":
-        return Array.from({ length: 24 }, (_, i) => `${i + 1}`)
+        return [
+          { value: "1", label: "Monday" },
+          { value: "2", label: "Tuesday" },
+          { value: "3", label: "Wednesday" },
+          { value: "4", label: "Thursday" },
+          { value: "5", label: "Friday" },
+          { value: "6", label: "Saturday" },
+          { value: "7", label: "Sunday" },
+        ]
       case "Weekly":
-        return Array.from({ length: 7 }, (_, i) => `W-${i + 1}`)
+        return [
+          { value: "1", label: "Monday" },
+          { value: "2", label: "Tuesday" },
+          { value: "3", label: "Wednesday" },
+          { value: "4", label: "Thursday" },
+          { value: "5", label: "Friday" },
+          { value: "6", label: "Saturday" },
+          { value: "7", label: "Sunday" },
+        ]
       case "Monthly":
-        return Array.from({ length: 28 }, (_, i) => `M-${i + 1}`)
+        return Array.from({ length: 31 }, (_, i) => ({
+          value: `${i + 1}`,
+          label: `${i + 1}`,
+        }))
       case "Quarterly":
-        return ["1", "2", "3"]
+        return [
+          { value: "1", label: "Q1 (Jan-Mar)" },
+          { value: "2", label: "Q2 (Apr-Jun)" },
+          { value: "3", label: "Q3 (Jul-Sep)" },
+          { value: "4", label: "Q4 (Oct-Dec)" },
+        ]
       default:
         return []
     }
+  }
+
+  const getTimezoneOptions = () => {
+    return [
+      { value: "EST", label: "Eastern Standard Time (EST)" },
+      { value: "PST", label: "Pacific Standard Time (PST)" },
+      { value: "CST", label: "Central Standard Time (CST)" },
+      { value: "MST", label: "Mountain Standard Time (MST)" },
+      { value: "UTC", label: "Coordinated Universal Time (UTC)" },
+      { value: "GMT", label: "Greenwich Mean Time (GMT)" },
+      { value: "CET", label: "Central European Time (CET)" },
+      { value: "JST", label: "Japan Standard Time (JST)" },
+      { value: "AEST", label: "Australian Eastern Standard Time (AEST)" },
+      { value: "IST", label: "India Standard Time (IST)" },
+    ]
   }
 
   const removeInstruction = (id: number) => {
@@ -116,6 +157,8 @@ export const AgentTable = () => {
       objective: "",
       dayTime,
       frequency,
+      scheduleTime: null,
+      timezone: "EST", // Set default timezone
       isAgent,
     })
     setIsEditing(true)
@@ -126,6 +169,8 @@ export const AgentTable = () => {
     setFormData({
       ...agent,
       active: agent.active,
+      scheduleTime: agent.schedule_time || agent.scheduleTime || null,
+      timezone: agent.time_zone || agent.timezone || "EST", // Default to EST if not set
     })
     setIsEditing(true)
   }
@@ -160,9 +205,23 @@ export const AgentTable = () => {
   const handleSave = async () => {
     setAgentLoading(true)
     let data = { ...formData }
+
+    // Ensure timezone and scheduleTime are included in payload
+    console.log("Saving agent with data:", {
+      ...data,
+      time_zone: data.timezone || "EST",
+      schedule_time: data.scheduleTime || null,
+    })
+
     try {
       if (data._id) {
-        await http.put("/organization/agent", data, {
+        // Ensure timezone and scheduleTime are explicitly included
+        const updateData = {
+          ...data,
+          time_zone: data.timezone || "EST",
+          schedule_time: data.scheduleTime || null,
+        }
+        await http.put("/organization/agent", updateData, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         // Update the agent list without re-fetching from API
@@ -176,7 +235,13 @@ export const AgentTable = () => {
         toast.success("Agent updated successfully")
         await fetchOrgAgentInstructions()
       } else {
-        const response = await http.post("/organization/agent", data, {
+        // Ensure timezone and scheduleTime are explicitly included for new agents
+        const createData = {
+          ...data,
+          time_zone: data.timezone || "EST",
+          schedule_time: data.scheduleTime || null,
+        }
+        const response = await http.post("/organization/agent", createData, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         await fetchOrgAgentInstructions()
@@ -278,18 +343,29 @@ export const AgentTable = () => {
               <label className="block font-medium">Active</label>{" "}
               <select
                 id="active"
-                value={formData.active}
+                value={
+                  formData.active === true
+                    ? "true"
+                    : formData.active === false
+                      ? "false"
+                      : ""
+                }
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    active: e.target.value,
+                    active:
+                      e.target.value === "true"
+                        ? true
+                        : e.target.value === "false"
+                          ? false
+                          : null,
                   }))
                 }
                 className="w-full rounded border p-2"
               >
                 <option value="">Select</option>
-                <option value={true}>Y</option>
-                <option value={false}>N</option>
+                <option value="true">Y</option>
+                <option value="false">N</option>
               </select>
             </div>
 
@@ -349,31 +425,88 @@ export const AgentTable = () => {
                   </select>
                 </div>
                 {formData.frequency && (
-                  <div>
-                    <label
-                      htmlFor="dayTime"
-                      className="mb-1 block text-sm font-semibold"
-                    >
-                      Day/Time
-                    </label>
-                    <select
-                      id="dayTime"
-                      value={formData.dayTime}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          dayTime: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded border p-2"
-                    >
-                      <option value="">Select Option</option>
-                      {getDayTimeOptions().map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-3">
+                    <div>
+                      <label
+                        htmlFor="dayTime"
+                        className="mb-1 block text-sm font-semibold"
+                      >
+                        {formData.frequency === "Daily"
+                          ? "Day of Week"
+                          : formData.frequency === "Weekly"
+                            ? "Day of Week"
+                            : formData.frequency === "Monthly"
+                              ? "Day of Month"
+                              : formData.frequency === "Quarterly"
+                                ? "Quarter"
+                                : "Day/Time"}
+                      </label>
+                      <select
+                        id="dayTime"
+                        value={formData.dayTime}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            dayTime: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border p-2"
+                      >
+                        <option value="">Select Option</option>
+                        {getDayTimeOptions().map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="scheduleTime"
+                        className="mb-1 block text-sm font-semibold"
+                      >
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        id="scheduleTime"
+                        value={formData.scheduleTime || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            scheduleTime: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border p-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="timezone"
+                        className="mb-1 block text-sm font-semibold"
+                      >
+                        Timezone
+                      </label>
+                      <select
+                        id="timezone"
+                        value={formData.timezone || "EST"}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            timezone: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border p-2"
+                      >
+                        {getTimezoneOptions().map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
               </>

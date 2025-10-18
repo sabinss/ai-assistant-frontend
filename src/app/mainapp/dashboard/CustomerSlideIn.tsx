@@ -98,6 +98,7 @@ export default function CustomerSlideIn({
           score: d.score,
           trend: "",
         }))
+        console.log("healthDrivers", healthDrivers)
 
         churnDrivers = (grouped["Churn"] || []).map((d: any) => ({
           name: d.score_driver_id,
@@ -105,6 +106,7 @@ export default function CustomerSlideIn({
           score: d.score,
           trend: "",
         }))
+        console.log("churnDrivers", churnDrivers)
 
         expansionDrivers = (grouped["Expansion"] || []).map((d: any) => ({
           name: d.score_driver_id,
@@ -112,6 +114,7 @@ export default function CustomerSlideIn({
           score: d.score,
           trend: "",
         }))
+        console.log("expansionDrivers", expansionDrivers)
       }
 
       if (scoreData?.data?.length > 0) {
@@ -125,24 +128,6 @@ export default function CustomerSlideIn({
           recommendation,
         } = scoreData.data[0]
 
-        // ✅ Set keyDrivers here using mapped arrays
-        console.log("final tab data", [
-          {
-            title: "Health Score",
-            value: health_score,
-            keyDrivers: healthDrivers,
-          },
-          {
-            title: "Churn Risk",
-            value: churn_risk_score,
-            keyDrivers: churnDrivers,
-          },
-          {
-            title: "Expansion Opp Score",
-            value: expansion_opp_score,
-            keyDrivers: expansionDrivers,
-          },
-        ])
         setScoreTabData([
           {
             title: "Health Score",
@@ -184,18 +169,18 @@ export default function CustomerSlideIn({
         setScoreTabData([
           {
             title: "Health Score",
-            value: 0,
-            keyDrivers: [],
+            value: health ?? 0,
+            keyDrivers: healthDrivers?.length > 0 ? healthDrivers : [],
           },
           {
             title: "Churn Risk",
-            value: 0,
-            keyDrivers: [],
+            value: churn ?? 0,
+            keyDrivers: churnDrivers?.length > 0 ? churnDrivers : [],
           },
           {
             title: "Expansion Opp Score",
-            value: 0,
-            keyDrivers: [],
+            value: opp ?? 0,
+            keyDrivers: expansionDrivers?.length > 0 ? expansionDrivers : [],
           },
         ])
         setScoreAnalysis([

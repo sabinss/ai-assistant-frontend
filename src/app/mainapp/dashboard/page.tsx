@@ -256,7 +256,7 @@ export default function Dashboard() {
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
         // const scoreDashboardData = redshiftRes?.data?.scoreDashboardData || []
         // setScoreDashboardData(scoreDashboardData)
-
+        console.log("redshiftCustomerDetails", redshiftCustomerDetails)
         const {
           totalPages,
           totalRecords,
