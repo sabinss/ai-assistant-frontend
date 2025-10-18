@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react"
 import { ChevronDown, ChevronUp, Zap, TrendingUp } from "lucide-react"
 
@@ -17,6 +17,15 @@ export default function ScoreTab({
   const [activeTab, setActiveTab] = useState("Health Score")
   const currentTab = tabs.find((tab) => tab.title === activeTab)
   const [openTab, setOpenTab] = useState<string | null>(null)
+
+  // Update local state when props change
+  useEffect(() => {
+    setTabs(tabsData)
+  }, [tabsData])
+
+  useEffect(() => {
+    setAnalysis(analysisData)
+  }, [analysisData])
 
   const toggleTab = (title: string) => {
     setOpenTab((prev) => (prev === title ? null : title))
@@ -53,7 +62,7 @@ export default function ScoreTab({
                 activeTab === tab.title ? "text-blue-600" : "text-gray-500"
               }`}
             >
-              {tab.value}
+              {Math.trunc(tab.value)}
             </div>
           </button>
         ))}
@@ -63,36 +72,43 @@ export default function ScoreTab({
       <div className="mt-6 rounded-xl border bg-white p-4 shadow-sm">
         <h2 className="mb-4 text-lg font-semibold">Key Drivers</h2>
 
-        <div className="divide-y">
-          {currentTab?.keyDrivers.map((driver, index) => (
-            <div
-              key={index}
-              className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-4"
-            >
-              <div className="flex items-center gap-2">
-                {/* {getTrendIcon(driver.trend)} */}
-                <div>
-                  <div className="font-semibold">{driver.name}</div>
-                  {/* <div className="text-xs text-gray-400">
-                    {driver.impact}% impact
-                  </div> */}
-                </div>
-              </div>
+        {/* Debug info */}
+        <div className="mb-4 text-xs text-gray-500">
+          Debug: Current tab: {activeTab}, KeyDrivers count:{" "}
+          {currentTab?.keyDrivers?.length || 0}
+        </div>
 
-              <div className="flex flex-col items-end">
-                <div className="text-lg font-bold">{driver.score}</div>
-                <div className="text-xs capitalize text-gray-400">
-                  {driver.trend}
+        <div className="divide-y">
+          {currentTab?.keyDrivers && currentTab.keyDrivers.length > 0 ? (
+            currentTab.keyDrivers.map((driver: any, index: any) => (
+              <div
+                key={index}
+                className="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-4"
+              >
+                <div className="flex items-center gap-2">
+                  <div>
+                    <div className="font-semibold">{driver.name}</div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end">
+                  <div className="text-lg font-bold">{driver.score}</div>
+                  <div className="text-xs capitalize text-gray-400">
+                    {driver.trend}
+                  </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="py-4 text-center text-gray-500">
+              No key drivers available for {activeTab}
             </div>
-          ))}
+          )}
         </div>
       </div>
 
       {/* Analysis */}
-      {/* Analysis */}
-      <div className="mt-6 rounded-xl border bg-white p-4 shadow-sm">
+      {/* <div className="mt-6 rounded-xl border bg-white p-4 shadow-sm">
         {analysis.map((item) => (
           <div
             key={item.title}
@@ -115,8 +131,7 @@ export default function ScoreTab({
                 {item.growthIndicators?.length > 0 && (
                   <div>
                     <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-green-600">
-                      {/* <TrendingUp className="h-4 w-4" />
-                      Growth Indicators */}
+                     
                     </div>
                     <ul className="ml-5 list-disc text-sm text-gray-700">
                       {item.growthIndicators.map((g, idx) => (
@@ -138,7 +153,7 @@ export default function ScoreTab({
             {recommendedActions?.map((r, idx) => <li key={idx}>{r}</li>)}
           </ul>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

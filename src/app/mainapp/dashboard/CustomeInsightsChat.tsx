@@ -44,12 +44,6 @@ export default function InsightsPanel({
     setCustomerInsightsOpen,
     resetCustomerInsightsState,
   } = useOrgCustomer()
-  console.log(
-    "111",
-    customerConversationMessages,
-    "isCustomerInsightsOpen:",
-    isCustomerInsightsOpen
-  )
 
   // Set flag when component mounts and clear chat history
   useEffect(() => {
@@ -72,9 +66,6 @@ export default function InsightsPanel({
   // Clear chat history when customer changes
   useEffect(() => {
     if (customer?._id) {
-      console.log(
-        "CustomerInsightsChat - customer changed, clearing chat history"
-      )
       setLocalMessages([])
       clearCustomerConversationMessages()
     }
