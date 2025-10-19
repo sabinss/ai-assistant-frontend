@@ -415,7 +415,7 @@ export default function Dashboard() {
     const messagePayload = {
       sender: "user",
       message: message,
-      question: message + `for customer ${selectedCustomer.name})`,
+      question: message + " " + `for customer ${selectedCustomer.name}`,
       time: getClockTime(),
       id: messageId,
       isStreaming: false,

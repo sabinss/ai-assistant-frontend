@@ -92,7 +92,8 @@ export default function Page() {
     const messagePayload = {
       sender: "user",
       message: message,
-      question: message + `for customer ${selectedCustomer.customer_name}`,
+      question:
+        message + " " + `for customer ${selectedCustomer.customer_name}`,
       time: getClockTime(),
       id: messageId,
       isStreaming: false,
