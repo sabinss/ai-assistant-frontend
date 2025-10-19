@@ -54,7 +54,7 @@ export default function ImmediateActions({
     const messagePayload = {
       sender: "user",
       message: message,
-      question: message + `(from customer ${selectedCustomer.customer_name})`,
+      question: message + `for customer ${selectedCustomer.customer_name})`,
       time: getClockTime(),
       id: messageId,
       isStreaming: false,
