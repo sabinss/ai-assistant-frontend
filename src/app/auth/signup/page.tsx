@@ -36,7 +36,7 @@ export default function Page() {
   }
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
-    await sendConfirmEmail(data.email)
+    await sendConfirmEmail(data)
     setFormData(data)
     setEnteredDetails(true)
   }
@@ -356,13 +356,15 @@ const EmailConfirmDialog = ({ formData }) => {
 
   const handleSubmit = async () => {
     try {
-      let res = await http.post("/auth/signup", formData)
-      if (res.status === 201) {
-        toast.success("Account Created Successfully now login ")
-        router.push("/auth/signin")
-      } else {
-        toast.error(res?.data?.message)
-      }
+      toast.success("Account Created Successfully now login ")
+      router.push("/auth/signin")
+      // let res = await http.post("/auth/signup", formData)
+      // if (res.status === 201) {
+      //   toast.success("Account Created Successfully now login ")
+      //   router.push("/auth/signin")
+      // } else {
+      //   toast.error(res?.data?.message)
+      // }
     } catch (error) {
       toast.error("Something went Wrong from Backend")
       console.log("Error Occured ", error)
@@ -398,9 +400,9 @@ const EmailConfirmDialog = ({ formData }) => {
   )
 }
 
-const sendConfirmEmail = async (email) => {
+const sendConfirmEmail = async (formData) => {
   try {
-    await http.post("/auth/sendEmailVerifyToken", { email })
+    await http.post("/auth/sendEmailVerifyToken", formData)
     toast.success("Verification email sent")
   } catch (e) {
     toast.error(e?.response?.data?.message)

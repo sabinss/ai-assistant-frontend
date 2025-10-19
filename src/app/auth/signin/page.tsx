@@ -62,7 +62,10 @@ export default function page() {
           error.response?.data?.message || "Unauthorized! Invalid credentials."
         )
       } else {
-        toast.error("Something went wrong. Please try again.")
+        toast.error(
+          error.response?.data?.message ||
+            "Something went wrong. Please try again."
+        )
       }
     }
   }
