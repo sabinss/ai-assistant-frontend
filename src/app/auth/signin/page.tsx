@@ -11,6 +11,8 @@ import { useForm, SubmitHandler, FieldValues } from "react-hook-form"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { trackLogin } from "@/utility/tracking"
+import { initializeOrganization } from "@/utility/organizationSetup"
+import useOrgCustomer from "@/store/organization_customer"
 export default function page() {
   const [error, setError] = useState("")
   const [togglePass, setTogglePass] = useState("password")
@@ -20,6 +22,7 @@ export default function page() {
   const { register, handleSubmit, formState } = useForm()
   const { errors, isSubmitting } = formState
   const { loginUser } = useAuth()
+  const { setOrgToken } = useOrgCustomer()
   const [showPrivacy, setShowPrivacy] = useState(false)
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
@@ -39,6 +42,15 @@ export default function page() {
 
         // Track login event
         trackLogin(email, organization)
+
+        // Initialize organization setup after successful login
+        try {
+          await initializeOrganization(res.data?.access_token, setOrgToken)
+          console.log("Organization setup completed successfully")
+        } catch (orgError) {
+          console.error("Organization setup failed:", orgError)
+          // Don't block the login flow if organization setup fails
+        }
 
         router.push("/mainapp/chat")
         toast.success("Logged in successfully", { autoClose: 100 })

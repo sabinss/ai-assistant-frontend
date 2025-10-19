@@ -64,7 +64,6 @@ export default function Dashboard() {
   const customerScoreData = useChurnDashboardStore((s) => s.customerScoreData)
   // pagination
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const limit = 10 // records per page
   const [pagination, setPagination] = useState<any>({
     currentPage: 1,
@@ -73,7 +72,7 @@ export default function Dashboard() {
     hasNextPage: false,
     hasPrevPage: false,
   })
-
+  console.log("pagination", pagination)
   // Usage funnel pagination
   const [usageFunnelPage, setUsageFunnelPage] = useState(1)
 
@@ -86,6 +85,8 @@ export default function Dashboard() {
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
   const [alertData, setAlertData] = useState<any>([])
+  const [updatingAlert, setUpdatingAlert] = useState<string | null>(null)
+  const [addressedFilter, setAddressedFilter] = useState<string>("all") // "all", "addressed", "not_addressed"
   const [stats, setStats] = useState<
     Array<{
       id: string
@@ -128,6 +129,29 @@ export default function Dashboard() {
       customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [orgCustomerData?.customers, searchTerm])
+
+  // Filter alert data based on search term and addressed status
+  const filteredAlertData = useMemo(() => {
+    if (!customerAlertData) return []
+
+    let filtered = customerAlertData
+
+    // Filter by search term (company name)
+    if (searchTerm) {
+      filtered = filtered.filter((alert: any) =>
+        alert?.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    // Filter by addressed status
+    if (addressedFilter === "addressed") {
+      filtered = filtered.filter((alert: any) => alert?.addressed === true)
+    } else if (addressedFilter === "not_addressed") {
+      filtered = filtered.filter((alert: any) => alert?.addressed === false)
+    }
+
+    return filtered
+  }, [customerAlertData, searchTerm, addressedFilter])
 
   // Get unique stages for filter dropdown - fix TypeScript Set iteration
   const uniqueStages = useMemo(() => {
@@ -341,6 +365,47 @@ export default function Dashboard() {
       minute: "numeric",
       hour12: true,
     })
+  }
+
+  const handleAlertAddressToggle = async (
+    alertId: string,
+    currentAddressed: boolean
+  ) => {
+    if (!access_token) return
+
+    setUpdatingAlert(alertId)
+    try {
+      const response = await http.put(
+        `/customer/alert/${alertId}/address`,
+        { addressed: !currentAddressed },
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      )
+
+      if (response.status === 200) {
+        // Update the local state to reflect the change
+        const updatedAlertData = customerAlertData?.map((alert: any) =>
+          alert.alert_id === alertId
+            ? { ...alert, addressed: !currentAddressed }
+            : alert
+        )
+
+        // Update the store with the new data
+        useChurnDashboardStore.setState((state) => ({
+          ...state,
+          customerAlertData: {
+            ...state.customerAlertData,
+            data: updatedAlertData,
+          },
+        }))
+      }
+    } catch (error) {
+      console.error("Error updating alert address status:", error)
+      // You might want to show a toast notification here
+    } finally {
+      setUpdatingAlert(null)
+    }
   }
 
   const sendCustomerMessageToBackend = async (message: string) => {
@@ -565,13 +630,25 @@ export default function Dashboard() {
         <div className="mt-4">
           {activeTab === "alert" && (
             <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <input
-                type="text"
-                placeholder="Search..."
-                className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                <input
+                  type="text"
+                  placeholder="Search by company name..."
+                  className="w-full rounded border px-3 py-2 sm:w-1/3"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <select
+                  value={addressedFilter}
+                  onChange={(e) => setAddressedFilter(e.target.value)}
+                  className="w-full rounded border px-3 py-2 sm:w-1/4"
+                >
+                  <option value="all">All Alerts</option>
+                  <option value="addressed">Addressed</option>
+                  <option value="not_addressed">Not Addressed</option>
+                </select>
+              </div>
+
               <div className="overflow-x-auto">
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b text-gray-600">
@@ -617,14 +694,16 @@ export default function Dashboard() {
                           </tr>
                         ))}
                       </>
-                    ) : customerAlertData?.length === 0 ? (
+                    ) : filteredAlertData?.length === 0 ? (
                       <tr>
                         <td className="py-6 text-center" colSpan={8}>
-                          No alert to display
+                          {searchTerm || addressedFilter !== "all"
+                            ? "No alerts match your filters"
+                            : "No alert to display"}
                         </td>
                       </tr>
                     ) : (
-                      customerAlertData?.map((item: any, index: number) => {
+                      filteredAlertData?.map((item: any, index: number) => {
                         return (
                           <tr
                             key={item?.company_id || index}
@@ -647,9 +726,24 @@ export default function Dashboard() {
                               <input
                                 type="checkbox"
                                 checked={item?.addressed}
-                                readOnly
-                                className="h-4 w-4 cursor-default"
+                                onChange={() =>
+                                  handleAlertAddressToggle(
+                                    item?.alert_id,
+                                    item?.addressed
+                                  )
+                                }
+                                disabled={updatingAlert === item?.alert_id}
+                                className={`h-4 w-4 cursor-pointer ${
+                                  updatingAlert === item?.alert_id
+                                    ? "opacity-50"
+                                    : ""
+                                }`}
                               />
+                              {updatingAlert === item?.alert_id && (
+                                <span className="ml-2 text-xs text-gray-500">
+                                  Updating...
+                                </span>
+                              )}
                             </td>
                           </tr>
                         )
@@ -824,7 +918,7 @@ export default function Dashboard() {
                   Previous
                 </Button>
                 <span className="text-sm font-bold text-gray-500">
-                  Page {page} of {totalPages}
+                  Page {page} of {pagination.totalPages}
                 </span>
 
                 {/* <button
