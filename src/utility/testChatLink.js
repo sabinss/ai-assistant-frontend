@@ -6,15 +6,18 @@
 // Test function to generate and display email template
 function testEmailTemplate() {
   const query = "hi"
-  const chatUrl = `${window.location.origin}/mainapp/chat?query=${encodeURIComponent(query)}`
+  const emailId = "test_email_123"
+  const chatUrl = `${window.location.origin}/mainapp/chat?query=${encodeURIComponent(query)}&emailId=${emailId}`
 
-  console.log("=== CHAT LINK TEST ===")
+  console.log("=== CHAT LINK TEST WITH EMAIL ID ===")
   console.log("Generated URL:", chatUrl)
+  console.log("Email ID:", emailId)
   console.log("")
   console.log("To test manually:")
   console.log("1. Copy the URL above")
   console.log("2. Open it in a new tab")
   console.log("3. The chat should open with 'hi' pre-filled and auto-sent")
+  console.log("4. Check console for 'Email link detected with ID' message")
   console.log("")
   console.log(
     "To test with different queries, modify the 'query' variable above"

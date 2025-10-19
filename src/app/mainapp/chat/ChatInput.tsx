@@ -48,6 +48,17 @@ const ChatInput: React.FC<ChildProps> = ({
   const remainingAgents = agentList.slice(5)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
+  const [hasAutoSent, setHasAutoSent] = useState(false) // Flag to prevent multiple auto-sends
+
+  // Helper function to check if opened from email link
+  const isFromEmailLink = () => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search)
+      return !!urlParams.get("emailId")
+    }
+    return false
+  }
+
   // Sample list of text options
 
   useEffect(() => {
@@ -156,7 +167,7 @@ const ChatInput: React.FC<ChildProps> = ({
     try {
       if (publicChat) {
         const res = await http.post(
-          `/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
+          `/conversation/public/add?org_id=${(publicChatHeaders as any)?.org_id}&chat_session=${(publicChatHeaders as any)?.chat_session}`,
           {
             question: query,
             user_email: publicChatReponsePayload.user_email,
@@ -363,7 +374,7 @@ const ChatInput: React.FC<ChildProps> = ({
     try {
       // Configure fetch for streaming SSE response
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
+        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/public/add?org_id=${(publicChatHeaders as any)?.org_id}&chat_session=${(publicChatHeaders as any)?.chat_session}`,
         {
           method: "POST",
           headers: {
@@ -681,7 +692,7 @@ const ChatInput: React.FC<ChildProps> = ({
       console.error("Agent stream fetch error:", error)
       appendMessage({
         sender: botName,
-        message: `Error occurred while querying agent ${selectedAgents[0]}. ${error.message || ""}`,
+        message: `Error occurred while querying agent ${selectedAgents[0]}. ${(error as Error).message || ""}`,
         time: getClockTime(),
         id: messageId,
         isStreaming: false, // Mark as complete even on error
@@ -734,12 +745,39 @@ const ChatInput: React.FC<ChildProps> = ({
   }
   // Handle initial query from URL parameters
   useEffect(() => {
-    if (initialQuery && initialQuery.trim() !== "") {
+    if (initialQuery && initialQuery.trim() !== "" && !hasAutoSent) {
+      // Check if this is from an email link by looking for emailId parameter
+      const isFromEmail = isFromEmailLink()
+
+      if (isFromEmail) {
+        const urlParams = new URLSearchParams(window.location.search)
+        const emailId = urlParams.get("emailId")
+        console.log("Email link detected with ID:", emailId)
+        console.log("Query from email:", initialQuery)
+      }
+
       setMessage(initialQuery)
+      setHasAutoSent(true) // Mark as auto-sent to prevent multiple sends
+
       // Auto-send the message after a short delay to ensure everything is loaded
-      const timer = setTimeout(() => {
-        sendMessageToBackend(initialQuery)
-        setMessage("") // Clear the input after sending
+      const timer = setTimeout(async () => {
+        // Call sendMessageToBackend directly to avoid dependency issues
+        if (initialQuery.trim() !== "") {
+          setMessage("") // Clear the textarea after sending the message
+          await sendMessageToBackend(initialQuery) // Send the message to the backend
+
+          if (textareaRef.current) {
+            textareaRef.current.focus() // Focus back on the textarea
+          }
+        }
+
+        // Remove query and emailId parameters from URL after sending
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href)
+          url.searchParams.delete("query")
+          url.searchParams.delete("emailId")
+          window.history.replaceState({}, "", url.toString())
+        }
       }, 1000) // 1 second delay to ensure everything is ready
 
       return () => clearTimeout(timer)

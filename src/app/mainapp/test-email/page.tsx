@@ -46,7 +46,10 @@ export default function TestEmailPage() {
   }
 
   const handleOpenTestLink = () => {
-    const testUrl = `${window.location.origin}/mainapp/chat?query=${encodeURIComponent(query)}`
+    // Test with emailId parameter to simulate email link
+    const emailId = "test_email_123"
+    const testUrl = `${window.location.origin}/mainapp/chat?query=${encodeURIComponent(query)}&emailId=${emailId}`
+    console.log("Testing email link with ID:", emailId)
     window.open(testUrl, "_blank")
   }
 
@@ -118,7 +121,7 @@ export default function TestEmailPage() {
           <div className="space-y-2">
             <p className="text-sm text-gray-600">Generated URL:</p>
             <code className="block break-all rounded bg-gray-100 p-3 text-sm">
-              {`${typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/mainapp/chat?query=${encodeURIComponent(query)}`}
+              {`${typeof window !== "undefined" ? window.location.origin : "http://localhost:3000"}/mainapp/chat?query=${encodeURIComponent(query)}&emailId=unique_email_id`}
             </code>
 
             <p className="mt-4 text-sm text-gray-600">
@@ -132,6 +135,9 @@ export default function TestEmailPage() {
                 Pre-fill the chat input with: <strong>"{query}"</strong>
               </li>
               <li>Automatically send the message after 1 second</li>
+              <li>
+                Detect email link via <code>emailId</code> parameter
+              </li>
             </ul>
           </div>
         </div>
