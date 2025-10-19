@@ -921,13 +921,6 @@ export default function Dashboard() {
                   Page {page} of {pagination.totalPages}
                 </span>
 
-                {/* <button
-                  disabled={!pagination.hasNextPage}
-                  onClick={() => setPage((prev) => prev + 1)}
-                  className="disabled bg-[#174894] hover:bg-[#173094]"
-                >
-                  Next
-                </button> */}
                 <Button
                   className="disabled bg-[#174894] hover:bg-[#173094]"
                   disabled={!pagination.hasNextPage}
