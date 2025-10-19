@@ -18,7 +18,11 @@ export interface MessageObject {
   isStreaming?: boolean
 }
 
-const ChatMain: React.FC = () => {
+interface ChatMainProps {
+  initialQuery?: string | null
+}
+
+const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   const [messages, setMessages] = useState<MessageObject[]>([])
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
   const { greeting, botName, setBotName, setGreeting } = useNavBarStore()
@@ -67,7 +71,7 @@ const ChatMain: React.FC = () => {
   const fetchBotData = async () => {
     let org_id
     if (publicChat) {
-      org_id = publicChatHeaders?.org_id
+      org_id = (publicChatHeaders as any)?.org_id
     } else {
       org_id = user_data?.organization
     }
@@ -106,7 +110,7 @@ const ChatMain: React.FC = () => {
     try {
       if (publicChat) {
         res = await http.get(
-          `/conversations/public?org_id=${publicChatHeaders?.org_id}`,
+          `/conversations/public?org_id=${(publicChatHeaders as any)?.org_id}`,
           {
             headers: publicChatHeaders,
           }
@@ -170,14 +174,18 @@ const ChatMain: React.FC = () => {
         <div className="mb-2 bg-gray-200 p-2 text-gray-700">Loading...</div>
       )}
       <ChatList messages={messages} />
-      <ChatInput appendMessage={appendMessage} agentList={agentList} />
+      <ChatInput
+        appendMessage={appendMessage}
+        agentList={agentList}
+        initialQuery={initialQuery}
+      />
     </div>
   )
 }
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr)
-  const options = {
+  const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
     hour: "numeric",

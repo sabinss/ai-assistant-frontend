@@ -15,9 +15,14 @@ import CHAT_PROMPTS from "./chat-prompt"
 interface ChildProps {
   appendMessage: (newMessage: any) => void
   agentList: any[]
+  initialQuery?: string | null
 }
 
-const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
+const ChatInput: React.FC<ChildProps> = ({
+  appendMessage,
+  agentList,
+  initialQuery,
+}) => {
   const { botName } = useNavBarStore()
   const [agents, setAgents] = useState(agentList) // internal reorderable list
 
@@ -727,6 +732,20 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       )}px`
     }
   }
+  // Handle initial query from URL parameters
+  useEffect(() => {
+    if (initialQuery && initialQuery.trim() !== "") {
+      setMessage(initialQuery)
+      // Auto-send the message after a short delay to ensure everything is loaded
+      const timer = setTimeout(() => {
+        sendMessageToBackend(initialQuery)
+        setMessage("") // Clear the input after sending
+      }, 1000) // 1 second delay to ensure everything is ready
+
+      return () => clearTimeout(timer)
+    }
+  }, [initialQuery])
+
   useEffect(() => {
     const agent: any = agentList.find((x: any) => {
       if (x.name == selectedAgents[0]) {
