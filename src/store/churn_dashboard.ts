@@ -136,6 +136,9 @@ interface ChurnDashboardState {
   usageFunnelTableColumns: string[]
   customerAlertData: ChurnDataI | null
   customerAlertDataLoading: boolean
+  customerStageList: string[]
+  customerStageListLoading: boolean
+  fetchCustomerStageList: (accessToken: string) => Promise<void>
   // populateWithDemoData: () => void
 }
 
@@ -156,6 +159,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   scoreAnalysisData: null,
   customerAlertData: null,
   customerAlertDataLoading: false,
+  customerStageList: [],
+  customerStageListLoading: false,
   scoreAnalysisDataLoading: false,
   immediateActionsDataLoading: false,
   usageFunnelData: null,
@@ -595,6 +600,55 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
         set({ customerAlertDataLoading: false })
       } catch (err: any) {
         set({ customerAlertDataLoading: false, error: err })
+      }
+    }
+  },
+  fetchCustomerStageList: async (accessToken: string) => {
+    const state: any = useChurnDashboardStore.getState()
+    if (
+      state.customerStageList &&
+      state.customerStageList.length > 0 &&
+      isCacheValid(state.customerStageList?.timestamp)
+    ) {
+      return state.customerStageList
+    } else {
+      set({ customerStageListLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/stage-list`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        console.log("Stage list API response:", res.data)
+
+        // Extract stage values from the response data
+        const stages = res.data.data || []
+        console.log("Raw stages data:", stages)
+
+        const stageList = Array.isArray(stages)
+          ? stages.map((item: any) => {
+              if (typeof item === "string") {
+                return item
+              } else if (typeof item === "object" && item !== null) {
+                return (
+                  item.stage ||
+                  item.name ||
+                  item.value ||
+                  item.label ||
+                  JSON.stringify(item)
+                )
+              }
+              return String(item)
+            })
+          : []
+
+        console.log("Processed stage list:", stageList)
+
+        set({
+          customerStageList: stageList,
+          timestamp: Date.now(),
+        })
+        set({ customerStageListLoading: false })
+      } catch (err: any) {
+        set({ customerStageListLoading: false, error: err })
       }
     }
   },
