@@ -57,6 +57,13 @@ export default function Dashboard() {
   const customerAlertDataLoading = useChurnDashboardStore(
     (s) => s.customerAlertDataLoading
   )
+  const fetchCustomerStageList = useChurnDashboardStore(
+    (s) => s.fetchCustomerStageList
+  )
+  const customerStageList = useChurnDashboardStore((s) => s.customerStageList)
+  const customerStageListLoading = useChurnDashboardStore(
+    (s) => s.customerStageListLoading
+  )
 
   const fetchCustomerScoreData = useChurnDashboardStore(
     (s) => s.fetchCustomerScoreData
@@ -78,6 +85,9 @@ export default function Dashboard() {
 
   // Stage filter for usage funnel
   const [selectedStage, setSelectedStage] = useState("all")
+
+  // Stage filter for customer overview
+  const [selectedCustomerStage, setSelectedCustomerStage] = useState("all")
 
   const churnLoading = useChurnDashboardStore((s) => s.isLoading)
 
@@ -129,7 +139,7 @@ export default function Dashboard() {
       customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [orgCustomerData?.customers, searchTerm])
-
+  console.log("filteredCustomers", filteredCustomers)
   // Filter alert data based on search term and addressed status
   const filteredAlertData = useMemo(() => {
     if (!customerAlertData) return []
@@ -237,6 +247,13 @@ export default function Dashboard() {
     }
   }, [user_data?.organization])
 
+  // Fetch customer stage list
+  useEffect(() => {
+    if (access_token && customerStageList.length === 0) {
+      fetchCustomerStageList(access_token)
+    }
+  }, [access_token])
+
   // Fetch usage funnel data with API pagination
   useEffect(() => {
     if (activeTab === "usage_funnel" && access_token) {
@@ -270,8 +287,12 @@ export default function Dashboard() {
         setLoading(true)
 
         // Now only fetch from redshift as it contains all customer data
+        const stageParam =
+          selectedCustomerStage !== "all"
+            ? `&stage=${selectedCustomerStage}`
+            : ""
         const redshiftRes = await http.get(
-          `/customer/redshift?page=${page}&limit=${limit}&search=${debouncedSearchTerm ?? ""}`,
+          `/customer/redshift?page=${page}&limit=${limit}&search=${debouncedSearchTerm ?? ""}${stageParam}`,
           {
             headers: { Authorization: `Bearer ${access_token}` },
           }
@@ -321,7 +342,13 @@ export default function Dashboard() {
     }
 
     getOrgCustomers()
-  }, [user_data?.organization, access_token, page, debouncedSearchTerm])
+  }, [
+    user_data?.organization,
+    access_token,
+    page,
+    debouncedSearchTerm,
+    selectedCustomerStage,
+  ])
 
   useEffect(() => {
     let scoreDashboardData = { ...customerScoreData }
@@ -763,13 +790,36 @@ export default function Dashboard() {
                   Customer Overview
                 </div>
 
-                <input
-                  type="text"
-                  placeholder="Search customers..."
-                  className="mb-4 w-full rounded border px-3 py-2 md:w-1/3"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+                <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <input
+                    type="text"
+                    placeholder="Search customers..."
+                    className="w-full rounded border px-3 py-2 sm:w-1/3"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+
+                  <select
+                    value={selectedCustomerStage}
+                    onChange={(e) => {
+                      setSelectedCustomerStage(e.target.value)
+                      setPage(1) // Reset to first page when filter changes
+                    }}
+                    className="w-full rounded border px-3 py-2 sm:w-1/4"
+                    disabled={customerStageListLoading}
+                  >
+                    <option value="all">All Stages</option>
+                    {customerStageList && customerStageList.length > 0 ? (
+                      customerStageList.map((stage: string, index: number) => (
+                        <option key={stage || index} value={stage}>
+                          {stage}
+                        </option>
+                      ))
+                    ) : (
+                      <option disabled>No stages available</option>
+                    )}
+                  </select>
+                </div>
 
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-left text-sm">
