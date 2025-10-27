@@ -79,6 +79,7 @@ export default function Dashboard() {
     hasNextPage: false,
     hasPrevPage: false,
   })
+
   console.log("pagination", pagination)
   // Usage funnel pagination
   const [usageFunnelPage, setUsageFunnelPage] = useState(1)

@@ -356,13 +356,15 @@ const EmailConfirmDialog = ({ formData }) => {
 
   const handleSubmit = async () => {
     try {
-      let res = await http.post("/auth/signup", formData)
-      if (res.status === 201) {
-        toast.success("Account Created Successfully now login ")
-        router.push("/auth/signin")
-      } else {
-        toast.error(res?.data?.message)
-      }
+      toast.success("Account Created Successfully now login ")
+      router.push("/auth/signin")
+      // let res = await http.post("/auth/signup", formData)
+      // if (res.status === 201) {
+      //   toast.success("Account Created Successfully now login ")
+      //   router.push("/auth/signin")
+      // } else {
+      //   toast.error(res?.data?.message)
+      // }
     } catch (error) {
       toast.error("Something went Wrong from Backend")
       console.log("Error Occured ", error)
