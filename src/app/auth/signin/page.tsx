@@ -18,6 +18,8 @@ export default function page() {
   const [togglePass, setTogglePass] = useState("password")
   const [privacyPolicyChecked, setPrivacyPolicyChecked] = useState(false)
   const [termsOfUseChecked, setTermsOfUseChecked] = useState(false)
+  const [showEmailVerifyDialog, setShowEmailVerifyDialog] = useState(false)
+  const [userEmail, setUserEmail] = useState("")
   const router = useRouter()
   const { register, handleSubmit, formState } = useForm()
   const { errors, isSubmitting } = formState
@@ -32,6 +34,14 @@ export default function page() {
         setError(res?.data?.message)
       }
       if (res.status === 200) {
+        // Check if user is verified
+        if (res.data?.isVerified === false) {
+          setUserEmail(data.email)
+          setShowEmailVerifyDialog(true)
+          await sendConfirmEmail(data.email)
+          return
+        }
+
         loginUser(
           res.data?.user_details,
           res.data?.access_token,
@@ -70,6 +80,15 @@ export default function page() {
   const TogglePassword = (param: string) => {
     const params = param === "password" ? "text" : "password"
     setTogglePass(params)
+  }
+
+  if (showEmailVerifyDialog) {
+    return (
+      <EmailVerifyDialog
+        userEmail={userEmail}
+        setShowEmailVerifyDialog={setShowEmailVerifyDialog}
+      />
+    )
   }
 
   return (
@@ -253,4 +272,97 @@ export default function page() {
     </div> */}
     </div>
   )
+}
+
+const EmailVerifyDialog = ({
+  userEmail,
+  setShowEmailVerifyDialog,
+}: {
+  userEmail: string
+  setShowEmailVerifyDialog: (show: boolean) => void
+}) => {
+  const [verificationCode, setVerificationCode] = useState("")
+  const [isValidCode, setIsValidCode] = useState(false)
+
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setVerificationCode(e?.target?.value)
+  }
+
+  const handleVerify = async () => {
+    const isValid = await isValidToken(userEmail, verificationCode)
+    if (isValid) {
+      setIsValidCode(true)
+      toast.success("Email verified! Please login again")
+      // Hide the email dialog and show the login page
+      setTimeout(() => {
+        setShowEmailVerifyDialog(false)
+      }, 1000)
+    } else {
+      toast.error("Invalid verification code")
+    }
+  }
+
+  return (
+    <div className="px-8">
+      <div className="mt-4 flex flex-col items-center">
+        <h1 className="mt-2 text-center text-2xl font-semibold">
+          Email Confirmation Required
+        </h1>
+        <p className="mt-2 text-center text-sm text-gray-600">
+          Please verify your email to continue. A verification code has been
+          sent to {userEmail}
+        </p>
+        <input
+          className="mt-4 rounded-lg border-2 border-[#CCC] bg-[#E7E7E7] px-3 py-2 text-sm outline-none"
+          type="text"
+          placeholder="Enter verification code"
+          value={verificationCode}
+          onChange={handleCodeChange}
+        />
+        <Button
+          onClick={handleVerify}
+          className="mt-4 bg-[#174894] hover:bg-[#173094]"
+        >
+          Verify
+        </Button>
+        {isValidCode && (
+          <div className="mt-4">
+            <p className="text-green-600">Code verified successfully!</p>
+          </div>
+        )}
+        <Button
+          onClick={() => setShowEmailVerifyDialog(false)}
+          variant="outline"
+          className="mt-2"
+        >
+          Back to Login
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+const sendConfirmEmail = async (email: string) => {
+  try {
+    await http.post("/auth/sendEmailVerifyToken", { email })
+    toast.success("Verification email sent")
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message)
+  }
+}
+
+const isValidToken = async (email: string, token: string) => {
+  try {
+    const response = await http.post("/auth/email-verify", { email, token })
+    if (response.status === 200) {
+      toast.success(response?.data?.message)
+      return true
+    } else if (response.status === 201) {
+      toast.error(response?.data?.message)
+      return false
+    }
+  } catch (e: any) {
+    console.log(e)
+    return false
+  }
 }

@@ -22,6 +22,7 @@ import QuickLinks from "@/components/ui/quick-links"
 import { useEffect, useRef } from "react"
 
 function getNavLinks(rolePermission: any, hideList = []) {
+  console.log("rolePermission", rolePermission)
   const mainLinks = [
     {
       name: "Dashboard",
