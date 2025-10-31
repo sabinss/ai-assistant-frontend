@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react"
 import { buttonVariants } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { IoMdSend } from "react-icons/io"
+import { MdStop } from "react-icons/md"
 import http from "@/config/http"
 import useFormStore from "@/store/formdata"
 import useAuth from "@/store/user"
@@ -49,6 +50,7 @@ const ChatInput: React.FC<ChildProps> = ({
   const [selectedAgents, setSelectedAgents] = useState<any>([])
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
   const [hasAutoSent, setHasAutoSent] = useState(false) // Flag to prevent multiple auto-sends
+  const abortControllerRef = useRef<AbortController | null>(null) // For cancelling fetch requests
 
   // Helper function to check if opened from email link
   const isFromEmailLink = () => {
@@ -142,6 +144,19 @@ const ChatInput: React.FC<ChildProps> = ({
     // }
   }
 
+  const handleStopStreaming = () => {
+    console.log("Stopping streaming...")
+
+    // Abort the fetch request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+
+    // Reset loading state
+    updateMessageLoading(false)
+  }
+
   const sendMessage = async () => {
     if (message.trim() !== "") {
       let msg = message
@@ -230,6 +245,7 @@ const ChatInput: React.FC<ChildProps> = ({
   const handleStreamingResponse = async (query: string) => {
     const messageId = `stream_${Date.now()}`
     let conversationId: any = ""
+    let fullMessage = "" // Moved outside try block for access in catch
 
     // Add initial message with loading status
     appendMessage({
@@ -242,6 +258,10 @@ const ChatInput: React.FC<ChildProps> = ({
     })
 
     try {
+      // Create AbortController for this request
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+
       // Configure fetch for streaming SSE response instead of axios
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/add`,
@@ -258,6 +278,7 @@ const ChatInput: React.FC<ChildProps> = ({
             sessionId,
             apiType,
           }),
+          signal: abortController.signal,
         }
       )
 
@@ -271,7 +292,6 @@ const ChatInput: React.FC<ChildProps> = ({
         throw new Error("Response body is not readable")
       }
 
-      let fullMessage = ""
       let sessionIdFromResponse = null
 
       // Read the stream
@@ -346,15 +366,31 @@ const ChatInput: React.FC<ChildProps> = ({
         conversationId: conversationId,
         isStreaming: false,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Stream error:", error)
-      appendMessage({
-        sender: botName,
-        message: "Error occurred while streaming the response.",
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
+
+      // Check if error is from abort (user stopped the stream)
+      if (error.name === "AbortError") {
+        console.log("Stream stopped by user")
+        appendMessage({
+          sender: botName,
+          message: fullMessage || "Response stopped by user.",
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false,
+        })
+      } else {
+        appendMessage({
+          sender: botName,
+          message: "Error occurred while streaming the response.",
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false,
+        })
+      }
+    } finally {
+      // Clean up abort controller
+      abortControllerRef.current = null
     }
   }
 
@@ -529,6 +565,7 @@ const ChatInput: React.FC<ChildProps> = ({
   const handleCustomAgentStreaming = async (query: string) => {
     const messageId = `stream_agent_${Date.now()}`
     let conversationId: any = ""
+    let fullMessage = "" // Moved outside try block for access in catch
 
     // Add initial message with loading status
     appendMessage({
@@ -541,6 +578,10 @@ const ChatInput: React.FC<ChildProps> = ({
     })
 
     try {
+      // Create AbortController for this request
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+
       // Configure fetch for streaming SSE response
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/agent/add`,
@@ -558,6 +599,7 @@ const ChatInput: React.FC<ChildProps> = ({
             // apiType, // Removed as it might not be needed for agents, adjust if necessary
             agentName: selectedAgents[0], // Send only the first selected agent
           }),
+          signal: abortController.signal,
         }
       )
 
@@ -581,7 +623,6 @@ const ChatInput: React.FC<ChildProps> = ({
         throw new Error("Response body is not readable")
       }
 
-      let fullMessage = ""
       let sessionIdFromResponse = sessionId // Start with current session ID
 
       // Read the stream
@@ -688,16 +729,31 @@ const ChatInput: React.FC<ChildProps> = ({
         id: messageId,
         isStreaming: false, // Mark as complete
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Agent stream fetch error:", error)
-      appendMessage({
-        sender: botName,
-        message: `Error occurred while querying agent ${selectedAgents[0]}. ${(error as Error).message || ""}`,
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false, // Mark as complete even on error
-      })
+
+      // Check if error is from abort (user stopped the stream)
+      if (error.name === "AbortError") {
+        console.log("Agent stream stopped by user")
+        appendMessage({
+          sender: botName,
+          message: fullMessage || "Response stopped by user.",
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false,
+        })
+      } else {
+        appendMessage({
+          sender: botName,
+          message: `Error occurred while querying agent ${selectedAgents[0]}. ${error.message || ""}`,
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false, // Mark as complete even on error
+        })
+      }
     } finally {
+      // Clean up abort controller
+      abortControllerRef.current = null
       updateMessageLoading(false) // Ensure loading state is reset
     }
   }
@@ -838,22 +894,37 @@ const ChatInput: React.FC<ChildProps> = ({
               </button>
             )}
 
-            {/* Send message button */}
+            {/* Send/Stop message button */}
             <div className="m-2 flex w-20 items-center justify-center">
               <span className="text-sm text-[#838383]">
                 {message?.length}/4000
               </span>
-              <button
-                type="button"
-                onClick={sendMessage}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "h-9 w-9",
-                  "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                )}
-              >
-                <IoMdSend size={20} className=" text-[#174894]" />
-              </button>
+              {isMessageLoading ? (
+                <button
+                  type="button"
+                  onClick={handleStopStreaming}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9",
+                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                  )}
+                  title="Stop streaming"
+                >
+                  <MdStop size={22} className="text-red-600" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={sendMessage}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9",
+                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                  )}
+                >
+                  <IoMdSend size={20} className=" text-[#174894]" />
+                </button>
+              )}
             </div>
           </div>
         </div>
