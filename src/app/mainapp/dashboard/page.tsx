@@ -963,7 +963,7 @@ export default function Dashboard() {
               <div className="mb-20 mt-4 flex items-center justify-between">
                 <Button
                   className="disabled bg-[#174894] hover:bg-[#173094]"
-                  disabled={!pagination.hasNextPage}
+                  disabled={!pagination.hasPrevPage}
                   onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
                 >
                   Previous
