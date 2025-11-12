@@ -24,14 +24,10 @@ export const MessageDiv = ({ msg }: any) => {
   const [feedbackMsg, setFeedbackMsg] = useState("")
   const [feedbackId, setFeedbackId] = useState(null)
   //get feedback fr  om msg.liked or msg.disliked and set accordingly\
-  const [selectedFeedback, setSelectedFeedback] = useState<
-    "liked" | "disliked" | null
-  >(null)
+  const [selectedFeedback, setSelectedFeedback] = useState<"liked" | "disliked" | null>(null)
   const [feedbackLoading, setFeedbackLoading] = useState(false)
 
-  const [feedback, setFeedback] = useState(
-    msg.liked ? "liked" : msg.disliked ? "disliked" : null
-  )
+  const [feedback, setFeedback] = useState(msg.liked ? "liked" : msg.disliked ? "disliked" : null)
 
   const submitFeedback = async () => {
     setFeedbackLoading(true)
@@ -117,10 +113,7 @@ export const MessageDiv = ({ msg }: any) => {
     }
     return id // fallback if no prefix
   }
-  const sendFeedbackToBackend = async (
-    feedbackType: "liked" | "disliked",
-    id: any
-  ) => {
+  const sendFeedbackToBackend = async (feedbackType: "liked" | "disliked", id: any) => {
     try {
       //sent to our backend feedback
       const conversationId = extractConversationId(id)
@@ -193,13 +186,7 @@ export const MessageDiv = ({ msg }: any) => {
       {msg.sender !== "user" ? (
         <div className="group relative w-full pb-6">
           <div className="timeandname  mb-2 flex items-center justify-start gap-2 text-[#838383] ">
-            <Image
-              src={bot}
-              className="rounded-full"
-              alt=""
-              height={30}
-              width={30}
-            />
+            <Image src={bot} className="rounded-full" alt="" height={30} width={30} />
             <p dangerouslySetInnerHTML={{ __html: botName }} />
             <span>{msg.time}</span>
           </div>
@@ -212,15 +199,16 @@ export const MessageDiv = ({ msg }: any) => {
             }}
           ></motion.div> */}
           <motion.div
-            className="ml-4 max-w-[90%] space-y-4 rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            className="ml-4 max-w-[90%] space-y-4 break-words rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <div className="prose prose-lg prose-gray max-w-none text-sm">
-              <ReactMarkdown
-                rehypePlugins={[rehypeRaw]}
-                remarkPlugins={[remarkGfm]}
-              >
+            <div
+              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+            >
+              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
                 {msg.message}
               </ReactMarkdown>
             </div>
@@ -228,8 +216,7 @@ export const MessageDiv = ({ msg }: any) => {
           <div className="likebuttons absolute  left-2 py-1 pl-2">
             {msg.id !== "greeting" &&
               msg.id !== "loading" &&
-              (msg.id?.startsWith("ANS_") ||
-                msg.conversationId?.startsWith("ANS_")) && (
+              (msg.id?.startsWith("ANS_") || msg.conversationId?.startsWith("ANS_")) && (
                 <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
                   {feedback === null && (
                     <>
@@ -284,12 +271,13 @@ export const MessageDiv = ({ msg }: any) => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
             className="float-right max-w-[90%] break-words rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
+            style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
           >
-            <div className="prose prose-lg prose-gray max-w-none text-sm">
-              <ReactMarkdown
-                rehypePlugins={[rehypeRaw]}
-                remarkPlugins={[remarkGfm]}
-              >
+            <div
+              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+            >
+              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
                 {msg.message}
               </ReactMarkdown>
             </div>
