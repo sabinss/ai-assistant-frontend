@@ -80,3 +80,37 @@ ol {
     overflow: hidden;
   }
 }
+
+/* Markdown table styles */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+  display: table;
+}
+
+.prose table thead {
+  background-color: #f3f4f6;
+}
+
+.prose table th,
+.prose table td {
+  padding: 0.5rem 1rem;
+  border: 1px solid #d1d5db;
+  text-align: left;
+  word-wrap: break-word;
+  vertical-align: top;
+}
+
+.prose table th {
+  font-weight: 600;
+  background-color: #f9fafb;
+}
+
+.prose table tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+.prose table tbody tr:hover {
+  background-color: #f3f4f6;
+}
