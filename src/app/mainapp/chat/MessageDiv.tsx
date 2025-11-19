@@ -28,7 +28,7 @@ export const MessageDiv = ({ msg }: any) => {
   const [feedbackLoading, setFeedbackLoading] = useState(false)
 
   const [feedback, setFeedback] = useState(msg.liked ? "liked" : msg.disliked ? "disliked" : null)
-
+  console.log("****Message Div****", msg.message)
   const submitFeedback = async () => {
     setFeedbackLoading(true)
     console.log("Submit Feedback", selectedFeedback)
@@ -205,12 +205,14 @@ export const MessageDiv = ({ msg }: any) => {
             animate={{ opacity: 1 }}
           >
             <div
-              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-x-auto [&_td]:border [&_td]:border-gray-300 [&_td]:px-4 [&_td]:py-2 [&_td]:text-left [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
-              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                {msg.message}
-              </ReactMarkdown>
+              <div className="overflow-x-auto">
+                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                  {msg.message}
+                </ReactMarkdown>
+              </div>
             </div>
           </motion.div>
           <div className="likebuttons absolute  left-2 py-1 pl-2">
@@ -274,12 +276,14 @@ export const MessageDiv = ({ msg }: any) => {
             style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
           >
             <div
-              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-x-auto [&_td]:border [&_td]:border-gray-300 [&_td]:px-4 [&_td]:py-2 [&_td]:text-left [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
-              <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-                {msg.message}
-              </ReactMarkdown>
+              <div className="overflow-x-auto">
+                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                  {msg.message}
+                </ReactMarkdown>
+              </div>
             </div>
           </motion.div>
         </div>
