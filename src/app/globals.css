@@ -82,19 +82,24 @@ ol {
 }
 
 /* Markdown table styles */
-.prose table {
+.prose table,
+.markdown-content table {
   width: 100%;
   border-collapse: collapse;
   margin: 1rem 0;
-  display: table;
+  display: table !important;
+  table-layout: auto;
 }
 
-.prose table thead {
+.prose table thead,
+.markdown-content table thead {
   background-color: #f3f4f6;
 }
 
 .prose table th,
-.prose table td {
+.prose table td,
+.markdown-content table th,
+.markdown-content table td {
   padding: 0.5rem 1rem;
   border: 1px solid #d1d5db;
   text-align: left;
@@ -102,15 +107,25 @@ ol {
   vertical-align: top;
 }
 
-.prose table th {
+.prose table th,
+.markdown-content table th {
   font-weight: 600;
   background-color: #f9fafb;
 }
 
-.prose table tbody tr:nth-child(even) {
+.prose table tbody tr:nth-child(even),
+.markdown-content table tbody tr:nth-child(even) {
   background-color: #f9fafb;
 }
 
-.prose table tbody tr:hover {
+.prose table tbody tr:hover,
+.markdown-content table tbody tr:hover {
   background-color: #f3f4f6;
+}
+
+/* Ensure tables are visible and properly rendered */
+.markdown-content table {
+  display: table !important;
+  visibility: visible !important;
+  opacity: 1 !important;
 }

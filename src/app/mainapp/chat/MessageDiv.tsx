@@ -205,11 +205,37 @@ export const MessageDiv = ({ msg }: any) => {
             animate={{ opacity: 1 }}
           >
             <div
-              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-x-auto [&_td]:border [&_td]:border-gray-300 [&_td]:px-4 [&_td]:py-2 [&_td]:text-left [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold"
+              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
               <div className="overflow-x-auto">
-                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  rehypePlugins={[rehypeRaw]}
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: ({ node, children, ...props }) => (
+                      <div className="my-4 w-full overflow-x-auto">
+                        <table className="w-full border-collapse border border-gray-300" {...props}>
+                          {children}
+                        </table>
+                      </div>
+                    ),
+                    thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
+                    tbody: ({ node, ...props }) => <tbody {...props} />,
+                    tr: ({ node, ...props }) => (
+                      <tr className="border-b border-gray-300 hover:bg-gray-50" {...props} />
+                    ),
+                    th: ({ node, ...props }) => (
+                      <th
+                        className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold"
+                        {...props}
+                      />
+                    ),
+                    td: ({ node, ...props }) => (
+                      <td className="border border-gray-300 px-4 py-2 text-left" {...props} />
+                    ),
+                  }}
+                >
                   {msg.message}
                 </ReactMarkdown>
               </div>
@@ -276,11 +302,37 @@ export const MessageDiv = ({ msg }: any) => {
             style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
           >
             <div
-              className="prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all [&_table]:my-4 [&_table]:w-full [&_table]:border-collapse [&_table]:overflow-x-auto [&_td]:border [&_td]:border-gray-300 [&_td]:px-4 [&_td]:py-2 [&_td]:text-left [&_th]:border [&_th]:border-gray-300 [&_th]:bg-gray-100 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold"
+              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
               <div className="overflow-x-auto">
-                <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  rehypePlugins={[rehypeRaw]}
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table: ({ node, children, ...props }) => (
+                      <div className="my-4 w-full overflow-x-auto">
+                        <table className="w-full border-collapse border border-gray-300" {...props}>
+                          {children}
+                        </table>
+                      </div>
+                    ),
+                    thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
+                    tbody: ({ node, ...props }) => <tbody {...props} />,
+                    tr: ({ node, ...props }) => (
+                      <tr className="border-b border-gray-300 hover:bg-gray-50" {...props} />
+                    ),
+                    th: ({ node, ...props }) => (
+                      <th
+                        className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold"
+                        {...props}
+                      />
+                    ),
+                    td: ({ node, ...props }) => (
+                      <td className="border border-gray-300 px-4 py-2 text-left" {...props} />
+                    ),
+                  }}
+                >
                   {msg.message}
                 </ReactMarkdown>
               </div>
