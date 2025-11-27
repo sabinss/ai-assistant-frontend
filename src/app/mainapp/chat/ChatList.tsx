@@ -37,7 +37,8 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
   return (
     <div
       ref={chatListRef}
-      className=" flex h-full w-full flex-col gap-5 overflow-y-scroll px-2"
+      className="flex h-full w-full flex-col gap-5 overflow-y-scroll px-2"
+      style={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}
     >
       <MessageDiv key="greeting" msg={greeting_message} />
 

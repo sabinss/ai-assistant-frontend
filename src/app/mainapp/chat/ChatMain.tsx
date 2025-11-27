@@ -31,8 +31,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   const { setOrgAgents } = useOrgCustomer()
   const [agentList, setAgentList] = useState<any>([])
 
-  const { publicChat, publicChatHeaders, setPublicChatHeaders } =
-    usePublicChat()
+  const { publicChat, publicChatHeaders, setPublicChatHeaders } = usePublicChat()
   const { sessionId } = useChatConfig()
 
   useEffect(() => {
@@ -75,9 +74,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
     } else {
       org_id = user_data?.organization
     }
-    const response = await http.get(
-      "/organization/greeting_botname?org_id=" + org_id
-    )
+    const response = await http.get("/organization/greeting_botname?org_id=" + org_id)
     const org_data = response?.data
     setBotName(org_data?.assistant_name)
     setGreeting(org_data?.greeting)
@@ -109,12 +106,9 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
     let res
     try {
       if (publicChat) {
-        res = await http.get(
-          `/conversations/public?org_id=${(publicChatHeaders as any)?.org_id}`,
-          {
-            headers: publicChatHeaders,
-          }
-        )
+        res = await http.get(`/conversations/public?org_id=${(publicChatHeaders as any)?.org_id}`, {
+          headers: publicChatHeaders,
+        })
       } else {
         res = await http.get(
           `/conversations?user_id=${user_data?.user_id}&chatSession=${chatSession}`,
@@ -134,6 +128,8 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           liked: false,
           disliked: false,
         })
+
+        console.log("📝 Final Message from API:", message.answer)
         appendMessage({
           id: `ANS_${message._id}`,
           sender: botName,
@@ -170,15 +166,9 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
     >
       {error && <div className="mb-2 bg-red-500 p-2 text-white">{error}</div>}
 
-      {isLoading && (
-        <div className="mb-2 bg-gray-200 p-2 text-gray-700">Loading...</div>
-      )}
+      {isLoading && <div className="mb-2 bg-gray-200 p-2 text-gray-700">Loading...</div>}
       <ChatList messages={messages} />
-      <ChatInput
-        appendMessage={appendMessage}
-        agentList={agentList}
-        initialQuery={initialQuery}
-      />
+      <ChatInput appendMessage={appendMessage} agentList={agentList} initialQuery={initialQuery} />
     </div>
   )
 }

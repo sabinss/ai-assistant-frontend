@@ -28,7 +28,23 @@ export const MessageDiv = ({ msg }: any) => {
   const [feedbackLoading, setFeedbackLoading] = useState(false)
 
   const [feedback, setFeedback] = useState(msg.liked ? "liked" : msg.disliked ? "disliked" : null)
-  console.log("****Message Div****", msg.message)
+
+  if (msg.sender !== "user") {
+    console.log("📝 Final Message (Displayed in MessageDiv):", msg.message)
+    console.log("📏 Message Length:", msg.message?.length)
+    console.log("🔍 Message Contains '2025-06-':", msg.message?.includes("2025-06-"))
+    if (msg.message?.includes("2025-06-")) {
+      const match = msg.message.match(/2025-06-[\d]*/g)
+      console.log("📅 Date Matches:", match)
+      console.log(
+        "📅 Full Date Context:",
+        msg.message.substring(
+          Math.max(0, msg.message.indexOf("2025-06-") - 50),
+          msg.message.indexOf("2025-06-") + 100
+        )
+      )
+    }
+  }
   const submitFeedback = async () => {
     setFeedbackLoading(true)
     console.log("Submit Feedback", selectedFeedback)
@@ -199,46 +215,51 @@ export const MessageDiv = ({ msg }: any) => {
             }}
           ></motion.div> */}
           <motion.div
-            className="ml-4 max-w-[90%] space-y-4 break-words rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
-            style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+            className="ml-4 max-w-[90%] space-y-4 rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            style={{ flexShrink: 0 }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <div
-              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
-              style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
-            >
-              <div className="overflow-x-auto">
-                <ReactMarkdown
-                  rehypePlugins={[rehypeRaw]}
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    table: ({ node, children, ...props }) => (
-                      <div className="my-4 w-full overflow-x-auto">
-                        <table className="w-full border-collapse border border-gray-300" {...props}>
-                          {children}
-                        </table>
-                      </div>
-                    ),
-                    thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
-                    tbody: ({ node, ...props }) => <tbody {...props} />,
-                    tr: ({ node, ...props }) => (
-                      <tr className="border-b border-gray-300 hover:bg-gray-50" {...props} />
-                    ),
-                    th: ({ node, ...props }) => (
-                      <th
-                        className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold"
-                        {...props}
-                      />
-                    ),
-                    td: ({ node, ...props }) => (
-                      <td className="border border-gray-300 px-4 py-2 text-left" {...props} />
-                    ),
-                  }}
-                >
-                  {msg.message}
-                </ReactMarkdown>
-              </div>
+            <div className="prose prose-lg prose-gray max-w-none whitespace-pre-wrap break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all">
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ node, children, ...props }) => (
+                    <div className="my-4 w-full overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-300" {...props}>
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
+                  tbody: ({ node, ...props }) => <tbody {...props} />,
+                  tr: ({ node, ...props }) => (
+                    <tr className="border-b border-gray-300 hover:bg-gray-50" {...props} />
+                  ),
+                  th: ({ node, ...props }) => (
+                    <th
+                      className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold"
+                      {...props}
+                    />
+                  ),
+                  td: ({ node, ...props }) => (
+                    <td className="border border-gray-300 px-4 py-2 text-left" {...props} />
+                  ),
+                  li: ({ node, children, ...props }) => (
+                    <li className="whitespace-normal break-words" {...props}>
+                      {children}
+                    </li>
+                  ),
+                  p: ({ node, children, ...props }) => (
+                    <p className="whitespace-normal break-words" {...props}>
+                      {children}
+                    </p>
+                  ),
+                }}
+              >
+                {msg.message}
+              </ReactMarkdown>
             </div>
           </motion.div>
           <div className="likebuttons absolute  left-2 py-1 pl-2">
@@ -298,44 +319,49 @@ export const MessageDiv = ({ msg }: any) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-            className="float-right max-w-[90%] break-words rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
-            style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+            className="float-right max-w-[90%] rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
+            style={{ flexShrink: 0 }}
           >
-            <div
-              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
-              style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
-            >
-              <div className="overflow-x-auto">
-                <ReactMarkdown
-                  rehypePlugins={[rehypeRaw]}
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    table: ({ node, children, ...props }) => (
-                      <div className="my-4 w-full overflow-x-auto">
-                        <table className="w-full border-collapse border border-gray-300" {...props}>
-                          {children}
-                        </table>
-                      </div>
-                    ),
-                    thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
-                    tbody: ({ node, ...props }) => <tbody {...props} />,
-                    tr: ({ node, ...props }) => (
-                      <tr className="border-b border-gray-300 hover:bg-gray-50" {...props} />
-                    ),
-                    th: ({ node, ...props }) => (
-                      <th
-                        className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold"
-                        {...props}
-                      />
-                    ),
-                    td: ({ node, ...props }) => (
-                      <td className="border border-gray-300 px-4 py-2 text-left" {...props} />
-                    ),
-                  }}
-                >
-                  {msg.message}
-                </ReactMarkdown>
-              </div>
+            <div className="prose prose-lg prose-gray max-w-none whitespace-pre-wrap break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all">
+              <ReactMarkdown
+                rehypePlugins={[rehypeRaw]}
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  table: ({ node, children, ...props }) => (
+                    <div className="my-4 w-full overflow-x-auto">
+                      <table className="w-full border-collapse border border-gray-300" {...props}>
+                        {children}
+                      </table>
+                    </div>
+                  ),
+                  thead: ({ node, ...props }) => <thead className="bg-gray-100" {...props} />,
+                  tbody: ({ node, ...props }) => <tbody {...props} />,
+                  tr: ({ node, ...props }) => (
+                    <tr className="border-b border-gray-300 hover:bg-gray-50" {...props} />
+                  ),
+                  th: ({ node, ...props }) => (
+                    <th
+                      className="border border-gray-300 bg-gray-100 px-4 py-2 text-left font-semibold"
+                      {...props}
+                    />
+                  ),
+                  td: ({ node, ...props }) => (
+                    <td className="border border-gray-300 px-4 py-2 text-left" {...props} />
+                  ),
+                  li: ({ node, children, ...props }) => (
+                    <li className="whitespace-normal break-words" {...props}>
+                      {children}
+                    </li>
+                  ),
+                  p: ({ node, children, ...props }) => (
+                    <p className="whitespace-normal break-words" {...props}>
+                      {children}
+                    </p>
+                  ),
+                }}
+              >
+                {msg.message}
+              </ReactMarkdown>
             </div>
           </motion.div>
         </div>

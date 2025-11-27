@@ -19,19 +19,14 @@ interface ChildProps {
   initialQuery?: string | null
 }
 
-const ChatInput: React.FC<ChildProps> = ({
-  appendMessage,
-  agentList,
-  initialQuery,
-}) => {
+const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuery }) => {
   const { botName } = useNavBarStore()
   const [agents, setAgents] = useState(agentList) // internal reorderable list
 
   const dropdownRef = useRef<any>(null)
   const [openUpwards, setOpenUpwards] = useState(false)
 
-  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } =
-    useChatConfig()
+  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } = useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { access_token, user_data, chatSession, setChatSession } = useAuth() // Call useAuth here
@@ -80,9 +75,7 @@ const ChatInput: React.FC<ChildProps> = ({
   const handleDropdownSelect = (agent: any) => {
     // Add to selectedAgents if not already selected
     setSelectedAgents((prevAgents: any) =>
-      prevAgents.some((a: any) => a.name === agent.name)
-        ? prevAgents
-        : [...prevAgents, agent]
+      prevAgents.some((a: any) => a.name === agent.name) ? prevAgents : [...prevAgents, agent]
     )
 
     // Add to visibleAgents if not already there
@@ -206,6 +199,7 @@ const ChatInput: React.FC<ChildProps> = ({
 
         const data = res?.data
 
+        console.log("📝 Final Message (Public Chat):", res?.data?.answer)
         appendMessage({
           sender: botName,
           message: res?.data?.answer,
@@ -357,6 +351,7 @@ const ChatInput: React.FC<ChildProps> = ({
         }
       }
 
+      console.log("📝 Final Message (Streaming):", fullMessage)
       // Final message update after stream completes
       appendMessage({
         sender: botName,
@@ -514,6 +509,7 @@ const ChatInput: React.FC<ChildProps> = ({
         customer_id: customerId,
       })
 
+      console.log("📝 Final Message (Public Chat Streaming):", fullMessage)
       // Final message update after stream completes
       appendMessage({
         sender: botName,
@@ -553,6 +549,7 @@ const ChatInput: React.FC<ChildProps> = ({
       setSessionId(res?.data?.session_id)
     }
 
+    console.log("📝 Final Message (Non-Streaming RAG):", res?.data?.answer)
     appendMessage({
       sender: botName,
       message: res?.data?.answer,
@@ -612,9 +609,7 @@ const ChatInput: React.FC<ChildProps> = ({
         } catch (e) {
           // Ignore if response body is not JSON
         }
-        throw new Error(
-          `HTTP error! status: ${response.status}, message: ${errorBody}`
-        )
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorBody}`)
       }
 
       // Get the response as a ReadableStream
@@ -652,10 +647,7 @@ const ChatInput: React.FC<ChildProps> = ({
                 if (data.session_id && data.session_id !== sessionId) {
                   sessionIdFromResponse = data.session_id
                   setSessionId(data.session_id)
-                  console.log(
-                    "Agent stream updated session ID:",
-                    data.session_id
-                  )
+                  console.log("Agent stream updated session ID:", data.session_id)
                 }
                 continue // Stop processing this message
               }
@@ -701,25 +693,18 @@ const ChatInput: React.FC<ChildProps> = ({
 
               // Handle raw chunks if backend sends them
               if (data.chunk) {
-                console.warn(
-                  "Received raw chunk from agent stream:",
-                  data.chunk
-                )
+                console.warn("Received raw chunk from agent stream:", data.chunk)
                 // Decide how to handle raw chunks, e.g., append to message or ignore
                 // fullMessage += data.chunk; // Example: append if it's text
               }
             } catch (e) {
-              console.error(
-                "Error parsing agent stream data:",
-                e,
-                "Raw line:",
-                line
-              )
+              console.error("Error parsing agent stream data:", e, "Raw line:", line)
             }
           }
         }
       }
 
+      console.log("📝 Final Message (Custom Agent Streaming):", fullMessage)
       // Final message update after stream completes successfully
       appendMessage({
         sender: botName,
@@ -793,10 +778,7 @@ const ChatInput: React.FC<ChildProps> = ({
   const handleInput = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        150
-      )}px`
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`
     }
   }
   // Handle initial query from URL parameters
@@ -859,9 +841,7 @@ const ChatInput: React.FC<ChildProps> = ({
     const newSession = Math.floor(Math.random() * 1000).toString()
     setSessionId(newSession)
 
-    setSelectedAgents((prevAgents: any) =>
-      prevAgents.includes(agentName) ? [] : [agentName]
-    )
+    setSelectedAgents((prevAgents: any) => (prevAgents.includes(agentName) ? [] : [agentName]))
   }
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
@@ -877,9 +857,7 @@ const ChatInput: React.FC<ChildProps> = ({
               onKeyDown={handleKeyPress}
               onInput={handleInput}
               disabled={isMessageLoading}
-              placeholder={
-                isMessageLoading ? "....." : "Type your message here..."
-              }
+              placeholder={isMessageLoading ? "....." : "Type your message here..."}
               className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
             />
           </div>
@@ -896,9 +874,7 @@ const ChatInput: React.FC<ChildProps> = ({
 
             {/* Send/Stop message button */}
             <div className="m-2 flex w-20 items-center justify-center">
-              <span className="text-sm text-[#838383]">
-                {message?.length}/4000
-              </span>
+              <span className="text-sm text-[#838383]">{message?.length}/4000</span>
               {isMessageLoading ? (
                 <button
                   type="button"
@@ -989,34 +965,27 @@ const ChatInput: React.FC<ChildProps> = ({
             onClick={handleBackgroundClick} // Close when clicking outside
           >
             <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
-              <h2 className="mb-4 text-center text-2xl font-semibold">
-                Select Prompt
-              </h2>
+              <h2 className="mb-4 text-center text-2xl font-semibold">Select Prompt</h2>
 
               {/* Columns for Categories */}
               <div className="grid grid-cols-3 gap-6">
                 {chatPrompts?.map((categoryData: any, index) => (
                   <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
-                    <h3 className="text-xl font-semibold">
-                      {categoryData.category}
-                    </h3>
+                    <h3 className="text-xl font-semibold">{categoryData.category}</h3>
                     <ul className="mt-2 space-y-2">
-                      {categoryData.prompts.map(
-                        (prompt: any, promptIndex: number) => (
-                          <React.Fragment key={promptIndex}>
-                            <li
-                              className="cursor-pointer text-gray-700 hover:text-blue-500"
-                              onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
-                            >
-                              {prompt.text}
-                            </li>
-                            {promptIndex !==
-                              categoryData.prompts.length - 1 && (
-                              <hr className="border-gray-300" />
-                            )}
-                          </React.Fragment>
-                        )
-                      )}
+                      {categoryData.prompts.map((prompt: any, promptIndex: number) => (
+                        <React.Fragment key={promptIndex}>
+                          <li
+                            className="cursor-pointer text-gray-700 hover:text-blue-500"
+                            onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
+                          >
+                            {prompt.text}
+                          </li>
+                          {promptIndex !== categoryData.prompts.length - 1 && (
+                            <hr className="border-gray-300" />
+                          )}
+                        </React.Fragment>
+                      ))}
                     </ul>
                   </div>
                 ))}
