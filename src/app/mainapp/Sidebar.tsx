@@ -22,7 +22,6 @@ import QuickLinks from "@/components/ui/quick-links"
 import { useEffect, useRef } from "react"
 
 function getNavLinks(rolePermission: any, hideList = []) {
-  console.log("rolePermission", rolePermission)
   const mainLinks = [
     {
       name: "Dashboard",
@@ -59,7 +58,7 @@ function getNavLinks(rolePermission: any, hideList = []) {
       icon: MessageSquareMore,
     },
     {
-      name: "Source",
+      name: "Upload Documents",
       path: "/mainapp/source",
       icon: FolderClockIcon,
     },
@@ -124,7 +123,7 @@ function getNavLinks(rolePermission: any, hideList = []) {
 
 function Navbar() {
   const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
-  const { user_data, rolePermission } = useAuth()
+  const { user_data, rolePermission, role } = useAuth()
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 640) {
@@ -147,8 +146,8 @@ function Navbar() {
   const navLinks = getNavLinks([
     ...rolePermission,
     // "customers",
-    "notification",
-    "dashboard",
+    ...(role != "individual" ? ["notification", "dashboard"] : []),
+    ,
   ])
 
   if (isCollapsed && divRef.current) {
@@ -184,13 +183,7 @@ function Navbar() {
           />
         ))}
 
-        <NavItem
-          key={"logout"}
-          isActive={false}
-          icon={LogOut}
-          path={"/logout"}
-          name={`Logout`}
-        />
+        <NavItem key={"logout"} isActive={false} icon={LogOut} path={"/logout"} name={`Logout`} />
 
         {/* {showSideBar && (
           <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
