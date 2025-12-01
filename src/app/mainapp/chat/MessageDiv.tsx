@@ -29,22 +29,6 @@ export const MessageDiv = ({ msg }: any) => {
 
   const [feedback, setFeedback] = useState(msg.liked ? "liked" : msg.disliked ? "disliked" : null)
 
-  if (msg.sender !== "user") {
-    console.log("📝 Final Message (Displayed in MessageDiv):", msg.message)
-    console.log("📏 Message Length:", msg.message?.length)
-    console.log("🔍 Message Contains '2025-06-':", msg.message?.includes("2025-06-"))
-    if (msg.message?.includes("2025-06-")) {
-      const match = msg.message.match(/2025-06-[\d]*/g)
-      console.log("📅 Date Matches:", match)
-      console.log(
-        "📅 Full Date Context:",
-        msg.message.substring(
-          Math.max(0, msg.message.indexOf("2025-06-") - 50),
-          msg.message.indexOf("2025-06-") + 100
-        )
-      )
-    }
-  }
   const submitFeedback = async () => {
     setFeedbackLoading(true)
     console.log("Submit Feedback", selectedFeedback)

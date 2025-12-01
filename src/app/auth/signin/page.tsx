@@ -46,7 +46,8 @@ export default function page() {
           res.data?.user_details,
           res.data?.access_token,
           res.data?.rolePermission,
-          res.data?.chatSession
+          res.data?.chatSession,
+          res.data?.role
         )
         const { email, organization, user_id, ...rest } = res.data.user_details
 
@@ -56,7 +57,6 @@ export default function page() {
         // Initialize organization setup after successful login
         try {
           await initializeOrganization(res.data?.access_token, setOrgToken)
-          console.log("Organization setup completed successfully")
         } catch (orgError) {
           console.error("Organization setup failed:", orgError)
           // Don't block the login flow if organization setup fails
@@ -68,9 +68,7 @@ export default function page() {
     } catch (error: any) {
       console.log("Error Occured ", error)
       if (error.response?.status === 401) {
-        toast.error(
-          error.response?.data?.message || "Unauthorized! Invalid credentials."
-        )
+        toast.error(error.response?.data?.message || "Unauthorized! Invalid credentials.")
       } else {
         toast.error("Something went wrong. Please try again.")
       }
@@ -99,10 +97,7 @@ export default function page() {
           {error}
         </div>
       )}
-      <form
-        className="mt-5 flex flex-col gap-3"
-        onSubmit={handleSubmit(onSubmit)}
-      >
+      <form className="mt-5 flex flex-col gap-3" onSubmit={handleSubmit(onSubmit)}>
         <div
           className={`flex rounded-lg  border-2 ${errors?.email ? "border-red-700" : "border-[#CCC]"} bg-[#E7E7E7] px-3 py-2`}
         >
@@ -113,12 +108,8 @@ export default function page() {
             placeholder="Email Address"
             {...register("email", { required: true })}
           />
-          <div
-            className={`border-l-2 ${errors?.email ? "border-red-700" : "border-[#CCC]"} pl-2`}
-          >
-            <Mail
-              className={`${errors?.email ? "text-red-700" : "text-[#9e9c9c]"}`}
-            />
+          <div className={`border-l-2 ${errors?.email ? "border-red-700" : "border-[#CCC]"} pl-2`}>
+            <Mail className={`${errors?.email ? "text-red-700" : "text-[#9e9c9c]"}`} />
           </div>
         </div>
         {errors?.email && errors?.email?.type === "required" && (
@@ -163,19 +154,13 @@ export default function page() {
           <div className="flex items-center">
             <Checkbox /> <span className="ml-2">Remember me</span>
           </div>
-          <Link
-            href="/auth/forgot-password"
-            className="text-blue-500 hover:underline"
-          >
+          <Link href="/auth/forgot-password" className="text-blue-500 hover:underline">
             Forgot Password?
           </Link>
         </div>
 
         {isSubmitting && (
-          <Button
-            type="submit"
-            className="disabled bg-[#174894] hover:bg-[#173094]"
-          >
+          <Button type="submit" className="disabled bg-[#174894] hover:bg-[#173094]">
             <svg
               aria-hidden="true"
               role="status"
@@ -206,11 +191,7 @@ export default function page() {
         <span>
           By continuing you are indicating that you have read and agree to the{" "}
           <span className="font-bold text-blue-900 hover:underline">
-            <Link
-              href="/master_agreement"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link href="/master_agreement" target="_blank" rel="noopener noreferrer">
               <b>Terms of Use</b>
             </Link>
           </span>
@@ -305,12 +286,9 @@ const EmailVerifyDialog = ({
   return (
     <div className="px-8">
       <div className="mt-4 flex flex-col items-center">
-        <h1 className="mt-2 text-center text-2xl font-semibold">
-          Email Confirmation Required
-        </h1>
+        <h1 className="mt-2 text-center text-2xl font-semibold">Email Confirmation Required</h1>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Please verify your email to continue. A verification code has been
-          sent to {userEmail}
+          Please verify your email to continue. A verification code has been sent to {userEmail}
         </p>
         <input
           className="mt-4 rounded-lg border-2 border-[#CCC] bg-[#E7E7E7] px-3 py-2 text-sm outline-none"
@@ -319,10 +297,7 @@ const EmailVerifyDialog = ({
           value={verificationCode}
           onChange={handleCodeChange}
         />
-        <Button
-          onClick={handleVerify}
-          className="mt-4 bg-[#174894] hover:bg-[#173094]"
-        >
+        <Button onClick={handleVerify} className="mt-4 bg-[#174894] hover:bg-[#173094]">
           Verify
         </Button>
         {isValidCode && (
@@ -330,11 +305,7 @@ const EmailVerifyDialog = ({
             <p className="text-green-600">Code verified successfully!</p>
           </div>
         )}
-        <Button
-          onClick={() => setShowEmailVerifyDialog(false)}
-          variant="outline"
-          className="mt-2"
-        >
+        <Button onClick={() => setShowEmailVerifyDialog(false)} variant="outline" className="mt-2">
           Back to Login
         </Button>
       </div>
