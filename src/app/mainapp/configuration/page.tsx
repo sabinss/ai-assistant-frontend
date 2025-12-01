@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Textarea } from "@/components/ui/textarea"
 import useChatConfig from "@/store/useChatSetting"
 import useOrgCustomer from "@/store/organization_customer"
@@ -11,14 +11,7 @@ import "react-toastify/dist/ReactToastify.css"
 import { TaskAgentTable } from "./TaskAgentTable"
 import { AgentTable } from "./AgentTable"
 import { SampleQuerySetup } from "./SampleQuerySetup"
-const TABS = [
-  { key: "support_workflow", label: "Support Workflow" },
-  { key: "customer_insights", label: "Customer Insights" },
-  { key: "email_rply", label: "Email Reply" },
-  { key: "task_agent", label: "Task Agent" },
-  { key: "agent", label: "Agent" },
-  { key: "sample_query", label: "Sample Query" },
-]
+import { getTabsForRole, getDefaultTabForRole } from "./tabs.config"
 
 export const Configuration = () => {
   const [selectedModel, setSelectedModel] = useState("")
@@ -27,9 +20,14 @@ export const Configuration = () => {
   const { workflowFlag, mockData } = useChatConfig()
   const [apiKey, setApiKey] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const { access_token } = useAuth()
+  const { access_token, role } = useAuth()
   const [temperature, setTemperature] = useState(0)
-  const [activeTab, setActiveTab] = useState("support_workflow")
+
+  // Get available tabs based on user role
+  const availableTabs = useMemo(() => getTabsForRole(role), [role])
+
+  // Set default active tab based on role
+  const [activeTab, setActiveTab] = useState(() => getDefaultTabForRole(role))
   const [organization_id, setOrganizationId] = useState(null)
   const [orgTaskAgents, setOrgTaskAgents] = useState<any>([])
   const [additionalPrompt, setAdditionalPrompt] = useState<any>({
@@ -71,8 +69,7 @@ export const Configuration = () => {
           nltosql_prompt: orgData?.nltosql_prompt,
           schema_prompt: orgData?.schema_prompt,
           abstract_refinement_prompt: orgData?.abstract_refinement_prompt,
-          outreach_email_generation_prompt:
-            orgData.outreach_email_generation_prompt,
+          outreach_email_generation_prompt: orgData.outreach_email_generation_prompt,
           outreach_customer_list_generation_prompt:
             orgData.outreach_customer_list_generation_prompt,
         })
@@ -100,12 +97,9 @@ export const Configuration = () => {
   const fetchOrganizationTaskAgents = async (organization_id: string) => {
     try {
       setIsLoading(true)
-      const res = await http.get(
-        `/organization/${organization_id}/task_agent`,
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      )
+      const res = await http.get(`/organization/${organization_id}/task_agent`, {
+        headers: { Authorization: `Bearer ${access_token}` },
+      })
       setOrgTaskAgents(res?.data?.taskAgents)
       setIsLoading(false)
     } catch (err) {
@@ -189,19 +183,13 @@ export const Configuration = () => {
           }
         )
         setOrgTaskAgents((prev: any) =>
-          prev.map((agent: any) =>
-            agent._id === data._id ? { ...agent, ...res.data } : agent
-          )
+          prev.map((agent: any) => (agent._id === data._id ? { ...agent, ...res.data } : agent))
         )
         toasMsg = "Task Agent updated successfully"
       } else {
-        const res = await http.post(
-          `/organization/${organization_id}/task_agent`,
-          data,
-          {
-            headers: { Authorization: `Bearer ${access_token}` },
-          }
-        )
+        const res = await http.post(`/organization/${organization_id}/task_agent`, data, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
         // Add the new task agent to the orgTaskAgents list
         setOrgTaskAgents((prev: any) => [res.data, ...prev])
         toasMsg = "Task Agent created successfully"
@@ -214,10 +202,18 @@ export const Configuration = () => {
     }
   }
 
+  // Update active tab if current tab is not available for the role
+  useEffect(() => {
+    const isCurrentTabAvailable = availableTabs.some((tab) => tab.key === activeTab)
+    if (!isCurrentTabAvailable && availableTabs.length > 0) {
+      setActiveTab(availableTabs[0].key)
+    }
+  }, [availableTabs, activeTab])
+
   return (
     <div className="mb-10">
       <div className="flex">
-        {TABS.map((tab) => {
+        {availableTabs.map((tab) => {
           return (
             <button
               onClick={() => setActiveTab(tab.key)}
@@ -287,9 +283,7 @@ export const Configuration = () => {
                   rows={10}
                   placeholder="Type your prompt here..."
                   value={additionalPrompt.internal_solution_prompt}
-                  onChange={handleChangeAdditionalPrompt(
-                    "internal_solution_prompt"
-                  )}
+                  onChange={handleChangeAdditionalPrompt("internal_solution_prompt")}
                 />
               </li>
             </ul>
@@ -323,9 +317,7 @@ export const Configuration = () => {
                   rows={10}
                   placeholder="Type your prompt here..."
                   value={additionalPrompt.abstract_refinement_prompt}
-                  onChange={handleChangeAdditionalPrompt(
-                    "abstract_refinement_prompt"
-                  )}
+                  onChange={handleChangeAdditionalPrompt("abstract_refinement_prompt")}
                 />
               </li>
               <li className="prompt mt-4">
@@ -349,8 +341,7 @@ export const Configuration = () => {
                       : "bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600"
                   }`}
                 >
-                  {isLoading ? "Updating..." : "Update"}{" "}
-                  {/* ADD LOADING TEXT */}
+                  {isLoading ? "Updating..." : "Update"} {/* ADD LOADING TEXT */}
                 </button>
               </div>
             </ul>
@@ -382,10 +373,7 @@ export const Configuration = () => {
           </>
         )}
         {activeTab === "task_agent" && !isLoading && (
-          <TaskAgentTable
-            orgTaskAgents={orgTaskAgents}
-            handleTaskAgent={saveOrUpdateTaskAgent}
-          />
+          <TaskAgentTable orgTaskAgents={orgTaskAgents} handleTaskAgent={saveOrUpdateTaskAgent} />
         )}
         {activeTab === "agent" && <AgentTable />}
         {activeTab === "sample_query" && <SampleQuerySetup />}
