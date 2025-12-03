@@ -63,7 +63,7 @@ function getNavLinks(rolePermission: any, hideList = []) {
       icon: FolderClockIcon,
     },
     {
-      name: "User Management",
+      name: "Users",
       path: "/mainapp/users",
       icon: Users,
     },
@@ -73,7 +73,7 @@ function getNavLinks(rolePermission: any, hideList = []) {
       icon: Settings,
     },
     {
-      name: "Configuration",
+      name: "Agent Config",
       path: "/mainapp/configuration",
       icon: Cog,
     },

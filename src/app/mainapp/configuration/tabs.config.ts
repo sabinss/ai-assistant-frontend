@@ -34,7 +34,7 @@ export const ALL_TABS: TabConfig[] = [
 /**
  * Tabs available for individual users
  */
-export const INDIVIDUAL_USER_TABS: TabKey[] = ["sample_query", "agent"]
+export const INDIVIDUAL_USER_TABS: TabKey[] = ["agent", "sample_query"]
 
 /**
  * Get available tabs based on user role
