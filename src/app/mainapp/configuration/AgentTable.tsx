@@ -73,10 +73,7 @@ export const AgentTable = () => {
   const addInstruction = () => {
     setFormData((prev: any) => ({
       ...prev,
-      tasks: [
-        ...(prev.tasks || []),
-        { _id: Date.now(), tasks: "", tools: "", name: "" },
-      ],
+      tasks: [...(prev.tasks || []), { _id: Date.now(), instruction: "", tools: "", name: "" }],
     }))
   }
   const getDayTimeOptions = () => {
@@ -143,9 +140,7 @@ export const AgentTable = () => {
   const updateInstruction = (id: number, field: any, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
-      tasks: prev.tasks.map((item) =>
-        item._id === id ? { ...item, [field]: value } : item
-      ),
+      tasks: prev.tasks.map((item) => (item._id === id ? { ...item, [field]: value } : item)),
     }))
   }
 
@@ -226,9 +221,7 @@ export const AgentTable = () => {
         })
         // Update the agent list without re-fetching from API
         setAgentList((prevList: any) =>
-          prevList.map((agent: any) =>
-            agent._id === data._id ? { ...agent, ...data } : agent
-          )
+          prevList.map((agent: any) => (agent._id === data._id ? { ...agent, ...data } : agent))
         )
         setAgentLoading(false)
         setIsEditing(false)
@@ -297,22 +290,15 @@ export const AgentTable = () => {
           <DialogHeader>
             <DialogTitle>Confirm Agent Start</DialogTitle>
             <DialogDescription>
-              Are you sure you want to start the agent "{selectedAgent?.name}"?
-              This action will initiate the agent process.
+              Are you sure you want to start the agent "{selectedAgent?.name}"? This action will
+              initiate the agent process.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              onClick={cancelStartAgent}
-              variant="outline"
-              className="mr-2"
-            >
+            <Button onClick={cancelStartAgent} variant="outline" className="mr-2">
               Cancel
             </Button>
-            <Button
-              onClick={confirmStartAgent}
-              className="bg-green-600 hover:bg-green-700"
-            >
+            <Button onClick={confirmStartAgent} className="bg-green-600 hover:bg-green-700">
               Start Agent
             </Button>
           </DialogFooter>
@@ -320,9 +306,7 @@ export const AgentTable = () => {
       </Dialog>
       {isEditing ? (
         <div className="rounded-lg bg-gray-100 p-4">
-          <h2 className="text-lg font-semibold">
-            {!isAddNew ? "Edit Agent" : "Add New Agent"}
-          </h2>
+          <h2 className="text-lg font-semibold">{!isAddNew ? "Edit Agent" : "Add New Agent"}</h2>
           <div className="flex flex-col gap-4">
             <div>
               {" "}
@@ -331,9 +315,7 @@ export const AgentTable = () => {
                 type="text"
                 placeholder="Name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full rounded border p-2"
               />
             </div>
@@ -343,22 +325,12 @@ export const AgentTable = () => {
               <label className="block font-medium">Active</label>{" "}
               <select
                 id="active"
-                value={
-                  formData.active === true
-                    ? "true"
-                    : formData.active === false
-                      ? "false"
-                      : ""
-                }
+                value={formData.active === true ? "true" : formData.active === false ? "false" : ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
                     active:
-                      e.target.value === "true"
-                        ? true
-                        : e.target.value === "false"
-                          ? false
-                          : null,
+                      e.target.value === "true" ? true : e.target.value === "false" ? false : null,
                   }))
                 }
                 className="w-full rounded border p-2"
@@ -400,10 +372,7 @@ export const AgentTable = () => {
             {formData.isAgent && (
               <>
                 <div>
-                  <label
-                    htmlFor="frequency"
-                    className="mb-1 block text-sm font-semibold"
-                  >
+                  <label htmlFor="frequency" className="mb-1 block text-sm font-semibold">
                     Frequency
                   </label>
                   <select
@@ -427,10 +396,7 @@ export const AgentTable = () => {
                 {formData.frequency && (
                   <div className="space-y-3">
                     <div>
-                      <label
-                        htmlFor="dayTime"
-                        className="mb-1 block text-sm font-semibold"
-                      >
+                      <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
                         {formData.frequency === "Daily"
                           ? "Day of Week"
                           : formData.frequency === "Weekly"
@@ -462,10 +428,7 @@ export const AgentTable = () => {
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="scheduleTime"
-                        className="mb-1 block text-sm font-semibold"
-                      >
+                      <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
                         Time
                       </label>
                       <input
@@ -483,10 +446,7 @@ export const AgentTable = () => {
                     </div>
 
                     <div>
-                      <label
-                        htmlFor="timezone"
-                        className="mb-1 block text-sm font-semibold"
-                      >
+                      <label htmlFor="timezone" className="mb-1 block text-sm font-semibold">
                         Timezone
                       </label>
                       <select
@@ -529,13 +489,11 @@ export const AgentTable = () => {
                 type="text"
                 placeholder="Name"
                 value={formData.tools_used}
-                onChange={(e) =>
-                  setFormData({ ...formData, tools_used: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, tools_used: e.target.value })}
                 className="w-full rounded border p-2"
               />
             </div>
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label className="block font-medium">Routing Instruction</label>
               <textarea
                 className="h-20 w-full rounded border p-2"
@@ -547,8 +505,8 @@ export const AgentTable = () => {
                   })
                 }}
               />
-            </div>
-            <div className="mb-4">
+            </div> */}
+            {/* <div className="mb-4">
               <label className="block font-medium">Routing Examples</label>
               <textarea
                 className="h-20 w-full rounded border p-2"
@@ -560,7 +518,7 @@ export const AgentTable = () => {
                   })
                 }}
               />
-            </div>
+            </div> */}
 
             <div className="mb-4">
               <div className="space-y-3">
@@ -602,9 +560,7 @@ export const AgentTable = () => {
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Scope
-                      </label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Scope</label>
                       <textarea
                         className="h-20 w-full rounded border p-2"
                         placeholder="Enter batch process scope..."
@@ -651,57 +607,35 @@ export const AgentTable = () => {
             {formData?.tasks && formData?.tasks.length > 0 && (
               <div className="mt-4 space-y-4">
                 {formData.tasks.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-2 rounded-lg border p-4 shadow"
-                  >
-                    <label
-                      htmlFor={`name-${item._id}`}
-                      className="font-semibold"
-                    >
+                  <div key={item.id} className="flex flex-col gap-2 rounded-lg border p-4 shadow">
+                    <label htmlFor={`name-${item._id}`} className="font-semibold">
                       Task Name
                     </label>
                     <input
                       type="text"
                       placeholder="Name"
                       value={item.name}
-                      onChange={(e) =>
-                        updateInstruction(item._id, "name", e.target.value)
-                      }
+                      onChange={(e) => updateInstruction(item._id, "name", e.target.value)}
                       className="w-full rounded border p-2"
                     />
-                    <label
-                      htmlFor={`tools-${item._id}`}
-                      className="font-semibold"
-                    >
+                    <label htmlFor={`tools-${item._id}`} className="font-semibold">
                       Tools
                     </label>
                     <input
                       type="text"
                       placeholder="Tools"
                       value={item.tools}
-                      onChange={(e) =>
-                        updateInstruction(item._id, "tools", e.target.value)
-                      }
+                      onChange={(e) => updateInstruction(item._id, "tools", e.target.value)}
                       className="w-full rounded border p-2"
                     />
-                    <label
-                      htmlFor={`instruction-${item._id}`}
-                      className="font-semibold"
-                    >
+                    <label htmlFor={`instruction-${item._id}`} className="font-semibold">
                       Instruction
                     </label>
                     <textarea
                       className="h-80 w-full rounded border p-2"
                       placeholder="Instruction"
                       value={item.instruction}
-                      onChange={(e) =>
-                        updateInstruction(
-                          item._id,
-                          "instruction",
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => updateInstruction(item._id, "instruction", e.target.value)}
                     />
                     <div className="w-400[x]">
                       {" "}
@@ -725,9 +659,7 @@ export const AgentTable = () => {
               >
                 <FaRegSave className="inline" />
                 Save
-                {isAgentLoading && (
-                  <ImSpinner2 className="ml-2 h-5 w-5 animate-spin text-white" />
-                )}
+                {isAgentLoading && <ImSpinner2 className="ml-2 h-5 w-5 animate-spin text-white" />}
               </button>
               <button
                 onClick={handleCancel}
@@ -794,10 +726,7 @@ export const AgentTable = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={tableHeader.length}
-                    className="py-3 text-center"
-                  >
+                  <TableCell colSpan={tableHeader.length} className="py-3 text-center">
                     No Agent list found
                   </TableCell>
                 </TableRow>
