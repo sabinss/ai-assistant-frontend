@@ -35,7 +35,8 @@ const tableHeader = [
 export const AgentTable = () => {
   const [agentList, setAgentList] = useState<any>([])
   const [isEditing, setIsEditing] = useState(false)
-  const { access_token } = useAuth() // Call useAuth here
+  const { access_token, role } = useAuth() // Call useAuth here
+  const isIndividual = role === "individual"
   const [isAgent, setIsAgent] = useState(false)
   const [frequency, setFrequency] = useState("")
   const [dayTime, setDayTime] = useState("")
@@ -672,17 +673,19 @@ export const AgentTable = () => {
         </div>
       ) : (
         <>
-          <div className="flex justify-end p-3">
-            <button
-              onClick={handleAddNew}
-              className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md hover:from-blue-800 hover:to-blue-600"
-            >
-              <div className="flex items-center">
-                <FaPlusCircle />
-                <span className="pl-3"> Add New</span>
-              </div>
-            </button>
-          </div>
+          {!isIndividual && (
+            <div className="flex justify-end p-3">
+              <button
+                onClick={handleAddNew}
+                className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md hover:from-blue-800 hover:to-blue-600"
+              >
+                <div className="flex items-center">
+                  <FaPlusCircle />
+                  <span className="pl-3"> Add New</span>
+                </div>
+              </button>
+            </div>
+          )}
           <Table className="mt-2">
             <TableHeader>
               <TableRow className="bg-[#174894]">
@@ -714,12 +717,16 @@ export const AgentTable = () => {
                             Start
                           </button>
                         )}
-                        <button onClick={() => handleEdit(agent)}>
-                          <FaEdit size={20} />
-                        </button>
-                        <button onClick={() => handleDelete(agent)}>
-                          <MdDelete size={20} />
-                        </button>
+                        {!isIndividual && (
+                          <>
+                            <button onClick={() => handleEdit(agent)}>
+                              <FaEdit size={20} />
+                            </button>
+                            <button onClick={() => handleDelete(agent)}>
+                              <MdDelete size={20} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
