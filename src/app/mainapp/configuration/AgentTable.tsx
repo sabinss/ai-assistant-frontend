@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { ToolsMultiSelect } from "@/components/ui/tools-multi-select"
 const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Objective", sortable: false },
@@ -56,7 +57,7 @@ export const AgentTable = () => {
     greeting: "",
     routing_examples: true,
     objective: "",
-    tools_used: "",
+    tools_used: [] as string[], // Array to store selected tools
     primary_instruction: "",
     frequency: null,
     dayTime: null,
@@ -151,6 +152,7 @@ export const AgentTable = () => {
       id: null,
       name: "",
       objective: "",
+      tools_used: [],
       dayTime,
       frequency,
       scheduleTime: null,
@@ -162,9 +164,21 @@ export const AgentTable = () => {
 
   const handleEdit = (agent: any) => {
     setAddNew(false)
+    // Handle tools_used - convert from string to array if needed for backwards compatibility
+    let toolsUsed: string[] = []
+    if (Array.isArray(agent.tools_used)) {
+      toolsUsed = agent.tools_used
+    } else if (typeof agent.tools_used === "string" && agent.tools_used) {
+      toolsUsed = agent.tools_used
+        .split(",")
+        .map((t: string) => t.trim())
+        .filter(Boolean)
+    }
+
     setFormData({
       ...agent,
       active: agent.active,
+      tools_used: toolsUsed,
       scheduleTime: agent.schedule_time || agent.scheduleTime || null,
       timezone: agent.time_zone || agent.timezone || "EST", // Default to EST if not set
     })
@@ -202,9 +216,15 @@ export const AgentTable = () => {
     setAgentLoading(true)
     let data = { ...formData }
 
+    // Convert tools_used array to comma-separated string for API
+    const toolsUsedString = Array.isArray(data.tools_used)
+      ? data.tools_used.join(",")
+      : data.tools_used || ""
+
     // Ensure timezone and scheduleTime are included in payload
     console.log("Saving agent with data:", {
       ...data,
+      tools_used: toolsUsedString,
       time_zone: data.timezone || "EST",
       schedule_time: data.scheduleTime || null,
     })
@@ -214,6 +234,7 @@ export const AgentTable = () => {
         // Ensure timezone and scheduleTime are explicitly included
         const updateData = {
           ...data,
+          tools_used: toolsUsedString,
           time_zone: data.timezone || "EST",
           schedule_time: data.scheduleTime || null,
         }
@@ -222,7 +243,9 @@ export const AgentTable = () => {
         })
         // Update the agent list without re-fetching from API
         setAgentList((prevList: any) =>
-          prevList.map((agent: any) => (agent._id === data._id ? { ...agent, ...data } : agent))
+          prevList.map((agent: any) =>
+            agent._id === data._id ? { ...agent, ...data, tools_used: toolsUsedString } : agent
+          )
         )
         setAgentLoading(false)
         setIsEditing(false)
@@ -232,6 +255,7 @@ export const AgentTable = () => {
         // Ensure timezone and scheduleTime are explicitly included for new agents
         const createData = {
           ...data,
+          tools_used: toolsUsedString,
           time_zone: data.timezone || "EST",
           schedule_time: data.scheduleTime || null,
         }
@@ -484,14 +508,20 @@ export const AgentTable = () => {
               />
             </div>
             <div>
-              {" "}
-              <label className="block font-medium">Tools Used</label>{" "}
-              <input
-                type="text"
-                placeholder="Name"
-                value={formData.tools_used}
-                onChange={(e) => setFormData({ ...formData, tools_used: e.target.value })}
-                className="w-full rounded border p-2"
+              <label className="block font-medium">Tools Used</label>
+              <ToolsMultiSelect
+                selectedTools={
+                  Array.isArray(formData.tools_used)
+                    ? formData.tools_used
+                    : typeof formData.tools_used === "string" && formData.tools_used
+                      ? formData.tools_used
+                          .split(",")
+                          .map((t: string) => t.trim())
+                          .filter(Boolean)
+                      : []
+                }
+                onChange={(tools) => setFormData({ ...formData, tools_used: tools })}
+                placeholder="Select tools..."
               />
             </div>
             {/* <div className="mb-4">
