@@ -165,14 +165,17 @@ export const AgentTable = () => {
   const handleEdit = (agent: any) => {
     setAddNew(false)
     // Handle tools_used - convert from string to array if needed for backwards compatibility
+    // If tools_used is not found (undefined/null) or is "NA", default to empty array
     let toolsUsed: string[] = []
-    if (Array.isArray(agent.tools_used)) {
-      toolsUsed = agent.tools_used
-    } else if (typeof agent.tools_used === "string" && agent.tools_used) {
-      toolsUsed = agent.tools_used
-        .split(",")
-        .map((t: string) => t.trim())
-        .filter(Boolean)
+    if (agent.tools_used != null && agent.tools_used !== "NA") {
+      if (Array.isArray(agent.tools_used)) {
+        toolsUsed = agent.tools_used.filter((t: string) => t !== "NA")
+      } else if (typeof agent.tools_used === "string" && agent.tools_used) {
+        toolsUsed = agent.tools_used
+          .split(",")
+          .map((t: string) => t.trim())
+          .filter((t: string) => t && t !== "NA")
+      }
     }
 
     setFormData({
