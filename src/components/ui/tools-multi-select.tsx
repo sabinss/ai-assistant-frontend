@@ -98,6 +98,10 @@ export const AVAILABLE_TOOLS: Tool[] = [
     description:
       "Send an email via the CRM Conversations API to a contact using the contact ID, with custom subject and HTML body content.",
   },
+  {
+    name: "search_documents",
+    description: "Search relevant docs in the RAG API knowledge base.",
+  },
 ]
 
 interface ToolsMultiSelectProps {

@@ -34,40 +34,23 @@ export default function Dashboard() {
   const { botName } = useNavBarStore()
   const router = useRouter()
 
-  const fetchUsageFunnelData = useChurnDashboardStore(
-    (s) => s.fetchUsageFunnelData
-  )
+  const fetchUsageFunnelData = useChurnDashboardStore((s) => s.fetchUsageFunnelData)
 
-  const usageFunnelDataLoading = useChurnDashboardStore(
-    (s) => s.usageFunnelDataLoading
-  )
+  const usageFunnelDataLoading = useChurnDashboardStore((s) => s.usageFunnelDataLoading)
   const usageFunnelData = useChurnDashboardStore((s) => s.usageFunnelData?.data)
-  const usageFunnelPagination = useChurnDashboardStore(
-    (s) => s.usageFunnelData?.pagination
-  )
-  const usageFunnelTableColumns = useChurnDashboardStore(
-    (s) => s.usageFunnelTableColumns
-  )
-  const fetchCustomerAlertData = useChurnDashboardStore(
-    (s) => s.fetchCustomerAlertData
-  )
-  const customerAlertData = useChurnDashboardStore(
-    (s) => s.customerAlertData?.data
-  )
-  const customerAlertDataLoading = useChurnDashboardStore(
-    (s) => s.customerAlertDataLoading
-  )
-  const fetchCustomerStageList = useChurnDashboardStore(
-    (s) => s.fetchCustomerStageList
-  )
+  const usageFunnelPagination = useChurnDashboardStore((s) => s.usageFunnelData?.pagination)
+  const usageFunnelTableColumns = useChurnDashboardStore((s) => s.usageFunnelTableColumns)
+  const fetchCustomerAlertData = useChurnDashboardStore((s) => s.fetchCustomerAlertData)
+  const customerAlertData = useChurnDashboardStore((s) => s.customerAlertData?.data)
+  const customerAlertDataLoading = useChurnDashboardStore((s) => s.customerAlertDataLoading)
+  const fetchCustomerStageList = useChurnDashboardStore((s) => s.fetchCustomerStageList)
   const customerStageList = useChurnDashboardStore((s) => s.customerStageList)
-  const customerStageListLoading = useChurnDashboardStore(
-    (s) => s.customerStageListLoading
-  )
+  const customerStageListLoading = useChurnDashboardStore((s) => s.customerStageListLoading)
+  const fetchStageDropdownList = useChurnDashboardStore((s) => s.fetchStageDropdownList)
+  const stageDropdownList = useChurnDashboardStore((s) => s.stageDropdownList)
+  const stageDropdownListLoading = useChurnDashboardStore((s) => s.stageDropdownListLoading)
 
-  const fetchCustomerScoreData = useChurnDashboardStore(
-    (s) => s.fetchCustomerScoreData
-  )
+  const fetchCustomerScoreData = useChurnDashboardStore((s) => s.fetchCustomerScoreData)
   const customerScoreData = useChurnDashboardStore((s) => s.customerScoreData)
   // pagination
   const [page, setPage] = useState(1)
@@ -164,19 +147,7 @@ export default function Dashboard() {
     return filtered
   }, [customerAlertData, searchTerm, addressedFilter])
 
-  // Get unique stages for filter dropdown - fix TypeScript Set iteration
-  const uniqueStages = useMemo(() => {
-    if (!usageFunnelData) return []
-    const stages = Array.from(
-      new Set(usageFunnelData.map((item: any) => item.stage))
-    )
-    return stages.filter(Boolean) as string[]
-  }, [usageFunnelData])
-
-  const getScoreColorClass = (
-    score: number,
-    type: "health" | "risk"
-  ): string => {
+  const getScoreColorClass = (score: number, type: "health" | "risk"): string => {
     const riskLevels = [
       { min: 0, max: 20, className: "bg-red-600" },
       { min: 21, max: 40, className: "bg-orange-500" },
@@ -255,6 +226,13 @@ export default function Dashboard() {
     }
   }, [access_token])
 
+  // Fetch stage dropdown list for usage funnel
+  useEffect(() => {
+    if (access_token && stageDropdownList.length === 0) {
+      fetchStageDropdownList(access_token)
+    }
+  }, [access_token])
+
   // Fetch usage funnel data with API pagination
   useEffect(() => {
     if (activeTab === "usage_funnel" && access_token) {
@@ -264,21 +242,9 @@ export default function Dashboard() {
         search: debouncedSearchTerm,
         stage: selectedStage,
       })
-      fetchUsageFunnelData(
-        access_token,
-        usageFunnelPage,
-        limit,
-        debouncedSearchTerm,
-        selectedStage
-      )
+      fetchUsageFunnelData(access_token, usageFunnelPage, limit, debouncedSearchTerm, selectedStage)
     }
-  }, [
-    user_data?.organization,
-    activeTab,
-    usageFunnelPage,
-    debouncedSearchTerm,
-    selectedStage,
-  ])
+  }, [user_data?.organization, activeTab, usageFunnelPage, debouncedSearchTerm, selectedStage])
 
   useEffect(() => {
     async function getOrgCustomers() {
@@ -288,10 +254,7 @@ export default function Dashboard() {
         setLoading(true)
 
         // Now only fetch from redshift as it contains all customer data
-        const stageParam =
-          selectedCustomerStage !== "all"
-            ? `&stage=${selectedCustomerStage}`
-            : ""
+        const stageParam = selectedCustomerStage !== "all" ? `&stage=${selectedCustomerStage}` : ""
         const redshiftRes = await http.get(
           `/customer/redshift?page=${page}&limit=${limit}&search=${debouncedSearchTerm ?? ""}${stageParam}`,
           {
@@ -303,14 +266,8 @@ export default function Dashboard() {
         // const scoreDashboardData = redshiftRes?.data?.scoreDashboardData || []
         // setScoreDashboardData(scoreDashboardData)
         console.log("redshiftCustomerDetails", redshiftCustomerDetails)
-        const {
-          totalPages,
-          totalRecords,
-          hasNextPage,
-          hasPrevPage,
-          nextPage,
-          prevPage,
-        } = redshiftRes?.data?.pagination
+        const { totalPages, totalRecords, hasNextPage, hasPrevPage, nextPage, prevPage } =
+          redshiftRes?.data?.pagination
 
         setPagination({
           totalPages,
@@ -322,12 +279,10 @@ export default function Dashboard() {
         })
 
         // Add _id field to each customer object for compatibility
-        const customersWithId = redshiftCustomerDetails.map(
-          (customer: any) => ({
-            ...customer,
-            _id: customer.company_id,
-          })
-        )
+        const customersWithId = redshiftCustomerDetails.map((customer: any) => ({
+          ...customer,
+          _id: customer.company_id,
+        }))
 
         // Use redshift data directly as the customer data source
         const orgCustomerData = {
@@ -343,13 +298,7 @@ export default function Dashboard() {
     }
 
     getOrgCustomers()
-  }, [
-    user_data?.organization,
-    access_token,
-    page,
-    debouncedSearchTerm,
-    selectedCustomerStage,
-  ])
+  }, [user_data?.organization, access_token, page, debouncedSearchTerm, selectedCustomerStage])
 
   useEffect(() => {
     let scoreDashboardData = { ...customerScoreData }
@@ -395,10 +344,7 @@ export default function Dashboard() {
     })
   }
 
-  const handleAlertAddressToggle = async (
-    alertId: string,
-    currentAddressed: boolean
-  ) => {
+  const handleAlertAddressToggle = async (alertId: string, currentAddressed: boolean) => {
     if (!access_token) return
 
     setUpdatingAlert(alertId)
@@ -414,9 +360,7 @@ export default function Dashboard() {
       if (response.status === 200) {
         // Update the local state to reflect the change
         const updatedAlertData = customerAlertData?.map((alert: any) =>
-          alert.alert_id === alertId
-            ? { ...alert, addressed: !currentAddressed }
-            : alert
+          alert.alert_id === alertId ? { ...alert, addressed: !currentAddressed } : alert
         )
 
         // Update the store with the new data
@@ -557,8 +501,7 @@ export default function Dashboard() {
             onClick={async () => {
               if (stat.id === "atRisk") {
                 try {
-                  const customerScoreData =
-                    useChurnDashboardStore.getState().customerScoreData
+                  const customerScoreData = useChurnDashboardStore.getState().customerScoreData
                   if (!customerScoreData) {
                     await useChurnDashboardStore
                       .getState()
@@ -593,25 +536,17 @@ export default function Dashboard() {
                       : stat.value} */}
                   </div>
                   {/* <div>{stat.arrValue}</div> */}
-                  <div>
-                    {formatCurrency(
-                      stat?.arrValue ? parseFloat(stat.arrValue) : 0
-                    )}
-                  </div>
+                  <div>{formatCurrency(stat?.arrValue ? parseFloat(stat.arrValue) : 0)}</div>
                 </div>
               </div>
             ) : (
               <div>
                 <div className="text-sm text-gray-500">{stat.title}</div>
                 <div className="m-2 text-2xl font-bold">
-                  {stat.id === "atRisk" && churnLoading
-                    ? "Loading..."
-                    : stat.value}
+                  {stat.id === "atRisk" && churnLoading ? "Loading..." : stat.value}
                 </div>
 
-                <div className="mt-1 text-xs text-gray-400">
-                  {stat.subtitle}
-                </div>
+                <div className="mt-1 text-xs text-gray-400">{stat.subtitle}</div>
               </div>
             )}
           </div>
@@ -738,39 +673,24 @@ export default function Dashboard() {
                             className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
                           >
                             <td className="px-6 py-4">{item?.company_name}</td>
-                            <td className="px-4 py-4">
-                              {item?.alert ?? "N/A"}
-                            </td>
-                            <td className="px-6 py-4">
-                              {item?.week_date ?? "N/A"}
-                            </td>
-                            <td className="px-6 py-4">
-                              {item?.owner_id ?? "N/A"}
-                            </td>
-                            <td className="px-6 py-4">
-                              {item?.source ?? "N/A"}
-                            </td>
+                            <td className="px-4 py-4">{item?.alert ?? "N/A"}</td>
+                            <td className="px-6 py-4">{item?.week_date ?? "N/A"}</td>
+                            <td className="px-6 py-4">{item?.owner_id ?? "N/A"}</td>
+                            <td className="px-6 py-4">{item?.source ?? "N/A"}</td>
                             <td className="px-6 py-4">
                               <input
                                 type="checkbox"
                                 checked={item?.addressed}
                                 onChange={() =>
-                                  handleAlertAddressToggle(
-                                    item?.alert_id,
-                                    item?.addressed
-                                  )
+                                  handleAlertAddressToggle(item?.alert_id, item?.addressed)
                                 }
                                 disabled={updatingAlert === item?.alert_id}
                                 className={`h-4 w-4 cursor-pointer ${
-                                  updatingAlert === item?.alert_id
-                                    ? "opacity-50"
-                                    : ""
+                                  updatingAlert === item?.alert_id ? "opacity-50" : ""
                                 }`}
                               />
                               {updatingAlert === item?.alert_id && (
-                                <span className="ml-2 text-xs text-gray-500">
-                                  Updating...
-                                </span>
+                                <span className="ml-2 text-xs text-gray-500">Updating...</span>
                               )}
                             </td>
                           </tr>
@@ -787,9 +707,7 @@ export default function Dashboard() {
             <>
               {/* Customer Overview Table */}
               <div className="rounded-xl border bg-white p-4 shadow-sm">
-                <div className="mb-4 text-lg font-semibold">
-                  Customer Overview
-                </div>
+                <div className="mb-4 text-lg font-semibold">Customer Overview</div>
 
                 <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
                   <input
@@ -875,86 +793,72 @@ export default function Dashboard() {
                           </td>
                         </tr>
                       ) : (
-                        filteredCustomers.map(
-                          (customer: any, index: number) => {
-                            const healthScore = customer?.health_score
-                            const riskScore = customer?.churn_risk_score
-                            const oppScore = customer?.expansion_opp_score
+                        filteredCustomers.map((customer: any, index: number) => {
+                          const healthScore = customer?.health_score
+                          const riskScore = customer?.churn_risk_score
+                          const oppScore = customer?.expansion_opp_score
 
-                            const healthColorClass = getScoreColorClass(
-                              healthScore ?? 0,
-                              "health"
-                            )
-                            const oppColor = getScoreColorClass(
-                              oppScore ?? 0,
-                              "health"
-                            )
-                            return (
-                              <tr
-                                key={customer.id || index}
-                                className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
-                              >
-                                <td className="px-6 py-4">{customer.name}</td>
-                                <td className="px-6 py-4">
-                                  {healthScore ? (
-                                    <Chip
-                                      value={healthScore}
-                                      otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${healthColorClass}`}
-                                    />
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-                                <td className="px-6 py-4">
-                                  {" "}
-                                  {riskScore ? (
-                                    <Chip
-                                      value={riskScore}
-                                      otherClasses={`text-white w-9 h-9  font-bold  text-white flex items-center justify-center ${healthColorClass}`}
-                                    />
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-                                <td className="px-6 py-4">
-                                  {oppScore ? (
-                                    <Chip
-                                      value={oppScore}
-                                      otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}
-                                    />
-                                  ) : (
-                                    "N/A"
-                                  )}
-                                </td>
-                                <td className="px-6 py-4">
-                                  {customer.phase ?? "N/A"}
-                                </td>
-                                <td className="px-6 py-4">
-                                  {customer.arr ?? "N/A"}
-                                </td>
-                                <td className="px-6 py-4">
-                                  {customer.renewal_date ?? "N/A"}
-                                </td>
-                                <td className="px-6 py-4">
-                                  <MdKeyboardArrowRight
-                                    size={25}
-                                    className="cursor-pointer"
-                                    onClick={() => {
-                                      // Track customer detail view
-                                      // trackEvent("dashboard_customer_detail", {
-                                      //   email: user_data?.email,
-                                      //   organization: user_data?.organization,
-                                      //   customer_id: customer._id,
-                                      //   customer_name: customer.name,
-                                      // })
-                                      setSelectedCustomer(customer)
-                                    }}
+                          const healthColorClass = getScoreColorClass(healthScore ?? 0, "health")
+                          const oppColor = getScoreColorClass(oppScore ?? 0, "health")
+                          return (
+                            <tr
+                              key={customer.id || index}
+                              className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
+                            >
+                              <td className="px-6 py-4">{customer.name}</td>
+                              <td className="px-6 py-4">
+                                {healthScore ? (
+                                  <Chip
+                                    value={healthScore}
+                                    otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${healthColorClass}`}
                                   />
-                                </td>
-                              </tr>
-                            )
-                          }
-                        )
+                                ) : (
+                                  "N/A"
+                                )}
+                              </td>
+                              <td className="px-6 py-4">
+                                {" "}
+                                {riskScore ? (
+                                  <Chip
+                                    value={riskScore}
+                                    otherClasses={`text-white w-9 h-9  font-bold  text-white flex items-center justify-center ${healthColorClass}`}
+                                  />
+                                ) : (
+                                  "N/A"
+                                )}
+                              </td>
+                              <td className="px-6 py-4">
+                                {oppScore ? (
+                                  <Chip
+                                    value={oppScore}
+                                    otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}
+                                  />
+                                ) : (
+                                  "N/A"
+                                )}
+                              </td>
+                              <td className="px-6 py-4">{customer.phase ?? "N/A"}</td>
+                              <td className="px-6 py-4">{customer.arr ?? "N/A"}</td>
+                              <td className="px-6 py-4">{customer.renewal_date ?? "N/A"}</td>
+                              <td className="px-6 py-4">
+                                <MdKeyboardArrowRight
+                                  size={25}
+                                  className="cursor-pointer"
+                                  onClick={() => {
+                                    // Track customer detail view
+                                    // trackEvent("dashboard_customer_detail", {
+                                    //   email: user_data?.email,
+                                    //   organization: user_data?.organization,
+                                    //   customer_id: customer._id,
+                                    //   customer_name: customer.name,
+                                    // })
+                                    setSelectedCustomer(customer)
+                                  }}
+                                />
+                              </td>
+                            </tr>
+                          )
+                        })
                       )}
                     </tbody>
                   </table>
@@ -1026,13 +930,18 @@ export default function Dashboard() {
                     setUsageFunnelPage(1) // Reset to first page when filter changes
                   }}
                   className="w-full rounded border px-3 py-2 sm:w-1/4"
+                  disabled={stageDropdownListLoading}
                 >
                   <option value="all">All Stages</option>
-                  {uniqueStages.map((stage: string) => (
-                    <option key={stage} value={stage}>
-                      {stage}
-                    </option>
-                  ))}
+                  {stageDropdownList && stageDropdownList.length > 0 ? (
+                    stageDropdownList.map((stage: string, index: number) => (
+                      <option key={stage || index} value={stage}>
+                        {stage}
+                      </option>
+                    ))
+                  ) : (
+                    <option disabled>No stages available</option>
+                  )}
                 </select>
               </div>
 
@@ -1040,13 +949,11 @@ export default function Dashboard() {
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b text-gray-600">
                     <tr className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50">
-                      {usageFunnelTableColumns?.map(
-                        (column: string, index: number) => (
-                          <th className="p-2" key={index}>
-                            {column}
-                          </th>
-                        )
-                      )}
+                      {usageFunnelTableColumns?.map((column: string, index: number) => (
+                        <th className="p-2" key={index}>
+                          {column}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody className="text-gray-700">
@@ -1104,15 +1011,12 @@ export default function Dashboard() {
                 <Button
                   className="disabled bg-[#174894] hover:bg-[#173094]"
                   disabled={!usageFunnelPagination?.hasPrevPage}
-                  onClick={() =>
-                    setUsageFunnelPage((prev) => Math.max(prev - 1, 1))
-                  }
+                  onClick={() => setUsageFunnelPage((prev) => Math.max(prev - 1, 1))}
                 >
                   Previous
                 </Button>
                 <span className="text-sm font-bold text-gray-500">
-                  Page {usageFunnelPage} of{" "}
-                  {usageFunnelPagination?.totalPages || 1}(
+                  Page {usageFunnelPage} of {usageFunnelPagination?.totalPages || 1}(
                   {usageFunnelPagination?.totalRecords || 0} total records)
                 </span>
                 <Button

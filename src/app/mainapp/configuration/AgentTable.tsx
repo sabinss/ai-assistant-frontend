@@ -44,6 +44,8 @@ export const AgentTable = () => {
   // Add state for confirmation dialog
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<any>(null)
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false)
+  const [agentToDelete, setAgentToDelete] = useState<any>(null)
 
   useEffect(() => {
     async function getOrgAgentList() {
@@ -188,16 +190,30 @@ export const AgentTable = () => {
     setIsEditing(true)
   }
 
-  const handleDelete = async (agent: any) => {
+  const handleDelete = (agent: any) => {
+    setAgentToDelete(agent)
+    setShowDeleteConfirmDialog(true)
+  }
+
+  const cancelDeleteAgent = () => {
+    setShowDeleteConfirmDialog(false)
+    setAgentToDelete(null)
+  }
+
+  const confirmDeleteAgent = async () => {
+    if (!agentToDelete) return
+
     try {
-      console.log("Delete agent", agent)
-      await http.delete(`/organization/agent/${agent._id}/instruction`, {
+      await http.delete(`/organization/agent/${agentToDelete._id}/instruction`, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       await fetchOrgAgentInstructions()
       toast.success("Agent deleted successfully")
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete Agent")
+    } finally {
+      setShowDeleteConfirmDialog(false)
+      setAgentToDelete(null)
     }
   }
 
@@ -328,6 +344,25 @@ export const AgentTable = () => {
             </Button>
             <Button onClick={confirmStartAgent} className="bg-green-600 hover:bg-green-700">
               Start Agent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Delete Agent</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the agent "{agentToDelete?.name}"?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={cancelDeleteAgent} variant="outline" className="mr-2">
+              Cancel
+            </Button>
+            <Button onClick={confirmDeleteAgent} className="bg-red-600 hover:bg-red-700">
+              Delete Agent
             </Button>
           </DialogFooter>
         </DialogContent>

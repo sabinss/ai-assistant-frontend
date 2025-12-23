@@ -107,11 +107,7 @@ interface ChurnDashboardState {
   fetchHighRiskChurnStats: (accessToken: string) => Promise<void>
   fetchCustomerScoreData: (accessToken: string) => Promise<void>
   fetchChurnRiskDistribution: (accessToken: string) => Promise<void>
-  fetchImmediateActionsData: (
-    accessToken: string,
-    page: number,
-    limit: number
-  ) => Promise<void>
+  fetchImmediateActionsData: (accessToken: string, page: number, limit: number) => Promise<void>
   fetchTrendData: (accessToken: string) => Promise<void>
   fetchScoreAnalysisData: (accessToken: string) => Promise<void>
   fetchUsageFunnelData: (
@@ -139,6 +135,9 @@ interface ChurnDashboardState {
   customerStageList: string[]
   customerStageListLoading: boolean
   fetchCustomerStageList: (accessToken: string) => Promise<void>
+  stageDropdownList: string[]
+  stageDropdownListLoading: boolean
+  fetchStageDropdownList: (accessToken: string) => Promise<void>
   // populateWithDemoData: () => void
 }
 
@@ -161,6 +160,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   customerAlertDataLoading: false,
   customerStageList: [],
   customerStageListLoading: false,
+  stageDropdownList: [],
+  stageDropdownListLoading: false,
   scoreAnalysisDataLoading: false,
   immediateActionsDataLoading: false,
   usageFunnelData: null,
@@ -179,8 +180,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   error: null,
   apiData: null,
   setMetricsData: (metrics) => set({ metricsData: metrics }),
-  setDistributionData: (distribution) =>
-    set({ distributionData: distribution }),
+  setDistributionData: (distribution) => set({ distributionData: distribution }),
   setTrendData: (trend) => set({ trendData: trend }),
   setRiskMatrixData: (points) => set({ riskMatrixData: points }),
   setApiData: (data) => set({ apiData: data }),
@@ -262,29 +262,21 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
 
         // Transform high risk customers to risk matrix format
         set({ highRiskCustomers: data.highRiskCustomers })
-        const riskMatrix = data.highRiskCustomers.map(
-          (customer: HighRiskCustomer) => ({
-            company: customer.customer_name,
-            arr: customer.arr ? parseFloat(customer.arr) || 0 : 0,
-            churnRisk: customer.churn_risk_score,
-            daysToRenewal:
-              customer.renewal_days === "N/A"
-                ? 0
-                : parseInt(customer.renewal_days),
-            revenue:
-              customer.monetary_value === "N/A"
-                ? 0
-                : parseFloat(customer.monetary_value),
-            segment: "Unknown", // Not provided in API
-            csm: "Unknown", // Not provided in API
-            priority:
-              customer.risk_level === "Critical"
-                ? "CRITICAL"
-                : customer.risk_level === "High"
-                  ? "HIGH"
-                  : "HEALTHY",
-          })
-        )
+        const riskMatrix = data.highRiskCustomers.map((customer: HighRiskCustomer) => ({
+          company: customer.customer_name,
+          arr: customer.arr ? parseFloat(customer.arr) || 0 : 0,
+          churnRisk: customer.churn_risk_score,
+          daysToRenewal: customer.renewal_days === "N/A" ? 0 : parseInt(customer.renewal_days),
+          revenue: customer.monetary_value === "N/A" ? 0 : parseFloat(customer.monetary_value),
+          segment: "Unknown", // Not provided in API
+          csm: "Unknown", // Not provided in API
+          priority:
+            customer.risk_level === "Critical"
+              ? "CRITICAL"
+              : customer.risk_level === "High"
+                ? "HIGH"
+                : "HEALTHY",
+        }))
         set({ riskMatrixData: riskMatrix })
       } else {
         // Check if we have totalCustomers data
@@ -339,14 +331,9 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       if (data.trendData && Array.isArray(data.trendData)) {
         set({ trendData: data.trendData })
       } else {
-        console.log(
-          "No trendData found, checking if we can create it from customers data"
-        )
+        console.log("No trendData found, checking if we can create it from customers data")
         // If no trend data, we might need to create it from the customers data
-        if (
-          data.riskMatrix?.customers &&
-          Array.isArray(data.riskMatrix.customers)
-        ) {
+        if (data.riskMatrix?.customers && Array.isArray(data.riskMatrix.customers)) {
           console.log("Creating trend data from customers data")
           // For now, set empty trend data since we don't have monthly progression
           set({ trendData: [] })
@@ -357,10 +344,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       }
 
       // Handle the new customers data structure for risk matrix
-      if (
-        data.riskMatrix.customers &&
-        Array.isArray(data.riskMatrix.customers)
-      ) {
+      if (data.riskMatrix.customers && Array.isArray(data.riskMatrix.customers)) {
         let customers = data.riskMatrix.customers
 
         // Transform customers data to risk matrix format
@@ -392,10 +376,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   },
   fetchCustomerScoreData: async (accessToken: string) => {
     const state: any = useChurnDashboardStore.getState()
-    if (
-      state.customerScoreData &&
-      isCacheValid(state.customerScoreData?.timestamp)
-    ) {
+    if (state.customerScoreData && isCacheValid(state.customerScoreData?.timestamp)) {
       return state.customerScoreData
     } else {
       set({ isLoading: true, error: null })
@@ -416,10 +397,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   },
   fetchChurnRiskDistribution: async (accessToken: string) => {
     const state: any = useChurnDashboardStore.getState()
-    if (
-      state.churnRiskDistribution &&
-      isCacheValid(state.churnRiskDistribution?.timestamp)
-    ) {
+    if (state.churnRiskDistribution && isCacheValid(state.churnRiskDistribution?.timestamp)) {
       return state.churnRiskDistribution
     } else {
       set({ churnRiskDistributionLoading: true, error: null })
@@ -439,16 +417,10 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
       }
     }
   },
-  fetchImmediateActionsData: async (
-    accessToken: string,
-    page: number = 1,
-    limit: number = 5
-  ) => {
+  fetchImmediateActionsData: async (accessToken: string, page: number = 1, limit: number = 5) => {
     set({ immediateActionsDataLoading: true, error: null })
     try {
-      console.log(
-        `Fetching immediate actions data - Page: ${page}, Limit: ${limit}`
-      )
+      console.log(`Fetching immediate actions data - Page: ${page}, Limit: ${limit}`)
       const res = await http.get(`/customer/immediate-actions`, {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: {
@@ -495,10 +467,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   },
   fetchScoreAnalysisData: async (accessToken: string) => {
     const state: any = useChurnDashboardStore.getState()
-    if (
-      state.scoreAnalysisData &&
-      isCacheValid(state.scoreAnalysisData?.timestamp)
-    ) {
+    if (state.scoreAnalysisData && isCacheValid(state.scoreAnalysisData?.timestamp)) {
       return state.scoreAnalysisData
     } else {
       set({ scoreAnalysisDataLoading: true, error: null })
@@ -580,10 +549,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   },
   fetchCustomerAlertData: async (accessToken: string) => {
     const state: any = useChurnDashboardStore.getState()
-    if (
-      state.customerAlertData &&
-      isCacheValid(state.customerAlertData?.timestamp)
-    ) {
+    if (state.customerAlertData && isCacheValid(state.customerAlertData?.timestamp)) {
       return state.customerAlertData
     } else {
       set({ customerAlertDataLoading: true, error: null })
@@ -605,11 +571,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   },
   fetchCustomerStageList: async (accessToken: string) => {
     const state: any = useChurnDashboardStore.getState()
-    if (
-      state.customerStageList &&
-      state.customerStageList.length > 0 &&
-      isCacheValid(state.customerStageList?.timestamp)
-    ) {
+    if (state.customerStageList && state.customerStageList.length > 0) {
       return state.customerStageList
     } else {
       set({ customerStageListLoading: true, error: null })
@@ -628,13 +590,7 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
               if (typeof item === "string") {
                 return item
               } else if (typeof item === "object" && item !== null) {
-                return (
-                  item.stage ||
-                  item.name ||
-                  item.value ||
-                  item.label ||
-                  JSON.stringify(item)
-                )
+                return item.stage || item.name || item.value || item.label || JSON.stringify(item)
               }
               return String(item)
             })
@@ -642,13 +598,48 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
 
         console.log("Processed stage list:", stageList)
 
-        set({
-          customerStageList: stageList,
-          timestamp: Date.now(),
-        })
+        set({ customerStageList: stageList })
         set({ customerStageListLoading: false })
       } catch (err: any) {
         set({ customerStageListLoading: false, error: err })
+      }
+    }
+  },
+  fetchStageDropdownList: async (accessToken: string) => {
+    const state: any = useChurnDashboardStore.getState()
+    if (state.stageDropdownList && state.stageDropdownList.length > 0) {
+      return state.stageDropdownList
+    } else {
+      set({ stageDropdownListLoading: true, error: null })
+      try {
+        const res = await http.get(`/customer/stage-list/dropdown`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        })
+        console.log("Stage dropdown list API response:", res.data)
+
+        // Extract stage values from the response data
+        const stages = res.data.data || []
+        console.log("Raw dropdown stages data:", stages)
+
+        const stageList = Array.isArray(stages)
+          ? stages.map((item: any) => {
+              if (typeof item === "string") {
+                return item
+              } else if (typeof item === "object" && item !== null) {
+                return item.stage || item.name || item.value || item.label || JSON.stringify(item)
+              }
+              return String(item)
+            })
+          : []
+
+        console.log("Processed dropdown stage list:", stageList)
+
+        set({
+          stageDropdownList: stageList,
+        })
+        set({ stageDropdownListLoading: false })
+      } catch (err: any) {
+        set({ stageDropdownListLoading: false, error: err })
       }
     }
   },
