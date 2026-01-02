@@ -264,6 +264,16 @@ const EmailVerifyDialog = ({
 }) => {
   const [verificationCode, setVerificationCode] = useState("")
   const [isValidCode, setIsValidCode] = useState(false)
+  const [isResending, setIsResending] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  // Cooldown timer effect
+  React.useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [resendCooldown])
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setVerificationCode(e?.target?.value)
@@ -280,6 +290,20 @@ const EmailVerifyDialog = ({
       }, 1000)
     } else {
       toast.error("Invalid verification code")
+    }
+  }
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0 || isResending) return
+
+    setIsResending(true)
+    try {
+      await sendConfirmEmail(userEmail)
+      setResendCooldown(60) // 60 seconds cooldown
+    } catch (error) {
+      console.error("Failed to resend OTP:", error)
+    } finally {
+      setIsResending(false)
     }
   }
 
@@ -305,7 +329,28 @@ const EmailVerifyDialog = ({
             <p className="text-green-600">Code verified successfully!</p>
           </div>
         )}
-        <Button onClick={() => setShowEmailVerifyDialog(false)} variant="outline" className="mt-2">
+
+        {/* Resend OTP Section */}
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-500">Didn't receive the code?</p>
+          <button
+            onClick={handleResendOTP}
+            disabled={resendCooldown > 0 || isResending}
+            className={`mt-1 text-sm font-medium ${
+              resendCooldown > 0 || isResending
+                ? "cursor-not-allowed text-gray-400"
+                : "cursor-pointer text-[#174894] hover:underline"
+            }`}
+          >
+            {isResending
+              ? "Sending..."
+              : resendCooldown > 0
+                ? `Resend OTP in ${resendCooldown}s`
+                : "Resend OTP"}
+          </button>
+        </div>
+
+        <Button onClick={() => setShowEmailVerifyDialog(false)} variant="outline" className="mt-4">
           Back to Login
         </Button>
       </div>
