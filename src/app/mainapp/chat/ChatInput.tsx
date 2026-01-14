@@ -910,19 +910,25 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
         {/* Custom agent list */}
         {!publicChat && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {visibleAgents.map((agent: any, index: number) => (
-              <div
-                onClick={() => handleAgentRemove(agent.name)}
-                key={index}
-                className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
-                  selectedAgents.includes(agent.name)
-                    ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                }`}
-              >
-                {agent.name}
-              </div>
-            ))}
+            {visibleAgents.map((agent: any, index: number) => {
+              console.log("agent", agent)
+              return (
+                <div
+                  onClick={() => {
+                    setMessage(agent?.greeting || "")
+                    handleAgentRemove(agent.name)
+                  }}
+                  key={index}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
+                    selectedAgents.includes(agent.name)
+                      ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+                  }`}
+                >
+                  {agent.name}
+                </div>
+              )
+            })}
             {/* Show ellipsis if more agents */}
             {remainingAgents.length > 0 && (
               <div className="relative">

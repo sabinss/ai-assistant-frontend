@@ -124,9 +124,9 @@ export default function page() {
       <div className="box my-4 w-full rounded-md border-[#CCCCCC] bg-[#E7E7E7] px-4 py-2">
         File Data Source
       </div>
-      <p className=" pl-3">Upload new data source file for your project.</p>
+      <p className=" pl-3">Upload documents (PDF upto 10MB).</p>
       <div className="mt-3 flex flex-col-reverse gap-2 md:flex-row">
-        <div className="cards flex w-full flex-col gap-6 md:w-2/5 md:p-6 ">
+        {/* <div className="cards flex w-full flex-col gap-6 md:w-2/5 md:p-6 ">
           {data?.map((item) => {
             return (
               <div
@@ -137,23 +137,18 @@ export default function page() {
                 <p>{item?.name}</p>
                 <div className="flex py-6">
                   {item?.icon}
-                  <p
-                    className={`${activeTab === item?.key ? "text-white" : "text-[#535353]"}`}
-                  >
+                  <p className={`${activeTab === item?.key ? "text-white" : "text-[#535353]"}`}>
                     {item?.description}
                   </p>
                 </div>
               </div>
             )
           })}
-        </div>
+        </div> */}
         <div className="uploadscreen w-full cursor-pointer md:w-3/5 md:p-6 ">
           <div className="flex h-full w-full flex-col items-center justify-center rounded-md border-2 border-dashed border-black bg-[#E7E7E7]">
             <div className="p-3 font-semibold">
-              <div
-                {...getRootProps({ className: "dropzone" })}
-                style={dropzoneStyle}
-              >
+              <div {...getRootProps({ className: "dropzone" })} style={dropzoneStyle}>
                 <input {...getInputProps()} />
                 {isLoading ? (
                   <div style={loaderStyle}>Loading...</div>
