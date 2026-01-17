@@ -829,8 +829,19 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
     if (selectedAgents.length > 0) {
       const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
       if (agent?.greeting && agent.greeting !== "NA") {
-        // This will display the greeting in chat list and send to API
-        sendMessageToBackend(agent.greeting)
+        const greetingMessage = agent.greeting
+
+        // Display the greeting message in chat list as user message
+        appendMessage({
+          sender: "user",
+          message: greetingMessage,
+          time: getClockTime(),
+          id: "",
+        })
+
+        // Send to API with the selected agent
+        updateMessageLoading(true)
+        handleCustomAgentStreaming(greetingMessage, agent.name)
       }
     }
   }, [selectedAgents])
