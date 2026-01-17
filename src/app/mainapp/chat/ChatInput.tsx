@@ -825,14 +825,13 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [initialQuery])
 
   useEffect(() => {
-    const agent: any = agentList.find((x: any) => {
-      if (x.name == selectedAgents[0]) {
-        return x
+    // When an agent is selected, send the agent's greeting message to the API
+    if (selectedAgents.length > 0) {
+      const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
+      if (agent?.greeting && agent.greeting !== "NA") {
+        // This will display the greeting in chat list and send to API
+        sendMessageToBackend(agent.greeting)
       }
-    })
-    if (agent?.greeting && agent.greeting != "NA") {
-      // Send the greeting message to the API
-      sendMessageToBackend(agent.greeting)
     }
   }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
