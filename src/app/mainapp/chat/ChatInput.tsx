@@ -831,12 +831,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
       }
     })
     if (agent?.greeting && agent.greeting != "NA") {
-      appendMessage({
-        sender: botName,
-        message: agent?.greeting,
-        time: getClockTime(),
-        id: "ANS_",
-      })
+      // Send the greeting message to the API
+      sendMessageToBackend(agent.greeting)
     }
   }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
@@ -915,7 +911,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
               return (
                 <div
                   onClick={() => {
-                    setMessage(agent?.greeting || "")
+                    // setMessage(agent?.greeting || "")
                     handleAgentRemove(agent.name)
                   }}
                   key={index}
