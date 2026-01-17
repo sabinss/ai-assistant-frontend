@@ -825,30 +825,25 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [initialQuery])
 
   useEffect(() => {
-    // When an agent is selected, send the agent's greeting message to the API
+    // When an agent is selected, display the agent's greeting message in chat and send to backend
     if (selectedAgents.length > 0) {
       const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
       if (agent?.greeting && agent.greeting !== "NA") {
-        const greetingMessage = agent.greeting
-
-        // Display the greeting message in chat list as user message
+        // 1. Display the greeting message in chat as user message (on user side)
         appendMessage({
           sender: "user",
-          message: greetingMessage,
+          message: agent.greeting,
           time: getClockTime(),
-          id: "",
+          id: `greeting_${Date.now()}`,
         })
 
-        // Send to API with the selected agent
-        updateMessageLoading(true)
-        handleCustomAgentStreaming(greetingMessage, agent.name)
+        // 2. Send the greeting message to backend
+        handleCustomAgentStreaming(agent.greeting, agent.name)
       }
     }
   }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
-    const newSession = Math.floor(Math.random() * 1000).toString()
-    setSessionId(newSession)
-
+    // Don't reset session - keep existing chat in UI
     setSelectedAgents((prevAgents: any) => (prevAgents.includes(agentName) ? [] : [agentName]))
   }
   return (
