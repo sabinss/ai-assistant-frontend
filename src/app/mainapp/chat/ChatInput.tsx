@@ -854,6 +854,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                   chatSession,
                   sessionId: sessionId || undefined,
                   agentName: agent.name,
+                  apiType,
+                  workflowFlag,
                 },
                 { headers: { Authorization: `Bearer ${access_token}` } }
               )
