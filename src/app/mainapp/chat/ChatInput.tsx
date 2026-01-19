@@ -830,16 +830,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [initialQuery])
 
   useEffect(() => {
-    // When an agent is selected, display the agent's greeting message in the input textarea
+    // When an agent is selected, focus the textarea (but don't display greeting message)
     if (selectedAgents.length > 0) {
-      const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
-      if (agent?.greeting && agent.greeting !== "NA") {
-        // Set the greeting message in the input textarea
-        setMessage(agent.greeting)
-        // Focus the textarea
-        if (textareaRef.current) {
-          textareaRef.current.focus()
-        }
+      if (textareaRef.current) {
+        textareaRef.current.focus()
       }
     }
   }, [selectedAgents])
