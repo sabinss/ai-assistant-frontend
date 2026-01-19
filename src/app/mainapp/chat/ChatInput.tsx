@@ -831,64 +831,25 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
 
   useEffect(() => {
     // When an agent is selected, display the agent's greeting message in chat and send to backend
-    const sendAgentGreeting = async () => {
-      if (selectedAgents.length > 0) {
-        const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
-        if (agent?.greeting && agent.greeting !== "NA") {
-          // 1. Display the greeting message in chat as user message (on user side)
-          appendMessage({
-            sender: "user",
-            message: agent.greeting,
-            time: getClockTime(),
-            id: `greeting_${Date.now()}`,
-          })
+    if (selectedAgents.length > 0) {
+      const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
+      if (agent?.greeting && agent.greeting !== "NA") {
+        // 1. Display the greeting message in chat as user message (on user side)
+        appendMessage({
+          sender: "user",
+          message: agent.greeting,
+          time: getClockTime(),
+          id: `greeting_${Date.now()}`,
+        })
 
-          // 2. Send the greeting message to backend as normal (non-streaming) request
-          if (chatSession && access_token) {
-            try {
-              updateMessageLoading(true)
-              const res = await http.post(
-                "/conversation/agent/add",
-                {
-                  question: agent.greeting,
-                  chatSession,
-                  sessionId: sessionId || undefined,
-                  agentName: agent.name,
-                  apiType,
-                  workflowFlag,
-                },
-                { headers: { Authorization: `Bearer ${access_token}` } }
-              )
-
-              if (res?.data?.session_id) {
-                setSessionId(res?.data?.session_id)
-              }
-
-              appendMessage({
-                sender: botName,
-                message: res?.data?.answer,
-                time: getClockTime(),
-                id: "ANS_" + res?.data?._id,
-              })
-            } catch (error: any) {
-              console.error("Error sending agent greeting:", error)
-              appendMessage({
-                sender: botName,
-                message: "Error occurred while sending greeting to agent.",
-                time: getClockTime(),
-                id: "error_greeting",
-              })
-            } finally {
-              updateMessageLoading(false)
-            }
-          } else {
-            console.warn("Cannot send greeting to backend - missing chatSession or access_token")
-          }
+        // 2. Send the greeting message to backend using streaming (same as normal chat)
+        if (chatSession && access_token) {
+          handleCustomAgentStreaming(agent.greeting, agent.name)
+        } else {
+          console.warn("Cannot send greeting to backend - missing chatSession or access_token")
         }
       }
     }
-
-    sendAgentGreeting()
   }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
     // Don't reset session - keep existing chat in UI
