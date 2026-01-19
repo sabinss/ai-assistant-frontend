@@ -825,20 +825,16 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [initialQuery])
 
   useEffect(() => {
-    // When an agent is selected, display the agent's greeting message in chat and send to backend
+    // When an agent is selected, display the agent's greeting message in the input textarea
     if (selectedAgents.length > 0) {
       const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
       if (agent?.greeting && agent.greeting !== "NA") {
-        // 1. Display the greeting message in chat as user message (on user side)
-        appendMessage({
-          sender: "user",
-          message: agent.greeting,
-          time: getClockTime(),
-          id: `greeting_${Date.now()}`,
-        })
-
-        // 2. Send the greeting message to backend
-        handleCustomAgentStreaming(agent.greeting, agent.name)
+        // Set the greeting message in the input textarea
+        setMessage(agent.greeting)
+        // Focus the textarea
+        if (textareaRef.current) {
+          textareaRef.current.focus()
+        }
       }
     }
   }, [selectedAgents])
@@ -920,11 +916,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                     handleAgentRemove(agent.name)
                   }}
                   key={index}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
-                    selectedAgents.includes(agent.name)
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${selectedAgents.includes(agent.name)
                       ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                  }`}
+                    }`}
                 >
                   {agent.name}
                 </div>
@@ -951,11 +946,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                           handleDropdownSelect(agent)
                           handleAgentRemove(agent.name)
                         }}
-                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${
-                          selectedAgents.includes(agent.name)
+                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.includes(agent.name)
                             ? "font-semibold text-blue-600"
                             : "text-gray-700"
-                        }`}
+                          }`}
                       >
                         {agent.name}
                       </div>
