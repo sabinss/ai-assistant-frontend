@@ -582,6 +582,18 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
       const abortController = new AbortController()
       abortControllerRef.current = abortController
 
+      // Build request body - only include sessionId if it exists
+      const requestBody: any = {
+        question: query,
+        chatSession,
+        agentName: agentToUse, // Use the agent name (either provided or from selectedAgents)
+      }
+
+      // Only add sessionId if it's not null/undefined
+      if (sessionId) {
+        requestBody.sessionId = sessionId
+      }
+
       // Configure fetch for streaming SSE response
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/agent/add`,
@@ -591,14 +603,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
             "Content-Type": "application/json",
             Authorization: `Bearer ${access_token}`,
           },
-          body: JSON.stringify({
-            question: query,
-            chatSession,
-            // workflowFlag, // Removed as it might not be needed for agents, adjust if necessary
-            sessionId,
-            // apiType, // Removed as it might not be needed for agents, adjust if necessary
-            agentName: agentToUse, // Use the agent name (either provided or from selectedAgents)
-          }),
+          body: JSON.stringify(requestBody),
           signal: abortController.signal,
         }
       )
@@ -917,8 +922,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                   }}
                   key={index}
                   className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${selectedAgents.includes(agent.name)
-                      ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+                    ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
                     }`}
                 >
                   {agent.name}
@@ -947,8 +952,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                           handleAgentRemove(agent.name)
                         }}
                         className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.includes(agent.name)
-                            ? "font-semibold text-blue-600"
-                            : "text-gray-700"
+                          ? "font-semibold text-blue-600"
+                          : "text-gray-700"
                           }`}
                       >
                         {agent.name}
