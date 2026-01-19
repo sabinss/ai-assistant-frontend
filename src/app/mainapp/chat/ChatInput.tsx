@@ -582,6 +582,18 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
       const abortController = new AbortController()
       abortControllerRef.current = abortController
 
+      // Build request body - only include sessionId if it exists
+      const requestBody: any = {
+        question: query,
+        chatSession,
+        agentName: agentToUse, // Use the agent name (either provided or from selectedAgents)
+      }
+
+      // Only add sessionId if it's not null/undefined
+      if (sessionId) {
+        requestBody.sessionId = sessionId
+      }
+
       // Configure fetch for streaming SSE response
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/agent/add`,
@@ -591,14 +603,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
             "Content-Type": "application/json",
             Authorization: `Bearer ${access_token}`,
           },
-          body: JSON.stringify({
-            question: query,
-            chatSession,
-            // workflowFlag, // Removed as it might not be needed for agents, adjust if necessary
-            sessionId,
-            // apiType, // Removed as it might not be needed for agents, adjust if necessary
-            agentName: agentToUse, // Use the agent name (either provided or from selectedAgents)
-          }),
+          body: JSON.stringify(requestBody),
           signal: abortController.signal,
         }
       )
@@ -826,21 +831,62 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
 
   useEffect(() => {
     // When an agent is selected, display the agent's greeting message in chat and send to backend
-    if (selectedAgents.length > 0) {
-      const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
-      if (agent?.greeting && agent.greeting !== "NA") {
-        // 1. Display the greeting message in chat as user message (on user side)
-        appendMessage({
-          sender: "user",
-          message: agent.greeting,
-          time: getClockTime(),
-          id: `greeting_${Date.now()}`,
-        })
+    const sendAgentGreeting = async () => {
+      if (selectedAgents.length > 0) {
+        const agent: any = agentList.find((x: any) => x.name === selectedAgents[0])
+        if (agent?.greeting && agent.greeting !== "NA") {
+          // 1. Display the greeting message in chat as user message (on user side)
+          appendMessage({
+            sender: "user",
+            message: agent.greeting,
+            time: getClockTime(),
+            id: `greeting_${Date.now()}`,
+          })
 
-        // 2. Send the greeting message to backend
-        handleCustomAgentStreaming(agent.greeting, agent.name)
+          // 2. Send the greeting message to backend as normal (non-streaming) request
+          if (chatSession && access_token) {
+            try {
+              updateMessageLoading(true)
+              const res = await http.post(
+                "/conversation/agent/add",
+                {
+                  question: agent.greeting,
+                  chatSession,
+                  sessionId: sessionId || undefined,
+                  agentName: agent.name,
+                },
+                { headers: { Authorization: `Bearer ${access_token}` } }
+              )
+
+              if (res?.data?.session_id) {
+                setSessionId(res?.data?.session_id)
+              }
+
+              appendMessage({
+                sender: botName,
+                message: res?.data?.answer,
+                time: getClockTime(),
+                id: "ANS_" + res?.data?._id,
+              })
+            } catch (error: any) {
+              console.error("Error sending agent greeting:", error)
+              appendMessage({
+                sender: botName,
+                message: "Error occurred while sending greeting to agent.",
+                time: getClockTime(),
+                id: "error_greeting",
+              })
+            } finally {
+              updateMessageLoading(false)
+            }
+          } else {
+            console.warn("Cannot send greeting to backend - missing chatSession or access_token")
+          }
+        }
       }
     }
+
+    sendAgentGreeting()
   }, [selectedAgents])
   const handleAgentRemove = (agentName: string) => {
     // Don't reset session - keep existing chat in UI
@@ -920,11 +966,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                     handleAgentRemove(agent.name)
                   }}
                   key={index}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
-                    selectedAgents.includes(agent.name)
-                      ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
-                      : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                  }`}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${selectedAgents.includes(agent.name)
+                    ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
+                    }`}
                 >
                   {agent.name}
                 </div>
@@ -951,11 +996,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                           handleDropdownSelect(agent)
                           handleAgentRemove(agent.name)
                         }}
-                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${
-                          selectedAgents.includes(agent.name)
-                            ? "font-semibold text-blue-600"
-                            : "text-gray-700"
-                        }`}
+                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.includes(agent.name)
+                          ? "font-semibold text-blue-600"
+                          : "text-gray-700"
+                          }`}
                       >
                         {agent.name}
                       </div>
