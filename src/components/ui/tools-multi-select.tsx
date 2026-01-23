@@ -102,6 +102,11 @@ export const AVAILABLE_TOOLS: Tool[] = [
     name: "search_documents",
     description: "Search relevant docs in the RAG API knowledge base.",
   },
+  {
+    name: "get_document",
+    description:
+      "Get entire content of a document",
+  },
 ]
 
 interface ToolsMultiSelectProps {
