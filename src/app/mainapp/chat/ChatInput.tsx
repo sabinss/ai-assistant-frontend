@@ -26,7 +26,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   const dropdownRef = useRef<any>(null)
   const [openUpwards, setOpenUpwards] = useState(false)
 
-  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } = useChatConfig()
+  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId, setSelectedAgentInfo } =
+    useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const { access_token, user_data, chatSession, setChatSession, role } = useAuth() // Call useAuth here
@@ -830,13 +831,22 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [initialQuery])
 
   useEffect(() => {
-    // When an agent is selected, focus the textarea (but don't display greeting message)
+    // When an agent is selected, update store so ChatList can show agent greeting (same way as default greeting)
     if (selectedAgents.length > 0) {
+      const first = selectedAgents[0]
+      const agent =
+        typeof first === "object" && first?.name
+          ? first
+          : agentList.find((a: any) => a.name === first)
+      const greeting = agent?.greeting && agent.greeting !== "NA" ? agent.greeting : null
+      setSelectedAgentInfo(greeting, agent?.name ?? null)
       if (textareaRef.current) {
         textareaRef.current.focus()
       }
+    } else {
+      setSelectedAgentInfo(null, null)
     }
-  }, [selectedAgents])
+  }, [selectedAgents, agentList])
   const handleAgentRemove = (agentName: string) => {
     // Don't reset session - keep existing chat in UI
     setSelectedAgents((prevAgents: any) => (prevAgents.includes(agentName) ? [] : [agentName]))
