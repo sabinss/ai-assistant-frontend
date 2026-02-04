@@ -53,6 +53,11 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
     >
       <MessageDiv key="greeting" msg={greeting_message} />
 
+      {/* Agent greeting stays in chat when agent is selected, shown after default greeting and before messages */}
+      {agent_greeting_message && (
+        <MessageDiv key="agent_greeting" msg={agent_greeting_message} />
+      )}
+
       {messages.map((msg, index) => {
         // Check if this is a streaming message with a status
         if (msg.isStreaming && msg.status) {
@@ -122,11 +127,6 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
             data-testid="loader"
           />
         </div>
-      )}
-
-      {/* Show agent greeting at bottom only when agent is selected and no messages yet; hide once user sends a message so chat flows normally */}
-      {agent_greeting_message && messages.length === 0 && (
-        <MessageDiv key="agent_greeting" msg={agent_greeting_message} />
       )}
     </div>
   )
