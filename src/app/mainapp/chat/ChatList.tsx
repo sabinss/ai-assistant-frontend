@@ -124,7 +124,8 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
         </div>
       )}
 
-      {agent_greeting_message && (
+      {/* Show agent greeting at bottom only when agent is selected and no messages yet; hide once user sends a message so chat flows normally */}
+      {agent_greeting_message && messages.length === 0 && (
         <MessageDiv key="agent_greeting" msg={agent_greeting_message} />
       )}
     </div>
