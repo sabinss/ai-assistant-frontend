@@ -52,9 +52,6 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
       className=" flex h-full w-full flex-col gap-5 overflow-y-scroll px-2"
     >
       <MessageDiv key="greeting" msg={greeting_message} />
-      {agent_greeting_message && (
-        <MessageDiv key="agent_greeting" msg={agent_greeting_message} />
-      )}
 
       {messages.map((msg, index) => {
         // Check if this is a streaming message with a status
@@ -125,6 +122,10 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
             data-testid="loader"
           />
         </div>
+      )}
+
+      {agent_greeting_message && (
+        <MessageDiv key="agent_greeting" msg={agent_greeting_message} />
       )}
     </div>
   )

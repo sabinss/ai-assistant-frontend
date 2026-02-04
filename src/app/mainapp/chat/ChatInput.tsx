@@ -30,9 +30,9 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
     useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { access_token, user_data, chatSession, setChatSession, role } = useAuth() // Call useAuth here
+  const { access_token, user_data, chatSession, setChatSession, role } = useAuth()
   const { isMessageLoading, updateMessageLoading } = useFormStore()
-  const { publicChat, publicChatHeaders } = usePublicChat()
+  const { publicChat, publicChatHeaders, setPublicChatHeaders } = usePublicChat()
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
   const [chatPrompts, setChatPrompts] = useState([])
@@ -831,7 +831,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [initialQuery])
 
   useEffect(() => {
-    // When an agent is selected, update store so ChatList can show agent greeting (same way as default greeting)
     if (selectedAgents.length > 0) {
       const first = selectedAgents[0]
       const agent =
@@ -840,6 +839,31 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
           : agentList.find((a: any) => a.name === first)
       const greeting = agent?.greeting && agent.greeting !== "NA" ? agent.greeting : null
       setSelectedAgentInfo(greeting, agent?.name ?? null)
+
+      // Create new session every time an agent is selected
+      const createNewSession = async () => {
+        setSessionId(null)
+        const newSession = Math.floor(Math.random() * 1000).toString()
+        if (publicChat) {
+          const newSessionId = Math.floor(Math.random() * 9000).toString()
+          localStorage.setItem("chat_session_agile_move", newSessionId)
+          setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSessionId })
+          setSessionId(newSessionId)
+        } else {
+          try {
+            const res = await http.get(
+              `user/profile/changeSession?session=${newSession}`,
+              { headers: { Authorization: `Bearer ${access_token}` } }
+            )
+            setChatSession(res?.data?.newSession)
+          } catch (_) {
+            setChatSession(newSession)
+          }
+          setSessionId(newSession)
+        }
+      }
+      createNewSession()
+
       if (textareaRef.current) {
         textareaRef.current.focus()
       }
