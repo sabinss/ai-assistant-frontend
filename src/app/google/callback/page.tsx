@@ -1,12 +1,18 @@
 // pages/auth/google/callback.tsx
 "use client"
 import http from "@/config/http"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
+import useAuth from "@/store/user"
 
 export default function GoogleCallback() {
   const [error, setError] = useState<string | null>(null)
+  const user_data = useAuth((s) => s.user_data)
+  const hasHydrated = useAuth((s) => s._hasHydrated)
+  const hasExchanged = useRef(false)
 
   useEffect(() => {
+    if (!hasHydrated || hasExchanged.current) return
+
     const urlParams = new URLSearchParams(window.location.search)
     const code = urlParams.get("code")
     const state = urlParams.get("state")
@@ -15,16 +21,24 @@ export default function GoogleCallback() {
       setError("No code provided in callback")
       return
     }
-
     const parsedState = state
       ? JSON.parse(decodeURIComponent(state as string))
       : {}
+    // Get orgId from Zustand first, then state, then sessionStorage
+    const orgId =
+      user_data?.organization ??
+      parsedState?.orgId ??
+      (typeof window !== "undefined" && sessionStorage.getItem("google_oauth_org_id")) ??
+      null
+
+    hasExchanged.current = true
+
     // Call backend to exchange code for tokens
     const exchangeCode = async () => {
       try {
         const res: any = await http.post("/auth/google-oauth/exchange", {
           code,
-          orgId: parsedState.orgId,
+          orgId,
         })
 
         const data = res
@@ -42,7 +56,7 @@ export default function GoogleCallback() {
     }
 
     exchangeCode()
-  }, [])
+  }, [hasHydrated, user_data?.organization])
 
   if (error) {
     return (
