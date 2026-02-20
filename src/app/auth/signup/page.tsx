@@ -27,7 +27,7 @@ export default function Page() {
   const [error, setError] = useState("")
   const [enteredDetails, setEnteredDetails] = useState(false)
   const [togglePass, setTogglePass] = useState("password")
-  const [formData, setFormData] = useState("")
+  const [formData, setFormData] = useState<any>(null)
   const [privacyPolicyChecked, setPrivacyPolicyChecked] = useState(false)
   const [termsOfUseChecked, setTermsOfUseChecked] = useState(false)
 
@@ -36,9 +36,11 @@ export default function Page() {
   }
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
-    await sendConfirmEmail(data.email)
-    setFormData(data)
-    setEnteredDetails(true)
+    const success = await sendConfirmEmail(data)
+    if (success) {
+      setFormData(data)
+      setEnteredDetails(true)
+    }
   }
 
   // Check if both checkboxes are checked
@@ -335,12 +337,12 @@ export default function Page() {
   )
 }
 
-const EmailConfirmDialog = ({ formData }) => {
+const EmailConfirmDialog = ({ formData }: { formData: any }) => {
   const router = useRouter()
   const [verificationCode, setVerificationCode] = useState("")
   const [isValidCode, setIsValidCode] = useState(false)
 
-  const handleCodeChange = (e) => {
+  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setVerificationCode(e?.target?.value)
   }
 
@@ -400,16 +402,25 @@ const EmailConfirmDialog = ({ formData }) => {
   )
 }
 
-const sendConfirmEmail = async (email) => {
+const sendConfirmEmail = async (formData: any): Promise<boolean> => {
   try {
-    await http.post("/auth/sendEmailVerifyToken", { email })
+    await http.post("/auth/sendEmailVerifyToken", {
+      email: formData.email,
+      first_name: formData.first_name,
+      last_name: formData.last_name,
+      organization_name: formData.organization_name,
+      ai_assistant_name: formData.ai_assistant_name,
+      password: formData.password,
+    })
     toast.success("Verification email sent")
-  } catch (e) {
-    toast.error(e?.response?.data?.message)
+    return true
+  } catch (e: any) {
+    toast.error(e?.response?.data?.message || "Something went wrong")
+    return false
   }
 }
 
-const isValidToken = async (email, token) => {
+const isValidToken = async (email: string, token: string) => {
   try {
     const response = await http.post("/auth/email-verify", { email, token })
     if (response.status === 200) {
