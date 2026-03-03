@@ -33,11 +33,12 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
-  const { sessionId } = useChatConfig()
+  const { sessionId, newSessionKey } = useChatConfig()
 
   useEffect(() => {
     console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
+      setMessages([])
       setIsLoading(true)
       try {
         if (greeting === "Hello X" || botName === "Bot X") {
@@ -66,7 +67,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
   useEffect(() => {
     setMessages([])
-  }, [sessionId])
+  }, [sessionId, newSessionKey])
 
   const fetchBotData = async () => {
     let org_id
@@ -102,7 +103,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
       }
 
       setAgentList(agentsRecords)
-    } catch (err: any) {}
+    } catch (err: any) { }
   }
 
   const getUserMessages = async () => {
