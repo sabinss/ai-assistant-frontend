@@ -107,6 +107,14 @@ export const AVAILABLE_TOOLS: Tool[] = [
     description:
       "Get entire content of a document",
   },
+  {
+    name: "update_customer",
+    description: "To add new or update existing company(customer)"
+  },
+  {
+    name: "update_order",
+    description: "To add new or update existing deal(order)"
+  }
 ]
 
 interface ToolsMultiSelectProps {
