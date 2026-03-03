@@ -26,7 +26,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   const dropdownRef = useRef<any>(null)
   const [openUpwards, setOpenUpwards] = useState(false)
 
-  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId, setSelectedAgentInfo } =
+  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId, setSelectedAgentInfo, triggerNewSession } =
     useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -842,20 +842,21 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
 
       // Create new session every time an agent is selected
       const createNewSession = async () => {
+        triggerNewSession()
         setSessionId(null)
-        const newSession = Math.floor(Math.random() * 1000).toString()
         if (publicChat) {
           const newSessionId = Math.floor(Math.random() * 9000).toString()
           localStorage.setItem("chat_session_agile_move", newSessionId)
           setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSessionId })
           setSessionId(newSessionId)
         } else {
+          const newSession = Math.floor(Math.random() * 1000).toString()
           try {
             const res = await http.get(
               `user/profile/changeSession?session=${newSession}`,
               { headers: { Authorization: `Bearer ${access_token}` } }
             )
-            setChatSession(res?.data?.newSession)
+            setChatSession(res?.data?.newSession ?? newSession)
           } catch (_) {
             setChatSession(newSession)
           }

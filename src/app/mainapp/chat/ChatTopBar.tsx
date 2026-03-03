@@ -27,7 +27,7 @@ import { Button } from "react-day-picker"
 export default function ChatTopbar() {
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
-  const { setSessionId, setSelectedAgentInfo } = useChatConfig()
+  const { setSessionId, setSelectedAgentInfo, triggerNewSession } = useChatConfig()
   const { apiType, setApiType } = useApiType()
   const [selectedOption, setSelectedOption] = useState(apiType)
   const handleSelect = (option: string) => {
@@ -41,6 +41,7 @@ export default function ChatTopbar() {
 
   const { access_token, setChatSession } = useAuth()
   const changeSession = async () => {
+    triggerNewSession()
     setSessionId(null)
     setSelectedAgentInfo(null, null)
     if (publicChat) {
