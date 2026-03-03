@@ -114,6 +114,10 @@ export const AVAILABLE_TOOLS: Tool[] = [
   {
     name: "update_order",
     description: "To add new or update existing deal(order)"
+  },
+  {
+    name: "read_gmail",
+    description: "Read email from Gmail inbox."
   }
 ]
 
