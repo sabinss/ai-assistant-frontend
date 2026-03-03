@@ -106,6 +106,12 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   }
 
   const getUserMessages = async () => {
+    // Capture session we're fetching for so we can ignore stale responses
+    const sessionWeAreFetching =
+      publicChat
+        ? (publicChatHeaders as { chat_session?: string })?.chat_session
+        : chatSession
+
     let res
     try {
       if (publicChat) {
@@ -123,6 +129,13 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           }
         )
       }
+
+      // Ignore response if session changed while we were fetching (e.g. user clicked New Session)
+      const currentSession = publicChat
+        ? (usePublicChat.getState().publicChatHeaders as { chat_session?: string })?.chat_session
+        : useAuth.getState().chatSession
+      if (currentSession !== sessionWeAreFetching) return
+
       const messageArray = res?.data || []
       setMessages([])
       messageArray?.forEach((message: any) => {
