@@ -43,21 +43,26 @@ export default function ChatTopbar() {
   const changeSession = async () => {
     setSessionId(null)
     setSelectedAgentInfo(null, null)
-    const newSession = Math.floor(Math.random() * 1000).toString()
     if (publicChat) {
-      let newSession = Math.floor(Math.random() * 9000).toString()
-      localStorage.setItem("chat_session_agile_move", newSession)
-      setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSession })
+      const newSessionId = Math.floor(Math.random() * 9000).toString()
+      localStorage.setItem("chat_session_agile_move", newSessionId)
+      setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSessionId })
+      setSessionId(newSessionId)
     } else {
-      const res = await http.get(
-        `user/profile/changeSession?session=${newSession}`,
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      )
-      setChatSession(res?.data?.newSession)
+      const newSession = Math.floor(Math.random() * 1000).toString()
+      try {
+        const res = await http.get(
+          `user/profile/changeSession?session=${newSession}`,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        setChatSession(res?.data?.newSession ?? newSession)
+      } catch {
+        setChatSession(newSession)
+      }
+      setSessionId(newSession)
     }
-    setSessionId(newSession)
   }
   const { botName } = useNavBarStore()
 
