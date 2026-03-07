@@ -75,10 +75,24 @@ ol {
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground;
+  html {
+    height: 100%;
     overflow: hidden;
   }
+
+  body {
+    @apply bg-background text-foreground;
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+/* Main app scroll area: single scroll container to prevent freeze at bottom */
+.mainapp-scroll-area {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overflow-anchor: none;
+  overscroll-behavior-y: contain;
 }
 
 /* Markdown table styles */

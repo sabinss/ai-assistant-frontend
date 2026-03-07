@@ -74,21 +74,15 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   }, [showDropdown])
 
   const handleDropdownSelect = (agent: any) => {
-    // Add to selectedAgents if not already selected
-    setSelectedAgents((prevAgents: any) =>
-      prevAgents.some((a: any) => a.name === agent.name) ? prevAgents : [...prevAgents, agent]
-    )
-
-    // Add to visibleAgents if not already there
-    setAgents((prev: any) =>
-      prev.some((a: any) => a.name === agent.name) ? prev : [...prev, agent]
-    )
-
-    // Reorder agents: move selected one to front
-    const reordered = [agent, ...agents.filter((a) => a.name !== agent.name)]
-    setAgents(reordered)
-
+    // Switch to this agent only: replace selection and new session will be created by the effect
+    setSelectedAgents([agent])
+    setAgents((prev: any) => [agent, ...prev.filter((a: any) => a.name !== agent.name)])
     setShowDropdown(false)
+  }
+
+  /** Switch to a single agent (used when clicking a chip). Starts new session via effect. */
+  const switchToAgent = (agent: any) => {
+    setSelectedAgents([agent])
   }
 
   useEffect(() => {
@@ -873,8 +867,12 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
     }
   }, [selectedAgents, agentList])
   const handleAgentRemove = (agentName: string) => {
-    // Don't reset session - keep existing chat in UI
-    setSelectedAgents((prevAgents: any) => (prevAgents.includes(agentName) ? [] : [agentName]))
+    // Clicking selected agent: clear. Clicking different agent: switch to that agent (new session).
+    setSelectedAgents((prevAgents: any) =>
+      prevAgents.some((a: any) => (typeof a === "object" ? a.name : a) === agentName)
+        ? []
+        : [agentName]
+    )
   }
   return (
     <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
@@ -942,15 +940,20 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
         {!publicChat && (
           <div className="mt-2 flex flex-wrap gap-2">
             {visibleAgents.map((agent: any, index: number) => {
-              console.log("agent", agent)
+              const isSelected = selectedAgents.some(
+                (a: any) => (typeof a === "object" ? a?.name : a) === agent.name
+              )
               return (
                 <div
                   onClick={() => {
-                    // setMessage(agent?.greeting || "")
-                    handleAgentRemove(agent.name)
+                    if (isSelected) {
+                      handleAgentRemove(agent.name)
+                    } else {
+                      switchToAgent(agent)
+                    }
                   }}
                   key={index}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${selectedAgents.includes(agent.name)
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${isSelected
                     ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
                     }`}
@@ -976,11 +979,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                     {remainingAgents.map((agent, index) => (
                       <div
                         key={index}
-                        onClick={() => {
-                          handleDropdownSelect(agent)
-                          handleAgentRemove(agent.name)
-                        }}
-                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.includes(agent.name)
+                        onClick={() => handleDropdownSelect(agent)}
+                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.some((a: any) => (typeof a === "object" ? a?.name : a) === agent?.name)
                           ? "font-semibold text-blue-600"
                           : "text-gray-700"
                           }`}
