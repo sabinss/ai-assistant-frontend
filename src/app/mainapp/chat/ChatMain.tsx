@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import ChatInput from "./ChatInput"
 import ChatList from "./ChatList"
 import http from "@/config/http"
@@ -33,7 +33,9 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
-  const { sessionId, newSessionKey } = useChatConfig()
+  const { sessionId, newSessionKey, selectedAgentName, skipNextHistoryLoad, clearSkipNextHistoryLoad } = useChatConfig()
+  const skipNextLoadHistoryRef = useRef(false)
+  const prevNewSessionKeyRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     console.log("ChatMain")
@@ -46,7 +48,15 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           await fetchBotData()
         }
 
-        await getUserMessages()
+        // When an agent is selected, treat as new session: do not load old chat history
+        // When user clicked "New Session", skip loading history (skipNextHistoryLoad set synchronously in store; ref is backup)
+        const shouldSkipHistory =
+          selectedAgentName || skipNextLoadHistoryRef.current || skipNextHistoryLoad
+        if (!shouldSkipHistory) {
+          await getUserMessages()
+        }
+        skipNextLoadHistoryRef.current = false
+        clearSkipNextHistoryLoad()
       } catch (error) {
         console.error("Error fetching data:", error)
         setError("Error fetching data")
@@ -56,7 +66,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
     }
 
     fetchBotNameAndMessages()
-  }, [user_data, access_token, chatSession, publicChat, publicChatHeaders])
+  }, [user_data, access_token, chatSession, publicChat, publicChatHeaders, newSessionKey])
 
   useEffect(() => {
     async function getOrgAgentList() {
@@ -67,7 +77,22 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
   useEffect(() => {
     setMessages([])
+    // Only skip loading history when user explicitly triggered "New Session" (newSessionKey incremented), not on initial load
+    const isUserTriggeredNewSession =
+      prevNewSessionKeyRef.current !== undefined &&
+      newSessionKey !== prevNewSessionKeyRef.current
+    prevNewSessionKeyRef.current = newSessionKey
+    if (isUserTriggeredNewSession) {
+      skipNextLoadHistoryRef.current = true
+    }
   }, [sessionId, newSessionKey])
+
+  // When user selects an agent, clear messages immediately so only greeting shows (new session)
+  useEffect(() => {
+    if (selectedAgentName) {
+      setMessages([])
+    }
+  }, [selectedAgentName])
 
   const fetchBotData = async () => {
     let org_id

@@ -211,18 +211,17 @@ export const Configuration = () => {
   }, [availableTabs, activeTab])
 
   return (
-    <div className="mb-10">
-      <div className="flex">
+    <div className="mb-10 min-h-0">
+      <div className="flex shrink-0">
         {availableTabs.map((tab) => {
           return (
             <button
               onClick={() => setActiveTab(tab.key)}
               key={tab.key}
-              className={`px-4 py-2 text-sm font-medium ${
-                activeTab === tab.key
-                  ? "border-b-2 border-blue-600 "
-                  : "text-gray-600 hover:text-blue-600"
-              }`}
+              className={`px-4 py-2 text-sm font-medium ${activeTab === tab.key
+                ? "border-b-2 border-blue-600 "
+                : "text-gray-600 hover:text-blue-600"
+                }`}
             >
               {tab.label}
             </button>
@@ -231,7 +230,7 @@ export const Configuration = () => {
       </div>
 
       {/* Tab Content */}
-      <div className="mt-4">
+      <div className="mt-4 pb-16">
         {activeTab === "support_workflow" && (
           <>
             <ul className="list-none pl-5">
@@ -335,11 +334,10 @@ export const Configuration = () => {
                 <button
                   disabled={isLoading} // ADD THIS
                   onClick={() => savePrompts("customer_insights")}
-                  className={`rounded-lg px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 ${
-                    isLoading
-                      ? "cursor-not-allowed bg-gray-400" // ADD LOADING STYLES
-                      : "bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600"
-                  }`}
+                  className={`rounded-lg px-6 py-2 font-semibold text-white shadow-md transition-all duration-300 ${isLoading
+                    ? "cursor-not-allowed bg-gray-400" // ADD LOADING STYLES
+                    : "bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600"
+                    }`}
                 >
                   {isLoading ? "Updating..." : "Update"} {/* ADD LOADING TEXT */}
                 </button>
