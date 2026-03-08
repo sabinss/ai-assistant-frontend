@@ -158,7 +158,7 @@ function Navbar() {
   return (
     <div
       ref={divRef}
-      className={`absolute z-50 box-border h-screen ${showSideBar ? "w-[300px]" : "w-[100px]"} overflow-y-scroll border-r  bg-white shadow-lg transition-all  duration-150 md:relative `}
+      className={`absolute z-50 box-border h-full ${showSideBar ? "w-[300px]" : "w-[100px]"} overflow-y-auto border-r  bg-white shadow-lg transition-all  duration-150 md:relative `}
     >
       <div className=" mx-5 mb-16 flex flex-col gap-1 py-4 pt-2">
         {navLinks.main.map((nav, index) => (
