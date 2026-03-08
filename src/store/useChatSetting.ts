@@ -8,11 +8,14 @@ type chatConfig = {
   selectedAgentGreeting: string | null
   selectedAgentName: string | null
   newSessionKey: number
+  /** Set to true when "New Session" or agent selection triggers; cleared after fetch effect skips loading history */
+  skipNextHistoryLoad: boolean
   setWorkFlowFlag: (workflowFlag: boolean) => void
   setMockData: (mockData: string) => void
   setSessionId: (sessionId: any) => void
   setSelectedAgentInfo: (greeting: string | null, agentName: string | null) => void
   triggerNewSession: () => void
+  clearSkipNextHistoryLoad: () => void
 }
 
 const useChatConfig = create<chatConfig>((set) => ({
@@ -22,13 +25,16 @@ const useChatConfig = create<chatConfig>((set) => ({
   selectedAgentGreeting: null,
   selectedAgentName: null,
   newSessionKey: 0,
+  skipNextHistoryLoad: false,
 
   setWorkFlowFlag: (flag) => set({ workflowFlag: flag }),
   setMockData: (mockData) => set({ mockData }),
   setSessionId: (sessionId: any) => set({ sessionId }),
   setSelectedAgentInfo: (greeting, agentName) =>
     set({ selectedAgentGreeting: greeting ?? null, selectedAgentName: agentName ?? null }),
-  triggerNewSession: () => set((s) => ({ newSessionKey: s.newSessionKey + 1 })),
+  triggerNewSession: () =>
+    set((s) => ({ newSessionKey: s.newSessionKey + 1, skipNextHistoryLoad: true })),
+  clearSkipNextHistoryLoad: () => set({ skipNextHistoryLoad: false }),
 }))
 
 export default useChatConfig
