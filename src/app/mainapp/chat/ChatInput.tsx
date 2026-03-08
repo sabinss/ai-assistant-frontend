@@ -560,7 +560,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
     let fullMessage = "" // Moved outside try block for access in catch
 
     // Use provided agentName or fall back to selectedAgents[0]
-    const agentToUse = agentName || selectedAgents[0]
+    const agentToUse = agentName || selectedAgents[0]?.name
 
     // Add initial message with loading status
     appendMessage({
