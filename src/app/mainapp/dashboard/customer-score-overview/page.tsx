@@ -20,6 +20,7 @@ import {
 } from "chart.js"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { renderSectionTitle } from "@/lib/sectionTitle"
+import { generateUniqueSessionId } from "@/lib/utils"
 import CustomerSlideIn from "../CustomerSlideIn"
 import useOrgCustomer from "@/store/organization_customer"
 import useAuth from "@/store/user"
@@ -88,7 +89,7 @@ export default function Page() {
   const sendCustomerMessageToBackend = async (message: string) => {
     setCustomerMessageStatus(true)
     const messageId = `stream_${Date.now()}`
-    const newSession = Math.floor(Math.random() * 1000).toString()
+    const newSession = generateUniqueSessionId()
     const messagePayload = {
       sender: "user",
       message: message,

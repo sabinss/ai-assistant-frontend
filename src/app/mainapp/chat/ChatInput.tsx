@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, generateUniqueSessionId } from "@/lib/utils"
 import { IoMdSend } from "react-icons/io"
 import { MdStop } from "react-icons/md"
 import http from "@/config/http"
@@ -845,12 +845,12 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
         triggerNewSession()
         setSessionId(null)
         if (publicChat) {
-          const newSessionId = Math.floor(Math.random() * 9000).toString()
+          const newSessionId = generateUniqueSessionId()
           localStorage.setItem("chat_session_agile_move", newSessionId)
           setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSessionId })
           setSessionId(newSessionId)
         } else {
-          const newSession = Math.floor(Math.random() * 1000).toString()
+          const newSession = generateUniqueSessionId()
           try {
             const res = await http.get(
               `user/profile/changeSession?session=${newSession}`,

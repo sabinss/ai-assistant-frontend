@@ -1,5 +1,6 @@
 import { renderSectionTitle } from "@/lib/sectionTitle"
 import { formatCurrency } from "@/utility"
+import { generateUniqueSessionId } from "@/lib/utils"
 import { ChevronRight, Search } from "lucide-react"
 import CustomerSlideIn from "../CustomerSlideIn"
 import { useState, useMemo } from "react"
@@ -50,7 +51,7 @@ export default function ImmediateActions({
   const sendCustomerMessageToBackend = async (message: string) => {
     setCustomerMessageStatus(true)
     const messageId = `stream_${Date.now()}`
-    const newSession = Math.floor(Math.random() * 1000).toString()
+    const newSession = generateUniqueSessionId()
     const messagePayload = {
       sender: "user",
       message: message,
