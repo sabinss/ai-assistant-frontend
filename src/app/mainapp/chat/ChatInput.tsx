@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import { buttonVariants } from "@/components/ui/button"
-import { cn, generateUniqueSessionId } from "@/lib/utils"
+import { cn, generateSessionIdLength5 } from "@/lib/utils"
 import { IoMdSend } from "react-icons/io"
 import { MdStop } from "react-icons/md"
 import http from "@/config/http"
@@ -839,20 +839,20 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
         triggerNewSession()
         setSessionId(null)
         if (publicChat) {
-          const newSessionId = generateUniqueSessionId()
-          localStorage.setItem("chat_session_agile_move", newSessionId)
-          setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSessionId })
+          const newSessionId = generateSessionIdLength5()
+          localStorage.setItem("chat_session_agile_move", String(newSessionId))
+          setPublicChatHeaders({ ...publicChatHeaders, chat_session: String(newSessionId) })
           setSessionId(newSessionId)
         } else {
-          const newSession = generateUniqueSessionId()
+          const newSession = generateSessionIdLength5()
           try {
             const res = await http.get(
               `user/profile/changeSession?session=${newSession}`,
               { headers: { Authorization: `Bearer ${access_token}` } }
             )
-            setChatSession(res?.data?.newSession ?? newSession)
+            setChatSession(res?.data?.newSession ?? String(newSession))
           } catch (_) {
-            setChatSession(newSession)
+            setChatSession(String(newSession))
           }
           setSessionId(newSession)
         }

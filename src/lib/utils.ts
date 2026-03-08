@@ -17,3 +17,8 @@ export function generateUniqueSessionId(): string {
   }
   return `${Date.now()}-${Math.random().toString(36).slice(2, 15)}`
 }
+
+/** Random 5-digit integer for session id / chat session id (10000–99999). Not guaranteed unique (90k values). */
+export function generateSessionIdLength5(): number {
+  return Math.floor(10000 + Math.random() * 90000)
+}
