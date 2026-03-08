@@ -45,7 +45,8 @@ export default function GoogleCallback() {
         console.log("data----", data)
         if (data?.data?.success) {
           console.log("code exchanged successfully")
-          window.location.href = `${process.env.NEXT_PUBLIC_APP_FE_URL}/mainapp/profile`
+          // Use current origin so production stays on myclode.com instead of env (which may be localhost)
+          window.location.href = `${window.location.origin}/mainapp/profile`
         } else {
           setError("Token exchange failed")
         }
@@ -64,7 +65,7 @@ export default function GoogleCallback() {
         <p>Error: {error}</p>
         <button
           onClick={() =>
-            (window.location.href = `${process.env.NEXT_PUBLIC_APP_FE_URL}/mainapp/chat`)
+            (window.location.href = `${window.location.origin}/mainapp/chat`)
           }
           style={{
             padding: "10px 20px",
