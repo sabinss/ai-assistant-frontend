@@ -70,7 +70,7 @@ export default function page() {
       if (error.response?.status === 401) {
         toast.error(error.response?.data?.message || "Unauthorized! Invalid credentials.")
       } else {
-        toast.error("Something went wrong. Please try again.")
+        toast.error(error.response?.data?.message ?? "Something went wrong. Please try again.")
       }
     }
   }
@@ -336,11 +336,10 @@ const EmailVerifyDialog = ({
           <button
             onClick={handleResendOTP}
             disabled={resendCooldown > 0 || isResending}
-            className={`mt-1 text-sm font-medium ${
-              resendCooldown > 0 || isResending
-                ? "cursor-not-allowed text-gray-400"
-                : "cursor-pointer text-[#174894] hover:underline"
-            }`}
+            className={`mt-1 text-sm font-medium ${resendCooldown > 0 || isResending
+              ? "cursor-not-allowed text-gray-400"
+              : "cursor-pointer text-[#174894] hover:underline"
+              }`}
           >
             {isResending
               ? "Sending..."
