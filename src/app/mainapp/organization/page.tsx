@@ -163,7 +163,7 @@ export default function Edit() {
 
   return (
     <div className="w-full p-4 text-[#333333]">
-      <div className="card w-full rounded-lg border bg-white p-4 md:w-2/5">
+      <div className="card w-full rounded-lg border bg-white p-4 md:w-full">
         <div className="top flex justify-between">
           <div className="hidden pt-2 md:block">
             {isEditingAssistantName ? (
@@ -252,7 +252,7 @@ export default function Edit() {
 
 
       <ChatProvider org_id={organizationId} />
-      <div className="card mt-4 w-full rounded-lg border bg-white p-4 md:w-2/5">
+      <div className="card mt-4 w-full rounded-lg border bg-white p-4 md:w-full">
         <p className="mb-3 text-lg font-medium text-[#333333]">Organization Details</p>
         {isLoadingDetail ? (
           <div className="flex flex-col items-center justify-center gap-4 py-8">
@@ -274,7 +274,7 @@ export default function Edit() {
               <label className="mb-1 block text-sm text-[#838383]">Organization Detail</label>
               <textarea
                 className="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-[#333333] outline-none focus:border-[#174894] focus:ring-1 focus:ring-[#174894]"
-                rows={3}
+                rows={6}
                 placeholder="Enter organization details..."
                 value={organizationDetail}
                 onChange={(e) => setOrganizationDetail(e.target.value)}
@@ -376,7 +376,7 @@ const ChatProvider = ({ org_id }) => {
   }
 
   return (
-    <div className="card w-full rounded-lg  border bg-white p-4 text-[#333333] md:w-2/5">
+    <div className="card w-full rounded-lg  border bg-white p-4 text-[#333333] md:w-full mt-4">
       <p className="text-bold text-xl">Public Chat Link</p>
       <textarea
         className="w-full rounded-md bg-gray-300 p-2"

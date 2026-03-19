@@ -122,7 +122,7 @@ export default function Page() {
         })
         setOrgToken(res.data.token)
         setSettingData(res.data.settings)
-      } catch (err) {}
+      } catch (err) { }
     }
     getOrgToken()
   }, [])
@@ -291,6 +291,19 @@ export default function Page() {
           />
         </div>
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
+          <h3 className="text-sm text-primary">Tenant Isolation</h3>
+          <select
+            name="tenant_isolation"
+            className="mt-2 h-10 w-full rounded-md border border-[#CCCCCC] bg-[#F7f7f7] px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={orgSetting?.tenant_isolation ?? ""}
+            onChange={handleOrgSettingDb}
+          >
+            <option value="">Select</option>
+            <option value="Shared">Shared</option>
+            <option value="Dedicated">Dedicated</option>
+          </select>
+        </div>
+        <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Zendesk Token</h3>
           <Input
             name="zendesk_token"
@@ -330,19 +343,7 @@ export default function Page() {
             onChange={handleOrgSettingDb}
           />
         </div>
-        <div className="apikeyflex mt-4 flex-col md:w-1/2">
-          <h3 className="text-sm text-primary">Tenant Isolation</h3>
-          <select
-            name="tenant_isolation"
-            className="mt-2 h-10 w-full rounded-md border border-[#CCCCCC] bg-[#F7f7f7] px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={orgSetting?.tenant_isolation ?? ""}
-            onChange={handleOrgSettingDb}
-          >
-            <option value="">Select</option>
-            <option value="Shared">Shared</option>
-            <option value="Dedicated">Dedicated</option>
-          </select>
-        </div>
+
         <div className="apikeyflex mt-4 flex-col">
           <h3 className="text-sm text-primary">Organization Token</h3>
 
