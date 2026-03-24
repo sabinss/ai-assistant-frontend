@@ -553,9 +553,9 @@ export const AgentTable = () => {
                     ? formData.tools_used
                     : typeof formData.tools_used === "string" && formData.tools_used
                       ? formData.tools_used
-                          .split(",")
-                          .map((t: string) => t.trim())
-                          .filter(Boolean)
+                        .split(",")
+                        .map((t: string) => t.trim())
+                        .filter(Boolean)
                       : []
                 }
                 onChange={(tools) => setFormData({ ...formData, tools_used: tools })}
@@ -741,19 +741,19 @@ export const AgentTable = () => {
         </div>
       ) : (
         <>
-          {!isIndividual && (
-            <div className="flex justify-end p-3">
-              <button
-                onClick={handleAddNew}
-                className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md hover:from-blue-800 hover:to-blue-600"
-              >
-                <div className="flex items-center">
-                  <FaPlusCircle />
-                  <span className="pl-3"> Add New</span>
-                </div>
-              </button>
-            </div>
-          )}
+          {/* {!isIndividual && (  */}
+          <div className="flex justify-end p-3">
+            <button
+              onClick={handleAddNew}
+              className="rounded-lg bg-gradient-to-r from-blue-700 to-blue-500 px-6 py-2 font-semibold text-white shadow-md hover:from-blue-800 hover:to-blue-600"
+            >
+              <div className="flex items-center">
+                <FaPlusCircle />
+                <span className="pl-3"> Add New</span>
+              </div>
+            </button>
+          </div>
+          {/* )} */}
           <Table className="mt-2">
             <TableHeader>
               <TableRow className="bg-[#174894]">
@@ -785,16 +785,16 @@ export const AgentTable = () => {
                             Start
                           </button>
                         )}
-                        {!isIndividual && (
-                          <>
-                            <button onClick={() => handleEdit(agent)}>
-                              <FaEdit size={20} />
-                            </button>
-                            <button onClick={() => handleDelete(agent)}>
-                              <MdDelete size={20} />
-                            </button>
-                          </>
-                        )}
+                        {/* {!isIndividual && ( */}
+                        <>
+                          <button onClick={() => handleEdit(agent)}>
+                            <FaEdit size={20} />
+                          </button>
+                          <button onClick={() => handleDelete(agent)}>
+                            <MdDelete size={20} />
+                          </button>
+                        </>
+                        {/* )} */}
                       </div>
                     </TableCell>
                   </TableRow>
