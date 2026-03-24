@@ -118,6 +118,10 @@ export const AVAILABLE_TOOLS: Tool[] = [
   {
     name: "read_gmail",
     description: "Read email from Gmail inbox."
+  },
+  {
+    name: "update_customer_summary",
+    description: "To update customer summary."
   }
 ]
 
