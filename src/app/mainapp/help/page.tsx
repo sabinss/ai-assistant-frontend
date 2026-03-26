@@ -47,7 +47,7 @@ const HelpPage = () => {
           Click to copy EmbedCode
         </button>
       </div>
-      <div className="flex w-full flex-col rounded-md border border-[#D7D7D7] bg-white text-[#333333]">
+      <div className="flex min-h-[70vh] w-full flex-col rounded-md border border-[#D7D7D7] bg-white text-[#333333]">
         <ChatTopBar />
         <ChatMain />
       </div>

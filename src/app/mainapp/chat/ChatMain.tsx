@@ -40,7 +40,11 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   useEffect(() => {
     console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
-      setMessages([])
+      // Public/Help: do not clear here — GET /conversations/public often returns the newest
+      // row with an empty `answer` before the DB matches POST; clearing would wipe the reply we just showed.
+      if (!publicChat) {
+        setMessages([])
+      }
       setIsLoading(true)
       try {
         if (greeting === "Hello X" || botName === "Bot X") {
@@ -162,26 +166,52 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
         : useAuth.getState().chatSession
       if (currentSession !== sessionWeAreFetching) return
 
-      const messageArray = res?.data || []
-      setMessages([])
+      const raw = res?.data
+      const messageArray = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === "object" && Array.isArray((raw as { data?: unknown }).data)
+          ? (raw as { data: any[] }).data
+          : []
+
+      const next: MessageObject[] = []
       messageArray?.forEach((message: any) => {
-        appendMessage({
+        const answerRaw =
+          message.answer ?? message.response ?? message.text ?? message.reply ?? message.content
+        const answerText =
+          typeof answerRaw === "string"
+            ? answerRaw
+            : answerRaw != null && typeof answerRaw !== "object"
+              ? String(answerRaw)
+              : ""
+        next.push({
           id: message._id,
           sender: "user",
-          message: message.question,
+          message: message.question ?? "",
           time: formatDate(message.createdAt.toString()),
           liked: false,
           disliked: false,
         })
-        appendMessage({
+        next.push({
           id: `ANS_${message._id}`,
           sender: botName,
-          message: message.answer,
+          message: answerText,
           time: formatDate(message.createdAt.toString()),
           liked: message.liked_disliked === "liked",
           disliked: message.liked_disliked === "disliked",
         })
       })
+
+      setMessages((prev) =>
+        next.map((m) => {
+          if (m.sender !== "user" && (!m.message || !String(m.message).trim())) {
+            const old = prev.find((p) => p.id === m.id)
+            if (old?.message && String(old.message).trim()) {
+              return { ...m, message: old.message }
+            }
+          }
+          return m
+        })
+      )
     } catch (error) {
       console.error("Error fetching user messages:", error)
       setError("Error fetching user messages")
@@ -205,20 +235,28 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
   return (
     <div
-      className={`mx-1 flex    flex-col px-1 ${publicChat ? "h-[90vh] md:h-[87vh]" : "h-[75vh] md:h-[77vh]"} `}
+      className={`mx-1 flex flex-col px-1 ${
+        publicChat
+          ? "min-h-0 flex-1 overflow-hidden"
+          : "h-[75vh] md:h-[77vh]"
+      } `}
     >
       {error && <div className="mb-2 bg-red-500 p-2 text-white">{error}</div>}
 
       {isLoading && (
         <div className="mb-2 bg-gray-200 p-2 text-gray-700">Loading...</div>
       )}
-      <ChatList messages={messages} />
-      <ChatInput
-        appendMessage={appendMessage}
-        agentList={agentList}
-        initialQuery={initialQuery}
-        historyLoading={publicChat && isLoading}
-      />
+      <div className={publicChat ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1"}>
+        <ChatList messages={messages} />
+      </div>
+      <div className="shrink-0">
+        <ChatInput
+          appendMessage={appendMessage}
+          agentList={agentList}
+          initialQuery={initialQuery}
+          historyLoading={publicChat && isLoading}
+        />
+      </div>
     </div>
   )
 }
