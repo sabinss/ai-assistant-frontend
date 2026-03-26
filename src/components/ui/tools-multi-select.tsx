@@ -124,7 +124,7 @@ export const AVAILABLE_TOOLS: Tool[] = [
     description: "To update customer summary."
   },
   {
-    name: "query_excel_sql ⁠",
+    name: "query_excel_sql",
     description: "Query an Excel file or SQL database using natural language."
   }
 ]
