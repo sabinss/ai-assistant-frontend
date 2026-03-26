@@ -12,12 +12,13 @@ import useChatConfig from "@/store/useChatSetting"
 import useApiType from "@/store/apiType"
 import { FaRegLightbulb } from "react-icons/fa"
 import CHAT_PROMPTS from "./chat-prompt"
+import { runPublicConversationAdd, type PublicChatPayload } from "./publicConversationAdd"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
   agentList: any[]
   initialQuery?: string | null
-  /** When true, chat history / greeting is still loading — block send to avoid races with history replace */
+  /** Public / Help only: wait for history load so replies are not cleared by a late fetch */
   historyLoading?: boolean
 }
 
@@ -43,7 +44,7 @@ const ChatInput: React.FC<ChildProps> = ({
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
   const [chatPrompts, setChatPrompts] = useState([])
-  const [publicChatReponsePayload, setPublicChatResponse] = useState({
+  const [publicChatReponsePayload, setPublicChatResponse] = useState<PublicChatPayload>({
     user_email: null,
     customer_id: null,
   })
@@ -176,8 +177,19 @@ const ChatInput: React.FC<ChildProps> = ({
     })
     try {
       if (publicChat) {
-        // Backend may return JSON or SSE; axios only handled JSON and missed streamed replies.
-        await handlePublicChatResponse(query)
+        const headers = publicChatHeaders as Record<string, string>
+        await runPublicConversationAdd({
+          query,
+          orgId: String((publicChatHeaders as any)?.org_id ?? ""),
+          chatSession: String((publicChatHeaders as any)?.chat_session ?? ""),
+          accessToken: access_token ?? "",
+          publicChatHeaders: headers,
+          botName,
+          getClockTime,
+          appendMessage,
+          payloadState: publicChatReponsePayload,
+          setPublicChatResponse,
+        })
       } else {
         // Prioritize agent selection
         // For individual users, if no agent is selected, use "search agent"
@@ -359,172 +371,6 @@ const ChatInput: React.FC<ChildProps> = ({
     } finally {
       // Clean up abort controller
       abortControllerRef.current = null
-    }
-  }
-
-  const handlePublicChatResponse = async (query: string) => {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/public/add?org_id=${(publicChatHeaders as any)?.org_id}&chat_session=${(publicChatHeaders as any)?.chat_session}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...publicChatHeaders,
-          Authorization: `Bearer ${access_token}`,
-        },
-        body: JSON.stringify({
-          question: query,
-          user_email: publicChatReponsePayload.user_email,
-          customer_id: publicChatReponsePayload.customer_id,
-        }),
-      }
-    )
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const contentType = response.headers.get("content-type") || ""
-
-    if (contentType.includes("application/json")) {
-      const data = await response.json()
-      const payload = data?.data ?? data
-      const user_email = payload?.user_email ?? data?.user_email
-      const customer_id = payload?.customer_id ?? data?.customer_id
-      if (user_email != null || customer_id != null) {
-        setPublicChatResponse((prevState) => ({
-          ...prevState,
-          user_email: user_email ?? prevState.user_email,
-          customer_id: customer_id ?? prevState.customer_id,
-        }))
-      }
-      const answer =
-        payload?.answer ??
-        payload?.message ??
-        payload?.response ??
-        (typeof payload === "string" ? payload : "")
-      const convId = payload?._id ?? payload?.id ?? data?._id ?? data?.id
-      appendMessage({
-        sender: botName,
-        message: answer || "(No text in response)",
-        time: getClockTime(),
-        id: "ANS_" + String(convId ?? Date.now()),
-      })
-      return
-    }
-
-    const messageId = `stream_${Date.now()}`
-
-    appendMessage({
-      sender: botName,
-      message: "",
-      time: getClockTime(),
-      id: messageId,
-      isStreaming: true,
-      status: "Analyzing your request...",
-    })
-
-    try {
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error("Response body is not readable")
-      }
-
-      let fullMessage = ""
-      let sessionIdFromResponse = null
-      let userEmail = publicChatReponsePayload.user_email
-      let customerId = publicChatReponsePayload.customer_id
-
-      // Read the stream
-      const decoder = new TextDecoder()
-      let buffer = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        // Decode the chunk and add it to our buffer
-        buffer += decoder.decode(value, { stream: true })
-
-        // Process complete SSE messages
-        const lines = buffer.split("\n\n")
-        buffer = lines.pop() || "" // Keep the last incomplete chunk
-
-        for (const line of lines) {
-          if (line.trim() && line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.substring(6))
-
-              // Handle completion
-              if (data.done) {
-                // Update session ID if provided
-                if (data.session_id) {
-                  sessionIdFromResponse = data.session_id
-                }
-                continue
-              }
-
-              // Update user_email and customer_id if they change
-              if (data.user_email && !userEmail) {
-                userEmail = data.user_email
-              }
-              if (data.customer_id && !customerId) {
-                customerId = data.customer_id
-              }
-
-              // Handle status updates
-              if (data.status) {
-                appendMessage({
-                  sender: botName,
-                  message: fullMessage,
-                  time: getClockTime(),
-                  id: messageId,
-                  isStreaming: true,
-                  status: data.status,
-                })
-              }
-
-              // Handle actual message content
-              if (data.message) {
-                fullMessage += data.message
-                appendMessage({
-                  sender: botName,
-                  message: fullMessage,
-                  time: getClockTime(),
-                  id: messageId,
-                  isStreaming: true,
-                })
-              }
-            } catch (e) {
-              console.error("Error parsing stream data:", e)
-            }
-          }
-        }
-      }
-
-      // Update the public chat response payload with any new information
-      setPublicChatResponse({
-        user_email: userEmail,
-        customer_id: customerId,
-      })
-
-      // Final message update after stream completes
-      appendMessage({
-        sender: botName,
-        message: fullMessage.trim() ? fullMessage : "(No text in response)",
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
-    } catch (error) {
-      console.error("Stream error:", error)
-      appendMessage({
-        sender: botName,
-        message: "Error occurred while streaming the response.",
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
     }
   }
 
