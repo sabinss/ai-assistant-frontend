@@ -1,11 +1,32 @@
 "use client"
 
+import { useEffect } from "react"
 import ChatMain from "../chat/ChatMain"
 import ChatTopBar from "../chat/ChatTopBar"
 import useAuth from "@/store/user"
+import usePublicChat from "@/store/public_chat"
+import { generateSessionIdLength5 } from "@/lib/utils"
 
 const HelpPage = () => {
   const { user_data } = useAuth()
+  const { setPublicChat, setPublicChatHeaders } = usePublicChat()
+
+  useEffect(() => {
+    let chatSession = localStorage.getItem("chat_session_agile_move")
+    if (!chatSession) {
+      chatSession = String(generateSessionIdLength5())
+      localStorage.setItem("chat_session_agile_move", chatSession)
+    }
+    setPublicChatHeaders({
+      org_id: user_data?.organization ?? "",
+      chat_session: chatSession,
+    })
+    setPublicChat(true)
+    return () => {
+      setPublicChat(false)
+      setPublicChatHeaders({})
+    }
+  }, [user_data?.organization, setPublicChat, setPublicChatHeaders])
   const publicChatLink = `${process?.env?.NEXT_PUBLIC_APP_FE_URL}/public_chat?org_id=${user_data?.organization}`
   const embedCode = `<div dataOrg="${user_data?.organization}" id="embed-container" style="font-size: 16px;"></div>
 <script src="${process?.env?.NEXT_PUBLIC_APP_FE_URL}/embedchat.js"></script>`
