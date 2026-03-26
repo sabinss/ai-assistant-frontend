@@ -37,10 +37,12 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   const skipNextLoadHistoryRef = useRef(false)
   const prevNewSessionKeyRef = useRef<number | undefined>(undefined)
 
+  const publicOrgId = (publicChatHeaders as { org_id?: string })?.org_id
+  const publicChatSessionId = (publicChatHeaders as { chat_session?: string })?.chat_session
+
   useEffect(() => {
     console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
-      setMessages([])
       setIsLoading(true)
       try {
         if (greeting === "Hello X" || botName === "Bot X") {
@@ -66,7 +68,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
     }
 
     fetchBotNameAndMessages()
-  }, [user_data, access_token, chatSession, publicChat, publicChatHeaders, newSessionKey])
+  }, [user_data, access_token, chatSession, publicChat, publicOrgId, publicChatSessionId, newSessionKey])
 
   useEffect(() => {
     async function getOrgAgentList() {
@@ -162,10 +164,18 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
         : useAuth.getState().chatSession
       if (currentSession !== sessionWeAreFetching) return
 
-      const messageArray = res?.data || []
-      setMessages([])
+      const raw = res?.data as unknown
+      const messageArray = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === "object" && Array.isArray((raw as { data?: unknown }).data)
+          ? (raw as { data: any[] }).data
+          : raw && typeof raw === "object" && Array.isArray((raw as { results?: unknown }).results)
+            ? (raw as { results: any[] }).results
+            : []
+
+      const next: MessageObject[] = []
       messageArray?.forEach((message: any) => {
-        appendMessage({
+        next.push({
           id: message._id,
           sender: "user",
           message: message.question,
@@ -173,7 +183,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           liked: false,
           disliked: false,
         })
-        appendMessage({
+        next.push({
           id: `ANS_${message._id}`,
           sender: botName,
           message: message.answer,
@@ -182,6 +192,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           disliked: message.liked_disliked === "disliked",
         })
       })
+      setMessages(next)
     } catch (error) {
       console.error("Error fetching user messages:", error)
       setError("Error fetching user messages")
@@ -217,6 +228,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
         appendMessage={appendMessage}
         agentList={agentList}
         initialQuery={initialQuery}
+        historyLoading={publicChat && isLoading}
       />
     </div>
   )
