@@ -25,9 +25,63 @@ function toDisplayText(value: unknown): string {
   return String(value)
 }
 
+function isConversationJsonRecord(o: unknown): o is Record<string, unknown> {
+  if (!o || typeof o !== "object" || Array.isArray(o)) return false
+  const r = o as Record<string, unknown>
+  if (
+    typeof r.answer === "string" ||
+    typeof r.question === "string" ||
+    typeof r._id === "string"
+  ) {
+    return true
+  }
+  const inner = r.data
+  if (inner && typeof inner === "object" && !Array.isArray(inner)) {
+    const d = inner as Record<string, unknown>
+    return (
+      typeof d.answer === "string" ||
+      typeof d.question === "string" ||
+      typeof d._id === "string"
+    )
+  }
+  return false
+}
+
+function appendJsonConversationReply(
+  data: Record<string, unknown>,
+  options: {
+    botName: string
+    getClockTime: () => string
+    appendMessage: (msg: any) => void
+    setPublicChatResponse: Dispatch<SetStateAction<PublicChatPayload>>
+  }
+) {
+  const { botName, getClockTime, appendMessage, setPublicChatResponse } = options
+  const payload = (data?.data as Record<string, unknown>) ?? data
+  const user_email = payload?.user_email ?? data?.user_email
+  const customer_id = payload?.customer_id ?? data?.customer_id
+  if (user_email != null || customer_id != null) {
+    setPublicChatResponse((prevState) => ({
+      ...prevState,
+      user_email: (user_email as string | null) ?? prevState.user_email,
+      customer_id: (customer_id as string | null) ?? prevState.customer_id,
+    }))
+  }
+  const answer = toDisplayText(
+    payload?.answer ?? payload?.message ?? payload?.response ?? payload?.text ?? payload
+  )
+  const convId = payload?._id ?? payload?.id ?? data?._id ?? data?.id
+  appendMessage({
+    sender: botName,
+    message: answer || "(No text in response)",
+    time: getClockTime(),
+    id: "ANS_" + String(convId ?? Date.now()),
+  })
+}
+
 /**
- * Help / public chat only: POST /conversation/public/add and render JSON or SSE (or raw chunk) replies.
- * Kept out of ChatInput so the shared component stays small.
+ * Help / public chat only: POST /conversation/public/add and render JSON or SSE replies.
+ * Reads body as text first so JSON displays even when Content-Type is not application/json.
  */
 export async function runPublicConversationAdd(options: {
   query: string
@@ -81,31 +135,24 @@ export async function runPublicConversationAdd(options: {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
 
-  const contentType = response.headers.get("content-type") || ""
+  const raw = await response.text()
+  const trimmed = raw.trim()
 
-  if (contentType.includes("application/json")) {
-    const data = await response.json()
-    const payload = data?.data ?? data
-    const user_email = payload?.user_email ?? data?.user_email
-    const customer_id = payload?.customer_id ?? data?.customer_id
-    if (user_email != null || customer_id != null) {
-      setPublicChatResponse((prevState) => ({
-        ...prevState,
-        user_email: user_email ?? prevState.user_email,
-        customer_id: customer_id ?? prevState.customer_id,
-      }))
+  if (trimmed.startsWith("{")) {
+    try {
+      const data = JSON.parse(trimmed) as Record<string, unknown>
+      if (isConversationJsonRecord(data)) {
+        appendJsonConversationReply(data, {
+          botName,
+          getClockTime,
+          appendMessage,
+          setPublicChatResponse,
+        })
+        return
+      }
+    } catch {
+      // fall through to SSE-style parsing
     }
-    const answer = toDisplayText(
-      payload?.answer ?? payload?.message ?? payload?.response ?? payload?.text ?? payload
-    )
-    const convId = payload?._id ?? payload?.id ?? data?._id ?? data?.id
-    appendMessage({
-      sender: botName,
-      message: answer || "(No text in response)",
-      time: getClockTime(),
-      id: "ANS_" + String(convId ?? Date.now()),
-    })
-    return
   }
 
   const messageId = `stream_${Date.now()}`
@@ -120,81 +167,87 @@ export async function runPublicConversationAdd(options: {
   })
 
   try {
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error("Response body is not readable")
-    }
-
     let fullMessage = ""
     let userEmail = payloadState.user_email
     let customerId = payloadState.customer_id
 
-    const decoder = new TextDecoder()
-    let buffer = ""
+    for (const block of trimmed.split(/\n\n/)) {
+      for (const line of block.split("\n")) {
+        const t = line.trim()
+        if (!t.startsWith("data: ")) continue
+        try {
+          const data = JSON.parse(t.slice(6))
 
-    while (true) {
-      const { done, value } = await reader.read()
-      if (done) break
-
-      buffer += decoder.decode(value, { stream: true })
-
-      const lines = buffer.split("\n\n")
-      buffer = lines.pop() || ""
-
-      for (const line of lines) {
-        if (line.trim() && line.startsWith("data: ")) {
-          try {
-            const data = JSON.parse(line.substring(6))
-
-            if (data.done) {
-              continue
-            }
-
-            if (data.user_email && !userEmail) {
-              userEmail = data.user_email
-            }
-            if (data.customer_id && !customerId) {
-              customerId = data.customer_id
-            }
-
-            if (data.status) {
-              appendMessage({
-                sender: botName,
-                message: fullMessage,
-                time: getClockTime(),
-                id: messageId,
-                isStreaming: true,
-                status: data.status,
-              })
-            }
-
-            if (data.message) {
-              fullMessage += toDisplayText(data.message)
-              appendMessage({
-                sender: botName,
-                message: fullMessage,
-                time: getClockTime(),
-                id: messageId,
-                isStreaming: true,
-              })
-            }
-          } catch (e) {
-            console.error("Error parsing stream data:", e)
+          if (data.done) {
+            continue
           }
+
+          if (data.user_email && !userEmail) {
+            userEmail = data.user_email
+          }
+          if (data.customer_id && !customerId) {
+            customerId = data.customer_id
+          }
+
+          if (data.status) {
+            appendMessage({
+              sender: botName,
+              message: fullMessage,
+              time: getClockTime(),
+              id: messageId,
+              isStreaming: true,
+              status: data.status,
+            })
+          }
+
+          if (data.message) {
+            fullMessage += toDisplayText(data.message)
+            appendMessage({
+              sender: botName,
+              message: fullMessage,
+              time: getClockTime(),
+              id: messageId,
+              isStreaming: true,
+            })
+          }
+        } catch (e) {
+          console.error("Error parsing stream data:", e)
         }
       }
     }
 
-    if (!fullMessage.trim() && buffer.trim()) {
-      const trimmed = buffer.trim()
+    if (!fullMessage.trim() && trimmed) {
       try {
-        const parsed = JSON.parse(trimmed)
+        const parsed = JSON.parse(trimmed) as Record<string, unknown>
+        if (isConversationJsonRecord(parsed)) {
+          const payload = ((parsed as any)?.data as Record<string, unknown>) ?? parsed
+          const user_email = payload?.user_email ?? parsed?.user_email
+          const customer_id = payload?.customer_id ?? parsed?.customer_id
+          if (user_email != null || customer_id != null) {
+            setPublicChatResponse((prev) => ({
+              ...prev,
+              user_email: (user_email as string | null) ?? prev.user_email,
+              customer_id: (customer_id as string | null) ?? prev.customer_id,
+            }))
+          }
+          const answer = toDisplayText(
+            payload?.answer ?? payload?.message ?? payload?.response ?? payload?.text ?? payload
+          )
+          appendMessage({
+            sender: botName,
+            message: answer || "(No text in response)",
+            time: getClockTime(),
+            id: messageId,
+            isStreaming: false,
+          })
+          return
+        }
         fullMessage = toDisplayText(
-          parsed?.data?.answer ??
-            parsed?.data?.message ??
-            parsed?.data ??
-            parsed?.answer ??
-            parsed?.message ??
+          (parsed as any)?.data?.answer ??
+            (parsed as any)?.data?.message ??
+            (parsed as any)?.data ??
+            (parsed as any)?.answer ??
+            (parsed as any)?.message ??
             parsed
         )
       } catch {
