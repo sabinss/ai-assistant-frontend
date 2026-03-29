@@ -16,6 +16,11 @@ import ReactMarkdown from "react-markdown"
 import rehypeRaw from "rehype-raw" // Allows rendering inline HTML inside Markdown
 import remarkGfm from "remark-gfm"
 
+function stripAnsPrefix(id: unknown): string {
+  const s = id == null ? "" : String(id)
+  return s.replace(/^ANS_/, "")
+}
+
 export const MessageDiv = ({ msg }: any) => {
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
@@ -71,9 +76,10 @@ export const MessageDiv = ({ msg }: any) => {
     // }
   }
   function convertToHTMLList(paragraph: any) {
+    if (paragraph == null || typeof paragraph !== "string") return ""
     const regex = /(\d+\.\s)([^.]+\.\s?)/g // Regular expression to match numbered items and text until the next period
     let matches
-    let updatedParagraph = paragraph?.replace(/\n/g, "") // Remove newline characters
+    let updatedParagraph = paragraph.replace(/\n/g, "") // Remove newline characters
     while ((matches = regex.exec(updatedParagraph)) !== null) {
       const listItem = `<li>${matches[1]}${matches[2]}</li>`
       updatedParagraph = updatedParagraph.replace(matches[0], listItem)
@@ -93,8 +99,8 @@ export const MessageDiv = ({ msg }: any) => {
       // Remove HTML tags if needed (optional)
       const strippedMessage = message.replace(/<\/?[^>]+(>|$)/g, "")
 
-      // Convert Markdown to HTML
-      const htmlMessage = marked(strippedMessage)
+      // Sync parse (marked.parse may be typed as possibly async)
+      const htmlMessage = marked.parser(marked.lexer(strippedMessage))
 
       // Sanitize the HTML content
       const sanitizedHtmlMessage = DOMPurify.sanitize(htmlMessage)
@@ -105,7 +111,8 @@ export const MessageDiv = ({ msg }: any) => {
       return "Error parsing content."
     }
   }
-  const extractConversationId = (id) => {
+  const extractConversationId = (id: string) => {
+    if (id == null || typeof id !== "string") return ""
     if (id.startsWith("ANS_")) {
       return id.split("ANS_")[1]
     } else if (id.startsWith("stream_")) {
@@ -187,7 +194,9 @@ export const MessageDiv = ({ msg }: any) => {
         <div className="group relative w-full pb-6">
           <div className="timeandname  mb-2 flex items-center justify-start gap-2 text-[#838383] ">
             <Image src={bot} className="rounded-full" alt="" height={30} width={30} />
-            <p dangerouslySetInnerHTML={{ __html: botName }} />
+            <span className="font-medium">
+              {publicChat ? (botName ?? "Gabby") : botName}
+            </span>
             <span>{msg.time}</span>
           </div>
           {/* <motion.div
@@ -236,7 +245,7 @@ export const MessageDiv = ({ msg }: any) => {
                     ),
                   }}
                 >
-                  {msg.message}
+                  {msg.message ?? ""}
                 </ReactMarkdown>
               </div>
             </div>
@@ -251,18 +260,14 @@ export const MessageDiv = ({ msg }: any) => {
                     <>
                       <div
                         className="likeholder cursor-pointer"
-                        onClick={
-                          () =>
-                            handleLike(
-                              msg.conversationId
-                                ? msg.conversationId.replace(/^ANS_/, "")
-                                : msg.id?.startsWith("ANS_")
-                                  ? msg.id.replace(/^ANS_/, "")
-                                  : msg.id
-                            )
-                          // handleLike(
-                          //   msg.conversationId?.replace(/^ANS_/, "") || msg.id
-                          // )
+                        onClick={() =>
+                          handleLike(
+                            msg.conversationId != null && msg.conversationId !== ""
+                              ? stripAnsPrefix(msg.conversationId)
+                              : msg.id?.startsWith("ANS_")
+                                ? stripAnsPrefix(msg.id)
+                                : String(msg.id ?? "")
+                          )
                         }
                       >
                         <BiLike size={20} />
@@ -271,11 +276,11 @@ export const MessageDiv = ({ msg }: any) => {
                         className="dislikeholder cursor-pointer"
                         onClick={() =>
                           handleDislike(
-                            msg.conversationId
-                              ? msg.conversationId.replace(/^ANS_/, "")
+                            msg.conversationId != null && msg.conversationId !== ""
+                              ? stripAnsPrefix(msg.conversationId)
                               : msg.id?.startsWith("ANS_")
-                                ? msg.id.replace(/^ANS_/, "")
-                                : msg.id
+                                ? stripAnsPrefix(msg.id)
+                                : String(msg.id ?? "")
                           )
                         }
                       >
@@ -334,7 +339,7 @@ export const MessageDiv = ({ msg }: any) => {
                     ),
                   }}
                 >
-                  {msg.message}
+                  {msg.message ?? ""}
                 </ReactMarkdown>
               </div>
             </div>

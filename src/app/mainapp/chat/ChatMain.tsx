@@ -107,6 +107,25 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
       org_id = user_data?.organization
     }
     if (!org_id) return
+
+    if (publicChat) {
+      try {
+        const response = await http.get(
+          "/organization/greeting_botname?org_id=" + org_id
+        )
+        const org_data = response?.data
+        if (org_data?.assistant_name != null && org_data.assistant_name !== "") {
+          setBotName(String(org_data.assistant_name))
+        }
+        if (org_data?.greeting != null && org_data.greeting !== "") {
+          setGreeting(String(org_data.greeting))
+        }
+      } catch {
+        /* public embed: keep defaults on timeout / errors */
+      }
+      return
+    }
+
     const response = await http.get(
       "/organization/greeting_botname?org_id=" + org_id
     )
@@ -177,6 +196,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
       const next: MessageObject[] = []
       messageArray?.forEach((message: any) => {
+        if (!message || typeof message !== "object") return
         const answerRaw =
           message.answer ?? message.response ?? message.text ?? message.reply ?? message.content
         const answerText =
@@ -186,8 +206,10 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
               ? String(answerRaw)
               : ""
         const msgTime = safeFormatMessageTime(message.createdAt)
+        const rowId = message._id != null ? String(message._id) : ""
+        if (!rowId) return
         next.push({
-          id: message._id,
+          id: rowId,
           sender: "user",
           message: message.question ?? "",
           time: msgTime,
@@ -195,8 +217,8 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           disliked: false,
         })
         next.push({
-          id: `ANS_${message._id}`,
-          sender: botName,
+          id: `ANS_${rowId}`,
+          sender: publicChat ? (botName ?? "Gabby") : botName,
           message: answerText,
           time: msgTime,
           liked: message.liked_disliked === "liked",
