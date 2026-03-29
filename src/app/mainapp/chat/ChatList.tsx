@@ -5,6 +5,7 @@ import { motion } from "framer-motion"
 import useNavBarStore from "@/store/store"
 import useFormStore from "@/store/formdata"
 import useChatConfig from "@/store/useChatSetting"
+import usePublicChat from "@/store/public_chat"
 import BeatLoader from "react-spinners/BeatLoader"
 
 interface ChatListProps {
@@ -12,6 +13,7 @@ interface ChatListProps {
 }
 
 const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
+  const { publicChat } = usePublicChat()
   const { botName, greeting } = useNavBarStore()
   const { selectedAgentGreeting, selectedAgentName } = useChatConfig()
   const { isMessageLoading } = useFormStore()
@@ -25,9 +27,13 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
   }, [messages, isMessageLoading])
 
   const greeting_message = {
-    sender: botName,
+    sender: publicChat ? (botName ?? "Gabby") : botName,
     time: "",
-    message: greeting,
+    message: publicChat
+      ? typeof greeting === "string"
+        ? greeting
+        : "Hello X"
+      : greeting,
     id: "greeting",
   }
 

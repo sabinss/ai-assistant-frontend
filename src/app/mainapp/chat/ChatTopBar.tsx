@@ -24,7 +24,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from "react-day-picker"
 
-export default function ChatTopbar() {
+type ChatTopbarProps = {
+  /** Prefer URL param on first paint (public embed); falls back to store. */
+  visitorDisplayNameFromUrl?: string | null
+}
+
+export default function ChatTopbar({
+  visitorDisplayNameFromUrl,
+}: ChatTopbarProps = {}) {
   const {
     publicChat,
     publicChatHeaders,
@@ -71,6 +78,15 @@ export default function ChatTopbar() {
   }
   const { botName } = useNavBarStore()
 
+  /* Visitor title is public / embed only — ignore store URL when in main app chat */
+  const visitorTitle = publicChat
+    ? (
+        visitorDisplayNameFromUrl?.trim() ||
+        publicVisitorDisplayName?.trim() ||
+        ""
+      ).trim()
+    : ""
+
   return (
     <div className="flex  w-full flex-col rounded-md bg-muted p-3 ">
       <div className="flex items-center justify-between">
@@ -84,8 +100,8 @@ export default function ChatTopbar() {
           />
           <h2 className="inline text-xl font-bold">
             Chat with{" "}
-            {publicChat && publicVisitorDisplayName?.trim()
-              ? publicVisitorDisplayName.trim()
+            {visitorTitle
+              ? visitorTitle
               : botName
                 ? botName
                 : "Gabby"}
