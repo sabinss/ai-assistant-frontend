@@ -25,8 +25,12 @@ import {
 import { Button } from "react-day-picker"
 
 export default function ChatTopbar() {
-  const { publicChat, publicChatHeaders, setPublicChatHeaders } =
-    usePublicChat()
+  const {
+    publicChat,
+    publicChatHeaders,
+    setPublicChatHeaders,
+    publicVisitorDisplayName,
+  } = usePublicChat()
   const { setSessionId, setSelectedAgentInfo, triggerNewSession } = useChatConfig()
   const { apiType, setApiType } = useApiType()
   const [selectedOption, setSelectedOption] = useState(apiType)
@@ -79,7 +83,12 @@ export default function ChatTopbar() {
             width={30}
           />
           <h2 className="inline text-xl font-bold">
-            Chat with {botName ? botName : "Gabby"}
+            Chat with{" "}
+            {publicChat && publicVisitorDisplayName?.trim()
+              ? publicVisitorDisplayName.trim()
+              : botName
+                ? botName
+                : "Gabby"}
           </h2>
           {/* <span className="inline text-xl font-bold">
             Chat about {publicChat && "Product Knowledge"}

@@ -1,10 +1,72 @@
 (function () {
+    const CHAT_BASE_URL =
+      'https://main.d2g25vge8n6qq6.amplifyapp.com/public_chat';
+  
+    /**
+     * Resolves org + user from (priority):
+     * 1) window.__cowrkrEmbedConfig — { orgId, user: { name, email, userId, ... } }
+     * 2) data-user-json on #embed-container — JSON string of a user object
+     * 3) data-org + data-user-name / data-user-email / data-user-id on the container
+     */
+    function getEmbedContext(embedContainer) {
+      const cfg = window.__cowrkrEmbedConfig;
+      let userObj = null;
+  
+      if (cfg && cfg.user && typeof cfg.user === 'object') {
+        userObj = cfg.user;
+      }
+  
+      const jsonRaw = embedContainer.getAttribute('data-user-json');
+      if (!userObj && jsonRaw) {
+        try {
+          userObj = JSON.parse(jsonRaw);
+        } catch {
+          /* ignore invalid JSON */
+        }
+      }
+  
+      const orgId = (cfg && cfg.orgId) || embedContainer.getAttribute('data-org');
+  
+      const name =
+        userObj?.name ?? embedContainer.getAttribute('data-user-name') ?? '';
+      const email =
+        userObj?.email ?? embedContainer.getAttribute('data-user-email') ?? '';
+      const userId =
+        userObj?.userId ??
+        userObj?.id ??
+        embedContainer.getAttribute('data-user-id') ??
+        '';
+  
+      return {
+        orgId,
+        user: { name, email, userId },
+      };
+    }
+  
+    function buildChatIframeSrc(ctx) {
+      const params = new URLSearchParams();
+      params.set('org_id', ctx.orgId);
+  
+      const { name: userName, email: userEmail, userId } = ctx.user;
+  
+      if (userName) {
+        params.set('user_name', userName);
+        params.set('display_name', userName);
+      }
+      if (userEmail) params.set('user_email', userEmail);
+      if (userId) params.set('user_id', userId);
+  
+      return `${CHAT_BASE_URL}?${params.toString()}`;
+    }
+  
     function init() {
       const embedContainer = document.getElementById('embed-container');
       if (!embedContainer) return;
   
-      const orgId = embedContainer.getAttribute('data-org');
-      if (!orgId) return;
+      const ctx = getEmbedContext(embedContainer);
+      if (!ctx.orgId) return;
+  
+      const iframeSrc = buildChatIframeSrc(ctx);
   
       // Mount on document.body so position:fixed is always relative to the viewport
       // (not clipped or offset by a transformed ancestor like #root).
@@ -20,7 +82,6 @@
             <div id="chat-modal" class="cowrkr-chat-modal" style="display:none; position:absolute; right:0; bottom:56px; width:320px; max-height:min(500px, calc(100vh - 120px)); box-shadow:0 8px 32px rgba(0,0,0,.18); border-radius:12px; overflow:hidden; background:#fff;">
               <iframe
                 title="Chat"
-                src="https://main.d2g25vge8n6qq6.amplifyapp.com/public_chat?org_id=${orgId}"
                 style="display:block; width:100%; height:500px; max-height:min(500px, calc(100vh - 120px)); border:0;">
               </iframe>
             </div>
@@ -30,6 +91,8 @@
       const wrap = document.createElement('div');
       wrap.innerHTML = embeddedContent.trim();
       const widgetRoot = wrap.firstElementChild;
+      const iframe = widgetRoot.querySelector('iframe');
+      if (iframe) iframe.src = iframeSrc;
       document.body.appendChild(widgetRoot);
       const ChatModalDiv = widgetRoot?.querySelector('#chat-modal');
       const ChatIcon = widgetRoot?.querySelector('#chaticon');

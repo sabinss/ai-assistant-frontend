@@ -8,7 +8,17 @@ import ChatTopbar from "../mainapp/chat/ChatTopBar"
 
 export default function Wrapper() {
   const searchParams = useSearchParams()
-  const { setPublicChat, setPublicChatHeaders, publicChat } = usePublicChat()
+  const {
+    setPublicChat,
+    setPublicChatHeaders,
+    setPublicVisitorDisplayName,
+    publicChat,
+  } = usePublicChat()
+
+  const orgId = searchParams.get("org_id")
+  const userNameParam =
+    searchParams.get("user_name") ?? searchParams.get("display_name")
+
   useEffect(() => {
     async function setSession() {
       let chat_session = localStorage.getItem("chat_session_agile_move")
@@ -17,7 +27,7 @@ export default function Wrapper() {
         localStorage.setItem("chat_session_agile_move", chat_session)
       }
       const headers = {
-        org_id: searchParams.get("org_id"),
+        org_id: orgId,
         chat_session: chat_session,
       }
       setPublicChatHeaders(headers)
@@ -25,7 +35,13 @@ export default function Wrapper() {
     }
 
     setSession()
-  }, [])
+  }, [orgId, setPublicChat, setPublicChatHeaders])
+
+  useEffect(() => {
+    const trimmed = userNameParam?.trim() || null
+    setPublicVisitorDisplayName(trimmed)
+    return () => setPublicVisitorDisplayName(null)
+  }, [userNameParam, setPublicVisitorDisplayName])
 
   return (
     <>

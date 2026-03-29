@@ -3,8 +3,11 @@ import { create } from "zustand"
 type publicChat = {
   publicChat: boolean
   publicChatHeaders: object
+  /** From /public_chat?user_name=… — shown in top bar instead of bot name when set. */
+  publicVisitorDisplayName: string | null
   setPublicChat: (publicChat: boolean) => void
   setPublicChatHeaders: (publicChatHeaders: object) => void
+  setPublicVisitorDisplayName: (name: string | null) => void
 }
 
 const usePublicChat = create<publicChat>((set) => ({
@@ -22,6 +25,12 @@ const usePublicChat = create<publicChat>((set) => ({
     set((state) => {
       return { publicChatHeaders }
     })
+  },
+
+  publicVisitorDisplayName: null,
+
+  setPublicVisitorDisplayName: (publicVisitorDisplayName: string | null) => {
+    set({ publicVisitorDisplayName })
   },
 }))
 
