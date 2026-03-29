@@ -12,14 +12,22 @@ import useChatConfig from "@/store/useChatSetting"
 import useApiType from "@/store/apiType"
 import { FaRegLightbulb } from "react-icons/fa"
 import CHAT_PROMPTS from "./chat-prompt"
+import { runPublicConversationAdd, type PublicChatPayload } from "./publicConversationAdd"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
   agentList: any[]
   initialQuery?: string | null
+  /** Public / Help only: wait for history load so replies are not cleared by a late fetch */
+  historyLoading?: boolean
 }
 
-const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuery }) => {
+const ChatInput: React.FC<ChildProps> = ({
+  appendMessage,
+  agentList,
+  initialQuery,
+  historyLoading = false,
+}) => {
   const { botName } = useNavBarStore()
   const [agents, setAgents] = useState(agentList) // internal reorderable list
 
@@ -36,7 +44,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
   const [chatPrompts, setChatPrompts] = useState([])
-  const [publicChatReponsePayload, setPublicChatResponse] = useState({
+  const [publicChatReponsePayload, setPublicChatResponse] = useState<PublicChatPayload>({
     user_email: null,
     customer_id: null,
   })
@@ -169,39 +177,19 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
     })
     try {
       if (publicChat) {
-        const res = await http.post(
-          `/conversation/public/add?org_id=${(publicChatHeaders as any)?.org_id}&chat_session=${(publicChatHeaders as any)?.chat_session}`,
-          {
-            question: query,
-            user_email: publicChatReponsePayload.user_email,
-            customer_id: publicChatReponsePayload.customer_id,
-          },
-          {
-            headers: {
-              ...publicChatHeaders,
-              Authorization: `Bearer ${access_token}`,
-            },
-          }
-        )
-
-        if (res.data) {
-          setPublicChatResponse((prevState) => ({
-            ...prevState,
-            user_email: res.data.user_email || null,
-            customer_id: res.data.customer_id || null,
-          }))
-        }
-
-        const data = res?.data
-
-        appendMessage({
-          sender: botName,
-          message: res?.data?.answer,
-          time: getClockTime(),
-          id: "ANS_" + data._id,
+        const headers = publicChatHeaders as Record<string, string>
+        await runPublicConversationAdd({
+          query,
+          orgId: String((publicChatHeaders as any)?.org_id ?? ""),
+          chatSession: String((publicChatHeaders as any)?.chat_session ?? ""),
+          accessToken: access_token ?? "",
+          publicChatHeaders: headers,
+          botName,
+          getClockTime,
+          appendMessage,
+          payloadState: publicChatReponsePayload,
+          setPublicChatResponse,
         })
-
-        updateMessageLoading(false)
       } else {
         // Prioritize agent selection
         // For individual users, if no agent is selected, use "search agent"
@@ -383,146 +371,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
     } finally {
       // Clean up abort controller
       abortControllerRef.current = null
-    }
-  }
-
-  const handlePublicChatStreamingResponse = async (query: string) => {
-    const messageId = `stream_${Date.now()}`
-
-    // Add initial message with loading status
-    appendMessage({
-      sender: botName,
-      message: "",
-      time: getClockTime(),
-      id: messageId,
-      isStreaming: true,
-      status: "Analyzing your request...",
-    })
-
-    try {
-      // Configure fetch for streaming SSE response
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/public/add?org_id=${(publicChatHeaders as any)?.org_id}&chat_session=${(publicChatHeaders as any)?.chat_session}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...publicChatHeaders,
-            Authorization: `Bearer ${access_token}`,
-          },
-          body: JSON.stringify({
-            question: query,
-            user_email: publicChatReponsePayload.user_email,
-            customer_id: publicChatReponsePayload.customer_id,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-
-      // Get the response as a ReadableStream
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error("Response body is not readable")
-      }
-
-      let fullMessage = ""
-      let sessionIdFromResponse = null
-      let userEmail = publicChatReponsePayload.user_email
-      let customerId = publicChatReponsePayload.customer_id
-
-      // Read the stream
-      const decoder = new TextDecoder()
-      let buffer = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        // Decode the chunk and add it to our buffer
-        buffer += decoder.decode(value, { stream: true })
-
-        // Process complete SSE messages
-        const lines = buffer.split("\n\n")
-        buffer = lines.pop() || "" // Keep the last incomplete chunk
-
-        for (const line of lines) {
-          if (line.trim() && line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.substring(6))
-
-              // Handle completion
-              if (data.done) {
-                // Update session ID if provided
-                if (data.session_id) {
-                  sessionIdFromResponse = data.session_id
-                }
-                continue
-              }
-
-              // Update user_email and customer_id if they change
-              if (data.user_email && !userEmail) {
-                userEmail = data.user_email
-              }
-              if (data.customer_id && !customerId) {
-                customerId = data.customer_id
-              }
-
-              // Handle status updates
-              if (data.status) {
-                appendMessage({
-                  sender: botName,
-                  message: fullMessage,
-                  time: getClockTime(),
-                  id: messageId,
-                  isStreaming: true,
-                  status: data.status,
-                })
-              }
-
-              // Handle actual message content
-              if (data.message) {
-                fullMessage += data.message
-                appendMessage({
-                  sender: botName,
-                  message: fullMessage,
-                  time: getClockTime(),
-                  id: messageId,
-                  isStreaming: true,
-                })
-              }
-            } catch (e) {
-              console.error("Error parsing stream data:", e)
-            }
-          }
-        }
-      }
-
-      // Update the public chat response payload with any new information
-      setPublicChatResponse({
-        user_email: userEmail,
-        customer_id: customerId,
-      })
-
-      // Final message update after stream completes
-      appendMessage({
-        sender: botName,
-        message: fullMessage,
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
-    } catch (error) {
-      console.error("Stream error:", error)
-      appendMessage({
-        sender: botName,
-        message: "Error occurred while streaming the response.",
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
     }
   }
 
@@ -866,6 +714,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
       setSelectedAgentInfo(null, null)
     }
   }, [selectedAgents, agentList])
+  const inputLocked = isMessageLoading || historyLoading
   const handleAgentRemove = (agentName: string) => {
     // Clicking selected agent: clear. Clicking different agent: switch to that agent (new session).
     setSelectedAgents((prevAgents: any) =>
@@ -887,8 +736,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
               onInput={handleInput}
-              disabled={isMessageLoading}
-              placeholder={isMessageLoading ? "....." : "Type your message here..."}
+              disabled={inputLocked}
+              placeholder={
+                historyLoading ? "Loading chat…" : isMessageLoading ? "....." : "Type your message here..."
+              }
               className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
             />
           </div>
@@ -923,10 +774,11 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList, initialQuer
                 <button
                   type="button"
                   onClick={sendMessage}
+                  disabled={historyLoading}
                   className={cn(
                     buttonVariants({ variant: "ghost", size: "icon" }),
                     "h-9 w-9",
-                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white disabled:opacity-40"
                   )}
                 >
                   <IoMdSend size={20} className=" text-[#174894]" />

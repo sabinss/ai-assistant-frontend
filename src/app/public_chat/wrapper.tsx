@@ -30,7 +30,7 @@ export default function Wrapper() {
   return (
     <>
       {publicChat && (
-        <div className="flex h-screen w-full flex-col rounded-md border border-[#D7D7D7] bg-white p-1 text-[#333333]">
+        <div className="flex h-screen min-h-0 w-full flex-col overflow-hidden rounded-md border border-[#D7D7D7] bg-white p-1 text-[#333333]">
           <ChatTopbar />
           <ChatMain />
         </div>

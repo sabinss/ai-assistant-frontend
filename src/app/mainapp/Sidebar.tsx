@@ -241,7 +241,7 @@ function Navbar() {
                 Close
               </button>
             </div>
-            <div className="h-[calc(85vh-57px)] w-full bg-white p-1 text-[#333333]">
+            <div className="flex h-[calc(85vh-57px)] min-h-0 w-full flex-col overflow-hidden bg-white p-1 text-[#333333]">
               <ChatTopBar />
               <ChatMain />
             </div>
