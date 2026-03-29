@@ -1,6 +1,6 @@
 window.addEventListener('DOMContentLoaded', (event) => {
     // Get the organization ID from the embed-container
-    const orgId = document.getElementById('embed-container').getAttribute('dataOrg');
+    const orgId = document.getElementById('embed-container').getAttribute('data-org');
 
     // Create and append HTML content based on the organization ID
     const embedContainer = document.getElementById('embed-container');
