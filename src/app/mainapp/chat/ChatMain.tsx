@@ -73,11 +73,12 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   }, [user_data, access_token, chatSession, publicChat, publicChatHeaders, newSessionKey])
 
   useEffect(() => {
+    if (publicChat) return
     async function getOrgAgentList() {
       await fetchOrgAgentInstructions()
     }
     getOrgAgentList()
-  }, [])
+  }, [publicChat])
 
   useEffect(() => {
     setMessages([])
@@ -105,6 +106,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
     } else {
       org_id = user_data?.organization
     }
+    if (!org_id) return
     const response = await http.get(
       "/organization/greeting_botname?org_id=" + org_id
     )
@@ -183,11 +185,12 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
             : answerRaw != null && typeof answerRaw !== "object"
               ? String(answerRaw)
               : ""
+        const msgTime = safeFormatMessageTime(message.createdAt)
         next.push({
           id: message._id,
           sender: "user",
           message: message.question ?? "",
-          time: formatDate(message.createdAt.toString()),
+          time: msgTime,
           liked: false,
           disliked: false,
         })
@@ -195,7 +198,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
           id: `ANS_${message._id}`,
           sender: botName,
           message: answerText,
-          time: formatDate(message.createdAt.toString()),
+          time: msgTime,
           liked: message.liked_disliked === "liked",
           disliked: message.liked_disliked === "disliked",
         })
@@ -263,6 +266,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr)
+  if (Number.isNaN(date.getTime())) return ""
   const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
@@ -271,6 +275,22 @@ function formatDate(dateStr: string) {
     hour12: true,
   }
   return new Intl.DateTimeFormat("en-US", options).format(date)
+}
+
+function safeFormatMessageTime(createdAt: unknown): string {
+  if (createdAt == null) return ""
+  try {
+    const s =
+      typeof createdAt === "string"
+        ? createdAt
+        : typeof (createdAt as { toString?: () => string })?.toString ===
+            "function"
+          ? (createdAt as { toString: () => string }).toString()
+          : String(createdAt)
+    return formatDate(s)
+  } catch {
+    return ""
+  }
 }
 
 export default ChatMain

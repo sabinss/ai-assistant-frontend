@@ -14,11 +14,24 @@ http.interceptors.response.use(
     //   window.location.href = '/logout'
     // }
     // Don't redirect for login failure (Invalid password)
+    // Don't redirect on /public_chat (embed iframe is unauthenticated; 401 would break the widget)
     if (error_code === 401 && requestUrl !== "/auth/signin") {
+      if (
+        typeof window !== "undefined" &&
+        window.location.pathname.includes("public_chat")
+      ) {
+        return Promise.reject(error)
+      }
       window.location.href = "/logout"
       return Promise.reject(error)
     }
     if (error_code == 403) {
+      if (
+        typeof window !== "undefined" &&
+        window.location.pathname.includes("public_chat")
+      ) {
+        return Promise.reject(error)
+      }
       window.location.href = "/mainapp/error/403"
     }
     return Promise.reject(error)
