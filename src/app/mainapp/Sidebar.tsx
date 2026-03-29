@@ -19,11 +19,7 @@ import useNavBarStore from "@/store/store"
 import NavItem from "@/components/ui/navitem"
 import { usePathname } from "next/navigation"
 import QuickLinks from "@/components/ui/quick-links"
-import { useEffect, useRef, useState } from "react"
-import ChatMain from "./chat/ChatMain"
-import ChatTopBar from "./chat/ChatTopBar"
-import usePublicChat from "@/store/public_chat"
-import { generateSessionIdLength5 } from "@/lib/utils"
+import { useEffect, useRef } from "react"
 
 function getNavLinks(rolePermission: any, hideList: string[] = []) {
   const mainLinks = [
@@ -127,28 +123,7 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
 
 function Navbar() {
   const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
-  const { rolePermission, role, user_data } = useAuth()
-  const { setPublicChat, setPublicChatHeaders } = usePublicChat()
-  const [isHelpChatOpen, setIsHelpChatOpen] = useState(false)
-
-  const openHelpChat = () => {
-    let chatSession = localStorage.getItem("chat_session_agile_move")
-    if (!chatSession) {
-      chatSession = String(generateSessionIdLength5())
-      localStorage.setItem("chat_session_agile_move", chatSession)
-    }
-    setPublicChatHeaders({
-      org_id: user_data?.organization ?? "",
-      chat_session: chatSession,
-    })
-    setPublicChat(true)
-    setIsHelpChatOpen(true)
-  }
-
-  const closeHelpChat = () => {
-    setIsHelpChatOpen(false)
-    setPublicChat(false)
-  }
+  const { rolePermission, role } = useAuth()
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 640) {
@@ -201,18 +176,10 @@ function Navbar() {
         {navLinks.others.map((nav, index) => (
           <NavItem
             key={index}
-            isActive={nav.name === "Help" ? isHelpChatOpen : path === nav.path}
+            isActive={path === nav.path}
             icon={nav.icon}
             path={nav.path}
             name={nav.name}
-            onClick={
-              nav.name === "Help"
-                ? (e) => {
-                    e.preventDefault()
-                    openHelpChat()
-                  }
-                : undefined
-            }
           />
         ))}
 
@@ -222,32 +189,6 @@ function Navbar() {
           <QuickLinks links={navLinks.quickLinks} title={`Quick Links`} />
         )} */}
       </div>
-      {isHelpChatOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4"
-          onClick={closeHelpChat}
-        >
-          <div
-            className="h-[85vh] w-full max-w-6xl overflow-hidden rounded-lg bg-white shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <h2 className="text-lg font-semibold text-[#333333]">Help</h2>
-              <button
-                type="button"
-                className="rounded bg-red-500 px-3 py-1 text-sm text-white hover:bg-red-600"
-                onClick={closeHelpChat}
-              >
-                Close
-              </button>
-            </div>
-            <div className="flex h-[calc(85vh-57px)] min-h-0 w-full flex-col overflow-hidden bg-white p-1 text-[#333333]">
-              <ChatTopBar />
-              <ChatMain />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

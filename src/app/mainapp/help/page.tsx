@@ -1,56 +1,84 @@
 "use client"
 
 import { useEffect } from "react"
-import ChatMain from "../chat/ChatMain"
-import ChatTopBar from "../chat/ChatTopBar"
 import useAuth from "@/store/user"
-import usePublicChat from "@/store/public_chat"
-import { generateSessionIdLength5 } from "@/lib/utils"
+
+type CowrkrWindow = Window & {
+  __cowrkrEmbedConfig?: {
+    orgId?: string
+    user?: { name?: string; email?: string; userId?: string }
+  }
+  __cowrkrEmbedChatInit?: () => void
+}
+
+/** Same-origin embed; mirrors host app pattern (public/embedchat.js). */
+const EMBED_SCRIPT_PATH = "/embedchat.js"
 
 const HelpPage = () => {
   const { user_data } = useAuth()
-  const { setPublicChat, setPublicChatHeaders } = usePublicChat()
 
   useEffect(() => {
-    let chatSession = localStorage.getItem("chat_session_agile_move")
-    if (!chatSession) {
-      chatSession = String(generateSessionIdLength5())
-      localStorage.setItem("chat_session_agile_move", chatSession)
+    const w = window as CowrkrWindow
+
+    if (!user_data?.organization) {
+      document.querySelectorAll(".cowrkr-chat-root").forEach((el) => el.remove())
+      delete w.__cowrkrEmbedConfig
+      return
     }
-    setPublicChatHeaders({
-      org_id: user_data?.organization ?? "",
-      chat_session: chatSession,
-    })
-    setPublicChat(true)
+
+    const displayName =
+      [user_data?.first_name, user_data?.last_name].filter(Boolean).join(" ").trim() ||
+      user_data?.email ||
+      ""
+
+    // Plain object read by public/embedchat.js (see getEmbedContext).
+    w.__cowrkrEmbedConfig = {
+      orgId: user_data.organization,
+      user: {
+        name: displayName,
+        email: user_data.email,
+        userId: user_data.user_id,
+      },
+    }
+
+    const runInit = () => w.__cowrkrEmbedChatInit?.()
+
+    let script = document.querySelector(
+      `script[src="${EMBED_SCRIPT_PATH}"]`
+    ) as HTMLScriptElement | null
+    if (!script) {
+      script = document.createElement("script")
+      script.src = EMBED_SCRIPT_PATH
+      script.async = true
+      script.onload = runInit
+      document.body.appendChild(script)
+    } else if (w.__cowrkrEmbedChatInit) {
+      runInit()
+    } else {
+      script.addEventListener("load", runInit, { once: true })
+    }
+
     return () => {
-      setPublicChat(false)
-      setPublicChatHeaders({})
+      document.querySelectorAll(".cowrkr-chat-root").forEach((el) => el.remove())
+      delete w.__cowrkrEmbedConfig
     }
-  }, [user_data?.organization, setPublicChat, setPublicChatHeaders])
-  const publicChatLink = `${process?.env?.NEXT_PUBLIC_APP_FE_URL}/public_chat?org_id=${user_data?.organization}`
-  const embedCode = `<div dataOrg="${user_data?.organization}" id="embed-container" style="font-size: 16px;"></div>
-<script src="${process?.env?.NEXT_PUBLIC_APP_FE_URL}/embedchat.js"></script>`
+  }, [
+    user_data?.organization,
+    user_data?.first_name,
+    user_data?.last_name,
+    user_data?.email,
+    user_data?.user_id,
+  ])
 
   return (
-    <div className="flex w-full flex-col gap-3">
-      <div className="flex w-full items-center justify-end gap-2 rounded-md border border-[#D7D7D7] bg-white p-3">
-        <button
-          className="rounded border px-3 py-1 text-sm text-[#333333] hover:bg-gray-100"
-          onClick={() => navigator.clipboard.writeText(publicChatLink)}
-        >
-          Click to copy link
-        </button>
-        <button
-          className="rounded border px-3 py-1 text-sm text-[#333333] hover:bg-gray-100"
-          onClick={() => navigator.clipboard.writeText(embedCode)}
-        >
-          Click to copy EmbedCode
-        </button>
-      </div>
-      <div className="flex min-h-[70vh] w-full flex-col rounded-md border border-[#D7D7D7] bg-white text-[#333333]">
-        <ChatTopBar />
-        <ChatMain />
-      </div>
+    <div className="flex min-h-[min(100%,calc(100vh-120px))] w-full flex-col gap-4">
+      {/* data-org is a fallback if __cowrkrEmbedConfig is missing */}
+      <div
+        id="embed-container"
+        data-org={user_data?.organization ?? ""}
+        className="pointer-events-none absolute h-px w-px overflow-hidden whitespace-nowrap border-0 p-0 [clip:rect(0,0,0,0)]"
+        aria-hidden
+      />
     </div>
   )
 }

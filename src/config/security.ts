@@ -36,8 +36,14 @@ export const securityConfig = {
   },
 }
 
-export const generateCSP = () => {
-  return Object.entries(securityConfig.csp)
+type CSPOptions = { embeddable?: boolean }
+
+export const generateCSP = (options?: CSPOptions) => {
+  const csp = { ...securityConfig.csp } as Record<string, string[]>
+  if (options?.embeddable) {
+    csp["frame-ancestors"] = ["*"]
+  }
+  return Object.entries(csp)
     .map(([key, values]) => `${key} ${values.join(" ")}`)
     .join("; ")
 }

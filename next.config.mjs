@@ -76,10 +76,7 @@ const nextConfig = {
       {
         source: "/(.*)",
         headers: [
-          {
-            key: "X-Frame-Options",
-            value: "DENY",
-          },
+          /* X-Frame-Options set in middleware (omitted for /public_chat so embed iframe works) */
           {
             key: "X-Content-Type-Options",
             value: "nosniff",
