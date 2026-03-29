@@ -1,22 +1,56 @@
 (function () {
   /**
+   * Ensures iframe loads /public_chat, never bare site root (root often has X-Frame-Options: DENY).
+   */
+  function toPublicChatPageBase(urlOrOrigin) {
+    var s = String(urlOrOrigin || "").trim().replace(/\/$/, "");
+    if (!s) return "";
+    if (/\/public_chat$/i.test(s)) return s;
+    try {
+      var u = new URL(s.indexOf("//") === -1 ? "https://" + s : s);
+      return u.origin + "/public_chat";
+    } catch (e) {
+      return s + "/public_chat";
+    }
+  }
+
+  function scriptOriginFromDom() {
+    var src = null;
+    try {
+      var cs = document.currentScript;
+      if (cs && cs.src) src = cs.src;
+    } catch (e) {}
+    if (!src) {
+      var nodes = document.querySelectorAll("script[src*='embedchat']");
+      if (nodes.length) src = nodes[nodes.length - 1].getAttribute("src") || "";
+    }
+    if (src) {
+      try {
+        return new URL(src, window.location.href).origin + "/public_chat";
+      } catch (e2) {}
+    }
+    return "";
+  }
+
+  /**
    * Public chat page URL (no query string).
-   * Priority: __cowrkrEmbedConfig.chatBaseUrl (full path) → chatOrigin + /public_chat → script origin + /public_chat → staging fallback.
+   * Priority: chatBaseUrl (normalized) → chatOrigin → embed script origin → page origin → staging.
    */
   function resolveChatPageUrl() {
     var cfg = window.__cowrkrEmbedConfig;
     if (cfg && cfg.chatBaseUrl) {
-      return String(cfg.chatBaseUrl).replace(/\/$/, "");
+      return toPublicChatPageBase(cfg.chatBaseUrl);
     }
     if (cfg && cfg.chatOrigin) {
-      return String(cfg.chatOrigin).replace(/\/$/, "") + "/public_chat";
+      return toPublicChatPageBase(cfg.chatOrigin);
     }
+    var fromScript = scriptOriginFromDom();
+    if (fromScript) return fromScript;
     try {
-      var cs = document.currentScript;
-      if (cs && cs.src) {
-        return new URL(cs.src).origin + "/public_chat";
+      if (window.location && window.location.origin) {
+        return window.location.origin + "/public_chat";
       }
-    } catch (e) {}
+    } catch (e3) {}
     return "https://staging.mycowrkr.cloud/public_chat";
   }
 
