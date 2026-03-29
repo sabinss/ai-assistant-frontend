@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react"
 import { buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { cn, generateSessionIdLength5 } from "@/lib/utils"
 import { IoMdSend } from "react-icons/io"
+import { MdStop } from "react-icons/md"
 import http from "@/config/http"
 import useFormStore from "@/store/formdata"
 import useAuth from "@/store/user"
@@ -11,30 +12,39 @@ import useChatConfig from "@/store/useChatSetting"
 import useApiType from "@/store/apiType"
 import { FaRegLightbulb } from "react-icons/fa"
 import CHAT_PROMPTS from "./chat-prompt"
+import { runPublicConversationAdd, type PublicChatPayload } from "./publicConversationAdd"
 
 interface ChildProps {
   appendMessage: (newMessage: any) => void
   agentList: any[]
+  initialQuery?: string | null
+  /** Public / Help only: wait for history load so replies are not cleared by a late fetch */
+  historyLoading?: boolean
 }
 
-const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
+const ChatInput: React.FC<ChildProps> = ({
+  appendMessage,
+  agentList,
+  initialQuery,
+  historyLoading = false,
+}) => {
   const { botName } = useNavBarStore()
   const [agents, setAgents] = useState(agentList) // internal reorderable list
 
   const dropdownRef = useRef<any>(null)
   const [openUpwards, setOpenUpwards] = useState(false)
 
-  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId } =
+  const { workflowFlag, setWorkFlowFlag, setSessionId, sessionId, setSelectedAgentInfo, triggerNewSession } =
     useChatConfig()
   const [message, setMessage] = useState("")
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const { access_token, user_data, chatSession, setChatSession } = useAuth() // Call useAuth here
+  const { access_token, user_data, chatSession, setChatSession, role } = useAuth()
   const { isMessageLoading, updateMessageLoading } = useFormStore()
-  const { publicChat, publicChatHeaders } = usePublicChat()
+  const { publicChat, publicChatHeaders, setPublicChatHeaders } = usePublicChat()
   const { apiType } = useApiType()
   const [isLoading, setIsLoading] = useState(false)
   const [chatPrompts, setChatPrompts] = useState([])
-  const [publicChatReponsePayload, setPublicChatResponse] = useState({
+  const [publicChatReponsePayload, setPublicChatResponse] = useState<PublicChatPayload>({
     user_email: null,
     customer_id: null,
   })
@@ -43,6 +53,18 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const remainingAgents = agentList.slice(5)
   const [selectedAgents, setSelectedAgents] = useState<any>([])
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
+  const [hasAutoSent, setHasAutoSent] = useState(false) // Flag to prevent multiple auto-sends
+  const abortControllerRef = useRef<AbortController | null>(null) // For cancelling fetch requests
+
+  // Helper function to check if opened from email link
+  const isFromEmailLink = () => {
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search)
+      return !!urlParams.get("emailId")
+    }
+    return false
+  }
+
   // Sample list of text options
 
   useEffect(() => {
@@ -60,23 +82,15 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   }, [showDropdown])
 
   const handleDropdownSelect = (agent: any) => {
-    // Add to selectedAgents if not already selected
-    setSelectedAgents((prevAgents: any) =>
-      prevAgents.some((a: any) => a.name === agent.name)
-        ? prevAgents
-        : [...prevAgents, agent]
-    )
-
-    // Add to visibleAgents if not already there
-    setAgents((prev: any) =>
-      prev.some((a: any) => a.name === agent.name) ? prev : [...prev, agent]
-    )
-
-    // Reorder agents: move selected one to front
-    const reordered = [agent, ...agents.filter((a) => a.name !== agent.name)]
-    setAgents(reordered)
-
+    // Switch to this agent only: replace selection and new session will be created by the effect
+    setSelectedAgents([agent])
+    setAgents((prev: any) => [agent, ...prev.filter((a: any) => a.name !== agent.name)])
     setShowDropdown(false)
+  }
+
+  /** Switch to a single agent (used when clicking a chip). Starts new session via effect. */
+  const switchToAgent = (agent: any) => {
+    setSelectedAgents([agent])
   }
 
   useEffect(() => {
@@ -126,6 +140,19 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     // }
   }
 
+  const handleStopStreaming = () => {
+    console.log("Stopping streaming...")
+
+    // Abort the fetch request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+      abortControllerRef.current = null
+    }
+
+    // Reset loading state
+    updateMessageLoading(false)
+  }
+
   const sendMessage = async () => {
     if (message.trim() !== "") {
       let msg = message
@@ -150,44 +177,28 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     })
     try {
       if (publicChat) {
-        const res = await http.post(
-          `/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
-          {
-            question: query,
-            user_email: publicChatReponsePayload.user_email,
-            customer_id: publicChatReponsePayload.customer_id,
-          },
-          {
-            headers: {
-              ...publicChatHeaders,
-              Authorization: `Bearer ${access_token}`,
-            },
-          }
-        )
-
-        if (res.data) {
-          setPublicChatResponse((prevState) => ({
-            ...prevState,
-            user_email: res.data.user_email || null,
-            customer_id: res.data.customer_id || null,
-          }))
-        }
-
-        const data = res?.data
-
-        appendMessage({
-          sender: botName,
-          message: res?.data?.answer,
-          time: getClockTime(),
-          id: "ANS_" + data._id,
+        const headers = publicChatHeaders as Record<string, string>
+        await runPublicConversationAdd({
+          query,
+          orgId: String((publicChatHeaders as any)?.org_id ?? ""),
+          chatSession: String((publicChatHeaders as any)?.chat_session ?? ""),
+          accessToken: access_token ?? "",
+          publicChatHeaders: headers,
+          botName,
+          getClockTime,
+          appendMessage,
+          payloadState: publicChatReponsePayload,
+          setPublicChatResponse,
         })
-
-        updateMessageLoading(false)
       } else {
         // Prioritize agent selection
+        // For individual users, if no agent is selected, use "search agent"
         if (selectedAgents.length > 0) {
           // Always use non-streaming for agent for now
           await handleCustomAgentStreaming(query)
+        } else if (role === "individual") {
+          // For individual users with no agent selected, use "search agent"
+          await handleCustomAgentStreaming(query, "Search")
         } else {
           await handleStreamingResponse(query)
         }
@@ -214,6 +225,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const handleStreamingResponse = async (query: string) => {
     const messageId = `stream_${Date.now()}`
     let conversationId: any = ""
+    let fullMessage = "" // Moved outside try block for access in catch
 
     // Add initial message with loading status
     appendMessage({
@@ -226,6 +238,10 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
     })
 
     try {
+      // Create AbortController for this request
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+
       // Configure fetch for streaming SSE response instead of axios
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/add`,
@@ -242,6 +258,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             sessionId,
             apiType,
           }),
+          signal: abortController.signal,
         }
       )
 
@@ -255,7 +272,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         throw new Error("Response body is not readable")
       }
 
-      let fullMessage = ""
       let sessionIdFromResponse = null
 
       // Read the stream
@@ -330,155 +346,31 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         conversationId: conversationId,
         isStreaming: false,
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Stream error:", error)
-      appendMessage({
-        sender: botName,
-        message: "Error occurred while streaming the response.",
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
-    }
-  }
 
-  const handlePublicChatStreamingResponse = async (query: string) => {
-    const messageId = `stream_${Date.now()}`
-
-    // Add initial message with loading status
-    appendMessage({
-      sender: botName,
-      message: "",
-      time: getClockTime(),
-      id: messageId,
-      isStreaming: true,
-      status: "Analyzing your request...",
-    })
-
-    try {
-      // Configure fetch for streaming SSE response
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/public/add?org_id=${publicChatHeaders?.org_id}&chat_session=${publicChatHeaders?.chat_session}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...publicChatHeaders,
-            Authorization: `Bearer ${access_token}`,
-          },
-          body: JSON.stringify({
-            question: query,
-            user_email: publicChatReponsePayload.user_email,
-            customer_id: publicChatReponsePayload.customer_id,
-          }),
-        }
-      )
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+      // Check if error is from abort (user stopped the stream)
+      if (error.name === "AbortError") {
+        console.log("Stream stopped by user")
+        appendMessage({
+          sender: botName,
+          message: fullMessage || "Response stopped by user.",
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false,
+        })
+      } else {
+        appendMessage({
+          sender: botName,
+          message: "Error occurred while streaming the response.",
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false,
+        })
       }
-
-      // Get the response as a ReadableStream
-      const reader = response.body?.getReader()
-      if (!reader) {
-        throw new Error("Response body is not readable")
-      }
-
-      let fullMessage = ""
-      let sessionIdFromResponse = null
-      let userEmail = publicChatReponsePayload.user_email
-      let customerId = publicChatReponsePayload.customer_id
-
-      // Read the stream
-      const decoder = new TextDecoder()
-      let buffer = ""
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-
-        // Decode the chunk and add it to our buffer
-        buffer += decoder.decode(value, { stream: true })
-
-        // Process complete SSE messages
-        const lines = buffer.split("\n\n")
-        buffer = lines.pop() || "" // Keep the last incomplete chunk
-
-        for (const line of lines) {
-          if (line.trim() && line.startsWith("data: ")) {
-            try {
-              const data = JSON.parse(line.substring(6))
-
-              // Handle completion
-              if (data.done) {
-                // Update session ID if provided
-                if (data.session_id) {
-                  sessionIdFromResponse = data.session_id
-                }
-                continue
-              }
-
-              // Update user_email and customer_id if they change
-              if (data.user_email && !userEmail) {
-                userEmail = data.user_email
-              }
-              if (data.customer_id && !customerId) {
-                customerId = data.customer_id
-              }
-
-              // Handle status updates
-              if (data.status) {
-                appendMessage({
-                  sender: botName,
-                  message: fullMessage,
-                  time: getClockTime(),
-                  id: messageId,
-                  isStreaming: true,
-                  status: data.status,
-                })
-              }
-
-              // Handle actual message content
-              if (data.message) {
-                fullMessage += data.message
-                appendMessage({
-                  sender: botName,
-                  message: fullMessage,
-                  time: getClockTime(),
-                  id: messageId,
-                  isStreaming: true,
-                })
-              }
-            } catch (e) {
-              console.error("Error parsing stream data:", e)
-            }
-          }
-        }
-      }
-
-      // Update the public chat response payload with any new information
-      setPublicChatResponse({
-        user_email: userEmail,
-        customer_id: customerId,
-      })
-
-      // Final message update after stream completes
-      appendMessage({
-        sender: botName,
-        message: fullMessage,
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
-    } catch (error) {
-      console.error("Stream error:", error)
-      appendMessage({
-        sender: botName,
-        message: "Error occurred while streaming the response.",
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false,
-      })
+    } finally {
+      // Clean up abort controller
+      abortControllerRef.current = null
     }
   }
 
@@ -510,9 +402,13 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   }
 
   // Handle custom agent query with streaming
-  const handleCustomAgentStreaming = async (query: string) => {
+  const handleCustomAgentStreaming = async (query: string, agentName?: string) => {
     const messageId = `stream_agent_${Date.now()}`
     let conversationId: any = ""
+    let fullMessage = "" // Moved outside try block for access in catch
+
+    // Use provided agentName or fall back to selectedAgents[0]
+    const agentToUse = agentName || selectedAgents[0]?.name
 
     // Add initial message with loading status
     appendMessage({
@@ -521,10 +417,26 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
       time: getClockTime(),
       id: messageId,
       isStreaming: true,
-      status: `Querying  ${selectedAgents[0]}...`, // Show agent name
+      status: `Querying  ${agentToUse}...`, // Show agent name
     })
 
     try {
+      // Create AbortController for this request
+      const abortController = new AbortController()
+      abortControllerRef.current = abortController
+
+      // Build request body - only include sessionId if it exists
+      const requestBody: any = {
+        question: query,
+        chatSession,
+        agentName: agentToUse, // Use the agent name (either provided or from selectedAgents)
+      }
+
+      // Only add sessionId if it's not null/undefined
+      if (sessionId) {
+        requestBody.sessionId = sessionId
+      }
+
       // Configure fetch for streaming SSE response
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_APP_URL}/${process.env.NEXT_PUBLIC_APP_VERSION}/conversation/agent/add`,
@@ -534,14 +446,8 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${access_token}`,
           },
-          body: JSON.stringify({
-            question: query,
-            chatSession,
-            // workflowFlag, // Removed as it might not be needed for agents, adjust if necessary
-            sessionId,
-            // apiType, // Removed as it might not be needed for agents, adjust if necessary
-            agentName: selectedAgents[0], // Send only the first selected agent
-          }),
+          body: JSON.stringify(requestBody),
+          signal: abortController.signal,
         }
       )
 
@@ -554,9 +460,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         } catch (e) {
           // Ignore if response body is not JSON
         }
-        throw new Error(
-          `HTTP error! status: ${response.status}, message: ${errorBody}`
-        )
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorBody}`)
       }
 
       // Get the response as a ReadableStream
@@ -565,7 +469,6 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         throw new Error("Response body is not readable")
       }
 
-      let fullMessage = ""
       let sessionIdFromResponse = sessionId // Start with current session ID
 
       // Read the stream
@@ -595,10 +498,7 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
                 if (data.session_id && data.session_id !== sessionId) {
                   sessionIdFromResponse = data.session_id
                   setSessionId(data.session_id)
-                  console.log(
-                    "Agent stream updated session ID:",
-                    data.session_id
-                  )
+                  console.log("Agent stream updated session ID:", data.session_id)
                 }
                 continue // Stop processing this message
               }
@@ -644,20 +544,12 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
 
               // Handle raw chunks if backend sends them
               if (data.chunk) {
-                console.warn(
-                  "Received raw chunk from agent stream:",
-                  data.chunk
-                )
+                console.warn("Received raw chunk from agent stream:", data.chunk)
                 // Decide how to handle raw chunks, e.g., append to message or ignore
                 // fullMessage += data.chunk; // Example: append if it's text
               }
             } catch (e) {
-              console.error(
-                "Error parsing agent stream data:",
-                e,
-                "Raw line:",
-                line
-              )
+              console.error("Error parsing agent stream data:", e, "Raw line:", line)
             }
           }
         }
@@ -672,16 +564,31 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         id: messageId,
         isStreaming: false, // Mark as complete
       })
-    } catch (error) {
+    } catch (error: any) {
       console.error("Agent stream fetch error:", error)
-      appendMessage({
-        sender: botName,
-        message: `Error occurred while querying agent ${selectedAgents[0]}. ${error.message || ""}`,
-        time: getClockTime(),
-        id: messageId,
-        isStreaming: false, // Mark as complete even on error
-      })
+
+      // Check if error is from abort (user stopped the stream)
+      if (error.name === "AbortError") {
+        console.log("Agent stream stopped by user")
+        appendMessage({
+          sender: botName,
+          message: fullMessage || "Response stopped by user.",
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false,
+        })
+      } else {
+        appendMessage({
+          sender: botName,
+          message: `Error occurred while querying agent ${agentToUse}. ${error.message || ""}`,
+          time: getClockTime(),
+          id: messageId,
+          isStreaming: false, // Mark as complete even on error
+        })
+      }
     } finally {
+      // Clean up abort controller
+      abortControllerRef.current = null
       updateMessageLoading(false) // Ensure loading state is reset
     }
   }
@@ -721,33 +628,99 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
   const handleInput = () => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
-      textareaRef.current.style.height = `${Math.min(
-        textareaRef.current.scrollHeight,
-        150
-      )}px`
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`
     }
   }
+  // Handle initial query from URL parameters
   useEffect(() => {
-    const agent: any = agentList.find((x: any) => {
-      if (x.name == selectedAgents[0]) {
-        return x
-      }
-    })
-    if (agent?.greeting && agent.greeting != "NA") {
-      appendMessage({
-        sender: botName,
-        message: agent?.greeting,
-        time: getClockTime(),
-        id: "ANS_",
-      })
-    }
-  }, [selectedAgents])
-  const handleAgentRemove = (agentName: string) => {
-    const newSession = Math.floor(Math.random() * 1000).toString()
-    setSessionId(newSession)
+    if (initialQuery && initialQuery.trim() !== "" && !hasAutoSent) {
+      // Check if this is from an email link by looking for emailId parameter
+      const isFromEmail = isFromEmailLink()
 
+      if (isFromEmail) {
+        const urlParams = new URLSearchParams(window.location.search)
+        const emailId = urlParams.get("emailId")
+        console.log("Email link detected with ID:", emailId)
+        console.log("Query from email:", initialQuery)
+      }
+
+      setMessage(initialQuery)
+      setHasAutoSent(true) // Mark as auto-sent to prevent multiple sends
+
+      // Auto-send the message after a short delay to ensure everything is loaded
+      const timer = setTimeout(async () => {
+        // Call sendMessageToBackend directly to avoid dependency issues
+        if (initialQuery.trim() !== "") {
+          setMessage("") // Clear the textarea after sending the message
+          await sendMessageToBackend(initialQuery) // Send the message to the backend
+
+          if (textareaRef.current) {
+            textareaRef.current.focus() // Focus back on the textarea
+          }
+        }
+
+        // Remove query and emailId parameters from URL after sending
+        if (typeof window !== "undefined") {
+          const url = new URL(window.location.href)
+          url.searchParams.delete("query")
+          url.searchParams.delete("emailId")
+          window.history.replaceState({}, "", url.toString())
+        }
+      }, 1000) // 1 second delay to ensure everything is ready
+
+      return () => clearTimeout(timer)
+    }
+  }, [initialQuery])
+
+  useEffect(() => {
+    if (selectedAgents.length > 0) {
+      const first = selectedAgents[0]
+      const agent =
+        typeof first === "object" && first?.name
+          ? first
+          : agentList.find((a: any) => a.name === first)
+      const greeting = agent?.greeting && agent.greeting !== "NA" ? agent.greeting : null
+      setSelectedAgentInfo(greeting, agent?.name ?? null)
+
+      // Create new session every time an agent is selected
+      const createNewSession = async () => {
+        triggerNewSession()
+        setSessionId(null)
+        if (publicChat) {
+          const newSessionId = generateSessionIdLength5()
+          localStorage.setItem("chat_session_agile_move", String(newSessionId))
+          setPublicChatHeaders({ ...publicChatHeaders, chat_session: String(newSessionId) })
+          setSessionId(newSessionId)
+        } else {
+          const newSession = generateSessionIdLength5()
+          try {
+            const res = await http.get(
+              `user/profile/changeSession?session=${newSession}`,
+              { headers: { Authorization: `Bearer ${access_token}` } }
+            )
+            setChatSession(res?.data?.newSession ?? String(newSession))
+          } catch (_) {
+            setChatSession(String(newSession))
+          }
+          setSessionId(newSession)
+        }
+      }
+      createNewSession()
+
+      if (textareaRef.current) {
+        textareaRef.current.focus()
+      }
+    } else {
+      setSelectedAgentInfo(null, null)
+    }
+  }, [selectedAgents, agentList])
+  const inputLocked = isMessageLoading || historyLoading
+  const handleAgentRemove = (agentName: string) => {
+    // Clicking selected agent: clear. Clicking different agent: switch to that agent (new session).
     setSelectedAgents((prevAgents: any) =>
-      prevAgents.includes(agentName) ? [] : [agentName]
+      prevAgents.some((a: any) => (typeof a === "object" ? a.name : a) === agentName)
+        ? []
+        : [agentName]
     )
   }
   return (
@@ -763,9 +736,9 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyPress}
               onInput={handleInput}
-              disabled={isMessageLoading}
+              disabled={inputLocked}
               placeholder={
-                isMessageLoading ? "....." : "Type your message here..."
+                historyLoading ? "Loading chat…" : isMessageLoading ? "....." : "Type your message here..."
               }
               className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
             />
@@ -781,22 +754,36 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
               </button>
             )}
 
-            {/* Send message button */}
+            {/* Send/Stop message button */}
             <div className="m-2 flex w-20 items-center justify-center">
-              <span className="text-sm text-[#838383]">
-                {message?.length}/4000
-              </span>
-              <button
-                type="button"
-                onClick={sendMessage}
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "icon" }),
-                  "h-9 w-9",
-                  "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                )}
-              >
-                <IoMdSend size={20} className=" text-[#174894]" />
-              </button>
+              <span className="text-sm text-[#838383]">{message?.length}/4000</span>
+              {isMessageLoading ? (
+                <button
+                  type="button"
+                  onClick={handleStopStreaming}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9",
+                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
+                  )}
+                  title="Stop streaming"
+                >
+                  <MdStop size={22} className="text-red-600" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={sendMessage}
+                  disabled={historyLoading}
+                  className={cn(
+                    buttonVariants({ variant: "ghost", size: "icon" }),
+                    "h-9 w-9",
+                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white disabled:opacity-40"
+                  )}
+                >
+                  <IoMdSend size={20} className=" text-[#174894]" />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -804,19 +791,29 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
         {/* Custom agent list */}
         {!publicChat && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {visibleAgents.map((agent: any, index: number) => (
-              <div
-                onClick={() => handleAgentRemove(agent.name)}
-                key={index}
-                className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${
-                  selectedAgents.includes(agent.name)
+            {visibleAgents.map((agent: any, index: number) => {
+              const isSelected = selectedAgents.some(
+                (a: any) => (typeof a === "object" ? a?.name : a) === agent.name
+              )
+              return (
+                <div
+                  onClick={() => {
+                    if (isSelected) {
+                      handleAgentRemove(agent.name)
+                    } else {
+                      switchToAgent(agent)
+                    }
+                  }}
+                  key={index}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${isSelected
                     ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                }`}
-              >
-                {agent.name}
-              </div>
-            ))}
+                    }`}
+                >
+                  {agent.name}
+                </div>
+              )
+            })}
             {/* Show ellipsis if more agents */}
             {remainingAgents.length > 0 && (
               <div className="relative">
@@ -834,15 +831,11 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
                     {remainingAgents.map((agent, index) => (
                       <div
                         key={index}
-                        onClick={() => {
-                          handleDropdownSelect(agent)
-                          handleAgentRemove(agent.name)
-                        }}
-                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${
-                          selectedAgents.includes(agent.name)
-                            ? "font-semibold text-blue-600"
-                            : "text-gray-700"
-                        }`}
+                        onClick={() => handleDropdownSelect(agent)}
+                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.some((a: any) => (typeof a === "object" ? a?.name : a) === agent?.name)
+                          ? "font-semibold text-blue-600"
+                          : "text-gray-700"
+                          }`}
                       >
                         {agent.name}
                       </div>
@@ -861,34 +854,27 @@ const ChatInput: React.FC<ChildProps> = ({ appendMessage, agentList }) => {
             onClick={handleBackgroundClick} // Close when clicking outside
           >
             <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
-              <h2 className="mb-4 text-center text-2xl font-semibold">
-                Select Prompt
-              </h2>
+              <h2 className="mb-4 text-center text-2xl font-semibold">Select Prompt</h2>
 
               {/* Columns for Categories */}
               <div className="grid grid-cols-3 gap-6">
                 {chatPrompts?.map((categoryData: any, index) => (
                   <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
-                    <h3 className="text-xl font-semibold">
-                      {categoryData.category}
-                    </h3>
+                    <h3 className="text-xl font-semibold">{categoryData.category}</h3>
                     <ul className="mt-2 space-y-2">
-                      {categoryData.prompts.map(
-                        (prompt: any, promptIndex: number) => (
-                          <React.Fragment key={promptIndex}>
-                            <li
-                              className="cursor-pointer text-gray-700 hover:text-blue-500"
-                              onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
-                            >
-                              {prompt.text}
-                            </li>
-                            {promptIndex !==
-                              categoryData.prompts.length - 1 && (
-                              <hr className="border-gray-300" />
-                            )}
-                          </React.Fragment>
-                        )
-                      )}
+                      {categoryData.prompts.map((prompt: any, promptIndex: number) => (
+                        <React.Fragment key={promptIndex}>
+                          <li
+                            className="cursor-pointer text-gray-700 hover:text-blue-500"
+                            onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
+                          >
+                            {prompt.text}
+                          </li>
+                          {promptIndex !== categoryData.prompts.length - 1 && (
+                            <hr className="border-gray-300" />
+                          )}
+                        </React.Fragment>
+                      ))}
                     </ul>
                   </div>
                 ))}

@@ -13,7 +13,7 @@ import { useState } from "react"
 import usePublicChat from "@/store/public_chat"
 import useChatConfig from "@/store/useChatSetting"
 import useApiType from "@/store/apiType"
-
+import { generateSessionIdLength5 } from "@/lib/utils"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,9 +25,13 @@ import {
 import { Button } from "react-day-picker"
 
 export default function ChatTopbar() {
-  const { publicChat, publicChatHeaders, setPublicChatHeaders } =
-    usePublicChat()
-  const { setSessionId } = useChatConfig()
+  const {
+    publicChat,
+    publicChatHeaders,
+    setPublicChatHeaders,
+    publicVisitorDisplayName,
+  } = usePublicChat()
+  const { setSessionId, setSelectedAgentInfo, triggerNewSession } = useChatConfig()
   const { apiType, setApiType } = useApiType()
   const [selectedOption, setSelectedOption] = useState(apiType)
   const handleSelect = (option: string) => {
@@ -41,22 +45,29 @@ export default function ChatTopbar() {
 
   const { access_token, setChatSession } = useAuth()
   const changeSession = async () => {
+    triggerNewSession()
     setSessionId(null)
-    const newSession = Math.floor(Math.random() * 1000).toString()
+    setSelectedAgentInfo(null, null)
     if (publicChat) {
-      let newSession = Math.floor(Math.random() * 9000).toString()
-      localStorage.setItem("chat_session_agile_move", newSession)
-      setPublicChatHeaders({ ...publicChatHeaders, chat_session: newSession })
+      const newSessionId = generateSessionIdLength5()
+      localStorage.setItem("chat_session_agile_move", String(newSessionId))
+      setPublicChatHeaders({ ...publicChatHeaders, chat_session: String(newSessionId) })
+      setSessionId(newSessionId)
     } else {
-      const res = await http.get(
-        `user/profile/changeSession?session=${newSession}`,
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      )
-      setChatSession(res?.data?.newSession)
+      const newSession = generateSessionIdLength5()
+      try {
+        const res = await http.get(
+          `user/profile/changeSession?session=${newSession}`,
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        setChatSession(res?.data?.newSession ?? String(newSession))
+      } catch {
+        setChatSession(String(newSession))
+      }
+      setSessionId(newSession)
     }
-    setSessionId(newSession)
   }
   const { botName } = useNavBarStore()
 
@@ -72,7 +83,12 @@ export default function ChatTopbar() {
             width={30}
           />
           <h2 className="inline text-xl font-bold">
-            Chat with {botName ? botName : "Gabby"}
+            Chat with{" "}
+            {publicChat && publicVisitorDisplayName?.trim()
+              ? publicVisitorDisplayName.trim()
+              : botName
+                ? botName
+                : "Gabby"}
           </h2>
           {/* <span className="inline text-xl font-bold">
             Chat about {publicChat && "Product Knowledge"}

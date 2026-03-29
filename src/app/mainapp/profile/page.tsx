@@ -445,7 +445,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
         </Button>
         <Button
           className="rounded-md border border-[#CDCDCD] bg-gradient-to-b from-white to-[#CDCDCD] font-medium text-[#535353]"
-          onClick={() => router.push("/mainapp/users")}
+          onClick={() => router.push("/mainapp/chat")}
         >
           Cancel
         </Button>

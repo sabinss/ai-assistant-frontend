@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useRef, useState } from "react"
 import ChatInput from "./ChatInput"
 import ChatList from "./ChatList"
 import http from "@/config/http"
@@ -18,7 +18,11 @@ export interface MessageObject {
   isStreaming?: boolean
 }
 
-const ChatMain: React.FC = () => {
+interface ChatMainProps {
+  initialQuery?: string | null
+}
+
+const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   const [messages, setMessages] = useState<MessageObject[]>([])
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
   const { greeting, botName, setBotName, setGreeting } = useNavBarStore()
@@ -29,11 +33,18 @@ const ChatMain: React.FC = () => {
 
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
-  const { sessionId } = useChatConfig()
+  const { sessionId, newSessionKey, selectedAgentName, skipNextHistoryLoad, clearSkipNextHistoryLoad } = useChatConfig()
+  const skipNextLoadHistoryRef = useRef(false)
+  const prevNewSessionKeyRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     console.log("ChatMain")
     const fetchBotNameAndMessages = async () => {
+      // Public/Help: do not clear here — GET /conversations/public often returns the newest
+      // row with an empty `answer` before the DB matches POST; clearing would wipe the reply we just showed.
+      if (!publicChat) {
+        setMessages([])
+      }
       setIsLoading(true)
       try {
         if (greeting === "Hello X" || botName === "Bot X") {
@@ -41,7 +52,15 @@ const ChatMain: React.FC = () => {
           await fetchBotData()
         }
 
-        await getUserMessages()
+        // When an agent is selected, treat as new session: do not load old chat history
+        // When user clicked "New Session", skip loading history (skipNextHistoryLoad set synchronously in store; ref is backup)
+        const shouldSkipHistory =
+          selectedAgentName || skipNextLoadHistoryRef.current || skipNextHistoryLoad
+        if (!shouldSkipHistory) {
+          await getUserMessages()
+        }
+        skipNextLoadHistoryRef.current = false
+        clearSkipNextHistoryLoad()
       } catch (error) {
         console.error("Error fetching data:", error)
         setError("Error fetching data")
@@ -51,26 +70,43 @@ const ChatMain: React.FC = () => {
     }
 
     fetchBotNameAndMessages()
-  }, [user_data, access_token, chatSession, publicChat, publicChatHeaders])
+  }, [user_data, access_token, chatSession, publicChat, publicChatHeaders, newSessionKey])
 
   useEffect(() => {
+    if (publicChat) return
     async function getOrgAgentList() {
       await fetchOrgAgentInstructions()
     }
     getOrgAgentList()
-  }, [])
+  }, [publicChat])
 
   useEffect(() => {
     setMessages([])
-  }, [sessionId])
+    // Only skip loading history when user explicitly triggered "New Session" (newSessionKey incremented), not on initial load
+    const isUserTriggeredNewSession =
+      prevNewSessionKeyRef.current !== undefined &&
+      newSessionKey !== prevNewSessionKeyRef.current
+    prevNewSessionKeyRef.current = newSessionKey
+    if (isUserTriggeredNewSession) {
+      skipNextLoadHistoryRef.current = true
+    }
+  }, [sessionId, newSessionKey])
+
+  // When user selects an agent, clear messages immediately so only greeting shows (new session)
+  useEffect(() => {
+    if (selectedAgentName) {
+      setMessages([])
+    }
+  }, [selectedAgentName])
 
   const fetchBotData = async () => {
     let org_id
     if (publicChat) {
-      org_id = publicChatHeaders?.org_id
+      org_id = (publicChatHeaders as any)?.org_id
     } else {
       org_id = user_data?.organization
     }
+    if (!org_id) return
     const response = await http.get(
       "/organization/greeting_botname?org_id=" + org_id
     )
@@ -98,15 +134,21 @@ const ChatMain: React.FC = () => {
       }
 
       setAgentList(agentsRecords)
-    } catch (err: any) {}
+    } catch (err: any) { }
   }
 
   const getUserMessages = async () => {
+    // Capture session we're fetching for so we can ignore stale responses
+    const sessionWeAreFetching =
+      publicChat
+        ? (publicChatHeaders as { chat_session?: string })?.chat_session
+        : chatSession
+
     let res
     try {
       if (publicChat) {
         res = await http.get(
-          `/conversations/public?org_id=${publicChatHeaders?.org_id}`,
+          `/conversations/public?org_id=${(publicChatHeaders as any)?.org_id}`,
           {
             headers: publicChatHeaders,
           }
@@ -119,26 +161,60 @@ const ChatMain: React.FC = () => {
           }
         )
       }
-      const messageArray = res?.data || []
-      setMessages([])
+
+      // Ignore response if session changed while we were fetching (e.g. user clicked New Session)
+      const currentSession = publicChat
+        ? (usePublicChat.getState().publicChatHeaders as { chat_session?: string })?.chat_session
+        : useAuth.getState().chatSession
+      if (currentSession !== sessionWeAreFetching) return
+
+      const raw = res?.data
+      const messageArray = Array.isArray(raw)
+        ? raw
+        : raw && typeof raw === "object" && Array.isArray((raw as { data?: unknown }).data)
+          ? (raw as { data: any[] }).data
+          : []
+
+      const next: MessageObject[] = []
       messageArray?.forEach((message: any) => {
-        appendMessage({
+        const answerRaw =
+          message.answer ?? message.response ?? message.text ?? message.reply ?? message.content
+        const answerText =
+          typeof answerRaw === "string"
+            ? answerRaw
+            : answerRaw != null && typeof answerRaw !== "object"
+              ? String(answerRaw)
+              : ""
+        const msgTime = safeFormatMessageTime(message.createdAt)
+        next.push({
           id: message._id,
           sender: "user",
-          message: message.question,
-          time: formatDate(message.createdAt.toString()),
+          message: message.question ?? "",
+          time: msgTime,
           liked: false,
           disliked: false,
         })
-        appendMessage({
+        next.push({
           id: `ANS_${message._id}`,
           sender: botName,
-          message: message.answer,
-          time: formatDate(message.createdAt.toString()),
+          message: answerText,
+          time: msgTime,
           liked: message.liked_disliked === "liked",
           disliked: message.liked_disliked === "disliked",
         })
       })
+
+      setMessages((prev) =>
+        next.map((m) => {
+          if (m.sender !== "user" && (!m.message || !String(m.message).trim())) {
+            const old = prev.find((p) => p.id === m.id)
+            if (old?.message && String(old.message).trim()) {
+              return { ...m, message: old.message }
+            }
+          }
+          return m
+        })
+      )
     } catch (error) {
       console.error("Error fetching user messages:", error)
       setError("Error fetching user messages")
@@ -162,22 +238,36 @@ const ChatMain: React.FC = () => {
 
   return (
     <div
-      className={`mx-1 flex    flex-col px-1 ${publicChat ? "h-[90vh] md:h-[87vh]" : "h-[75vh] md:h-[77vh]"} `}
+      className={`mx-1 flex flex-col px-1 ${
+        publicChat
+          ? "min-h-0 flex-1 overflow-hidden"
+          : "h-[75vh] md:h-[77vh]"
+      } `}
     >
       {error && <div className="mb-2 bg-red-500 p-2 text-white">{error}</div>}
 
       {isLoading && (
         <div className="mb-2 bg-gray-200 p-2 text-gray-700">Loading...</div>
       )}
-      <ChatList messages={messages} />
-      <ChatInput appendMessage={appendMessage} agentList={agentList} />
+      <div className={publicChat ? "min-h-0 flex-1 overflow-hidden" : "min-h-0 flex-1"}>
+        <ChatList messages={messages} />
+      </div>
+      <div className="shrink-0">
+        <ChatInput
+          appendMessage={appendMessage}
+          agentList={agentList}
+          initialQuery={initialQuery}
+          historyLoading={publicChat && isLoading}
+        />
+      </div>
     </div>
   )
 }
 
 function formatDate(dateStr: string) {
   const date = new Date(dateStr)
-  const options = {
+  if (Number.isNaN(date.getTime())) return ""
+  const options: Intl.DateTimeFormatOptions = {
     month: "short",
     day: "numeric",
     hour: "numeric",
@@ -185,6 +275,22 @@ function formatDate(dateStr: string) {
     hour12: true,
   }
   return new Intl.DateTimeFormat("en-US", options).format(date)
+}
+
+function safeFormatMessageTime(createdAt: unknown): string {
+  if (createdAt == null) return ""
+  try {
+    const s =
+      typeof createdAt === "string"
+        ? createdAt
+        : typeof (createdAt as { toString?: () => string })?.toString ===
+            "function"
+          ? (createdAt as { toString: () => string }).toString()
+          : String(createdAt)
+    return formatDate(s)
+  } catch {
+    return ""
+  }
 }
 
 export default ChatMain

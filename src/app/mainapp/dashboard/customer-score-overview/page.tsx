@@ -20,6 +20,7 @@ import {
 } from "chart.js"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { renderSectionTitle } from "@/lib/sectionTitle"
+import { generateSessionIdLength5 } from "@/lib/utils"
 import CustomerSlideIn from "../CustomerSlideIn"
 import useOrgCustomer from "@/store/organization_customer"
 import useAuth from "@/store/user"
@@ -88,11 +89,12 @@ export default function Page() {
   const sendCustomerMessageToBackend = async (message: string) => {
     setCustomerMessageStatus(true)
     const messageId = `stream_${Date.now()}`
-    const newSession = Math.floor(Math.random() * 1000).toString()
+    const newSession = generateSessionIdLength5()
     const messagePayload = {
       sender: "user",
       message: message,
-      question: message + `(from customer ${selectedCustomer.customer_name})`,
+      question:
+        message + " " + `for customer ${selectedCustomer.customer_name}`,
       time: getClockTime(),
       id: messageId,
       isStreaming: false,
@@ -635,7 +637,6 @@ export default function Page() {
           </h1>
         </div>
       </div>
-
       {isLoading && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/70 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-3">
@@ -646,13 +647,11 @@ export default function Page() {
           </div>
         </div>
       )}
-
       {error && (
         <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
-
       {/* Metrics */}
       {metrics && metrics.length > 0 && (
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -672,7 +671,6 @@ export default function Page() {
           ))}
         </div>
       )}
-
       {/* Donut Chart */}
       {distribution && distribution.length > 0 && (
         <div className="rounded-xl bg-white p-6 shadow">
@@ -684,14 +682,12 @@ export default function Page() {
           </div>
         </div>
       )}
-
       {/* Debug: Show distribution data */}
       {/* <div className="rounded-xl bg-gray-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold">Distribution Data Debug:</h3>
         <p>distribution length: {distribution?.length || 0}</p>
         <p>distribution data: {JSON.stringify(distribution)}</p>
       </div> */}
-
       {/* Line Chart */}
       {transformedTrendData &&
         transformedTrendData.datasets &&
@@ -703,7 +699,6 @@ export default function Page() {
             </div>
           </div>
         )}
-
       {/* Debug: Show line chart data */}
       {/* <div className="rounded-xl bg-gray-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold">Line Chart Debug:</h3>
@@ -717,7 +712,6 @@ export default function Page() {
           {transformedTrendData?.labels?.length || 0}
         </p>
       </div> */}
-
       {/* Scatter Chart */}
       {riskMatrixData && riskMatrixData.length > 0 && (
         <div className="rounded-xl bg-white p-6 shadow">
@@ -727,7 +721,6 @@ export default function Page() {
           </div>
         </div>
       )}
-
       {/* Debug: Show scatter chart data */}
       {/* <div className="rounded-xl bg-gray-50 p-4 text-sm">
         <h3 className="mb-2 font-semibold">Scatter Chart Debug:</h3>
@@ -739,7 +732,6 @@ export default function Page() {
             : "No data"}
         </p>
       </div> */}
-
       {/* Immediate Action Required */}
       {highRiskCustomers && highRiskCustomers.length > 0 && (
         <div className="rounded-xl bg-white p-6 shadow">
@@ -798,7 +790,6 @@ export default function Page() {
           </div>
         </div>
       )}
-
       {/* Additional Insights */}
       {/* {apiData &&
         apiData.previousMonth &&
@@ -879,7 +870,6 @@ export default function Page() {
             </div>
           </div>
         )} */}
-
       {/* Debug: Raw API Data */}
       {/* {apiData && (
         <div className="rounded-xl bg-gray-50 p-6 shadow">
@@ -894,7 +884,6 @@ export default function Page() {
           </details>
         </div>
       )} */}
-
       {/* Customer Slide-In Component */}
       <CustomerSlideIn
         customer={selectedCustomer}

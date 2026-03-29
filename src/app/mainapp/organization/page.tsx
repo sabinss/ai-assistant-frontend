@@ -8,6 +8,11 @@ import useAuth from "@/store/user"
 import { getGoogleOAuthURL } from "@/utility/getGoogleUrl"
 import GmailLoginButton from "@/components/ui/googleLoginButton"
 import useNavBarStore from "@/store/store"
+import { toast } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
+
+const SUBSCRIPTION_PLANS = ["Free", "Starter", "Growth", "Expansion"] as const
+const INDUSTRIES = ["SaaS", "MSP", "PhotoStudio", "Staffing", "ITConsulting", "Accounting"] as const
 
 export default function Edit() {
   const { access_token, user_data } = useAuth() // Call useAuth here
@@ -20,6 +25,14 @@ export default function Edit() {
   const organizationInputRef = useRef(null)
   const assistantNameInputRef = useRef(null)
   const { setBotName } = useNavBarStore()
+
+  // Organization detail, website, subscription plan, industry
+  const [organizationDetail, setOrganizationDetail] = useState("")
+  const [website, setWebsite] = useState("")
+  const [subscriptionPlan, setSubscriptionPlan] = useState<string>(SUBSCRIPTION_PLANS[0])
+  const [industry, setIndustry] = useState<string>(INDUSTRIES[0])
+  const [isUpdatingDetail, setIsUpdatingDetail] = useState(false)
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false)
 
   useEffect(() => {
     if (isEditable) {
@@ -38,11 +51,38 @@ export default function Edit() {
       setAssistantName(org_data.assistant_name)
       setBotName(org_data.assistant_name)
       setOrganizationName(org_data.name)
-      0
     } catch (err) {
       console.error(err)
     }
   }
+
+  useEffect(() => {
+    if (!organizationId || !access_token) return
+    const fetchOrganizationDetail = async () => {
+      setIsLoadingDetail(true)
+      try {
+        const response = await http.get(`/organization/${organizationId}/detail`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
+        const data = response?.data?.data ?? response?.data
+        if (!data) return
+        if (data.organizationDetail != null) setOrganizationDetail(data.organizationDetail)
+        else if (data.organization_detail != null) setOrganizationDetail(data.organization_detail)
+        if (data.website != null) setWebsite(data.website)
+        if (data.subscriptionPlan != null && SUBSCRIPTION_PLANS.includes(data.subscriptionPlan))
+          setSubscriptionPlan(data.subscriptionPlan)
+        else if (data.subscription_plan != null && SUBSCRIPTION_PLANS.includes(data.subscription_plan))
+          setSubscriptionPlan(data.subscription_plan)
+        if (data.industry != null && INDUSTRIES.includes(data.industry))
+          setIndustry(data.industry)
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setIsLoadingDetail(false)
+      }
+    }
+    fetchOrganizationDetail()
+  }, [organizationId, access_token])
 
   const handleOrganizationNameChange = (e) => {
     setOrganizationName(e.target.value)
@@ -100,9 +140,30 @@ export default function Edit() {
     setIsVisible((prevVisible) => !prevVisible)
   }
 
+  const handleUpdateOrganizationDetail = async () => {
+    setIsUpdatingDetail(true)
+    try {
+      await http.post(
+        `/organization/${organizationId}/detail`,
+        {
+          organizationDetail,
+          website,
+          subscriptionPlan,
+          industry,
+        },
+        { headers: { Authorization: `Bearer ${access_token}` } }
+      )
+      toast.success("Organization details updated successfully")
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message ?? "Failed to update organization details")
+    } finally {
+      setIsUpdatingDetail(false)
+    }
+  }
+
   return (
     <div className="w-full p-4 text-[#333333]">
-      <div className="card w-full rounded-lg border bg-white p-4 md:w-2/5">
+      <div className="card w-full rounded-lg border bg-white p-4 md:w-full">
         <div className="top flex justify-between">
           <div className="hidden pt-2 md:block">
             {isEditingAssistantName ? (
@@ -187,7 +248,87 @@ export default function Edit() {
           </div>
         </div>
       </div>
+
+
+
       <ChatProvider org_id={organizationId} />
+      <div className="card mt-4 w-full rounded-lg border bg-white p-4 md:w-full">
+        <p className="mb-3 text-lg font-medium text-[#333333]">Organization Details</p>
+        {isLoadingDetail ? (
+          <div className="flex flex-col items-center justify-center gap-4 py-8">
+            <div
+              className="h-10 w-10 animate-spin rounded-full border-2 border-[#174894] border-t-transparent"
+              aria-hidden
+            />
+            <p className="text-sm text-[#838383]">Loading organization details...</p>
+            <div className="w-full space-y-3">
+              <div className="h-16 animate-pulse rounded-md bg-gray-200" />
+              <div className="h-10 animate-pulse rounded-md bg-gray-200" />
+              <div className="h-10 animate-pulse rounded-md bg-gray-200" />
+              <div className="h-10 animate-pulse rounded-md bg-gray-200" />
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm text-[#838383]">Organization Detail</label>
+              <textarea
+                className="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-[#333333] outline-none focus:border-[#174894] focus:ring-1 focus:ring-[#174894]"
+                rows={6}
+                placeholder="Enter organization details..."
+                value={organizationDetail}
+                onChange={(e) => setOrganizationDetail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-[#838383]">Website</label>
+              <input
+                type="text"
+                className="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-[#333333] outline-none focus:border-[#174894] focus:ring-1 focus:ring-[#174894]"
+                placeholder="https://example.com"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-[#838383]">Subscription Plan</label>
+              <select
+                className="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-[#333333] outline-none focus:border-[#174894] focus:ring-1 focus:ring-[#174894]"
+                value={subscriptionPlan}
+                onChange={(e) => setSubscriptionPlan(e.target.value)}
+              >
+                {SUBSCRIPTION_PLANS.map((plan) => (
+                  <option key={plan} value={plan}>
+                    {plan}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm text-[#838383]">Industry</label>
+              <select
+                className="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-[#333333] outline-none focus:border-[#174894] focus:ring-1 focus:ring-[#174894]"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value)}
+              >
+                {INDUSTRIES.map((ind) => (
+                  <option key={ind} value={ind}>
+                    {ind}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              disabled={isUpdatingDetail}
+              className="rounded-md bg-[#174894] px-4 py-2 font-medium text-white hover:bg-[#173094] disabled:opacity-60"
+              onClick={handleUpdateOrganizationDetail}
+            >
+              {isUpdatingDetail ? "Updating..." : "Update"}
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -235,7 +376,7 @@ const ChatProvider = ({ org_id }) => {
   }
 
   return (
-    <div className="card w-full rounded-lg  border bg-white p-4 text-[#333333] md:w-2/5">
+    <div className="card w-full rounded-lg  border bg-white p-4 text-[#333333] md:w-full mt-4">
       <p className="text-bold text-xl">Public Chat Link</p>
       <textarea
         className="w-full rounded-md bg-gray-300 p-2"

@@ -1,11 +1,13 @@
 import useNavBarStore from "@/store/store"
 import { LucideIcon } from "lucide-react"
 import Link from "next/link"
+import { MouseEvent } from "react"
 interface NavItemProps {
   isActive: boolean
   icon: LucideIcon // Assuming LucideIcon is the type for Lucide icons
   path: string
   name: string
+  onClick?: (e: MouseEvent<HTMLAnchorElement>) => void
 }
 
 export default function NavItem({
@@ -13,6 +15,7 @@ export default function NavItem({
   name,
   icon: Icon,
   path,
+  onClick,
 }: NavItemProps) {
   //to collapse sidebar when menu is clicked
   const { setCollapse, showSideBar } = useNavBarStore()
@@ -21,8 +24,13 @@ export default function NavItem({
       setCollapse()
     }
   }
+
+  const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
+    onClick?.(e)
+    collapseIfMobile()
+  }
   return (
-    <Link href={path} onClick={collapseIfMobile}>
+    <Link href={path} onClick={handleClick}>
       <div className=" flex w-full">
         <div
           className={`flex w-full rounded-lg px-4 py-3 hover:bg-muted ${

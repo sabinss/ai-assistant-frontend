@@ -1,5 +1,6 @@
 import { renderSectionTitle } from "@/lib/sectionTitle"
 import { formatCurrency } from "@/utility"
+import { generateSessionIdLength5 } from "@/lib/utils"
 import { ChevronRight, Search } from "lucide-react"
 import CustomerSlideIn from "../CustomerSlideIn"
 import { useState, useMemo } from "react"
@@ -50,11 +51,12 @@ export default function ImmediateActions({
   const sendCustomerMessageToBackend = async (message: string) => {
     setCustomerMessageStatus(true)
     const messageId = `stream_${Date.now()}`
-    const newSession = Math.floor(Math.random() * 1000).toString()
+    const newSession = generateSessionIdLength5()
     const messagePayload = {
       sender: "user",
       message: message,
-      question: message + `(from customer ${selectedCustomer.customer_name})`,
+      question:
+        message + " " + `for customer ${selectedCustomer.customer_name}`,
       time: getClockTime(),
       id: messageId,
       isStreaming: false,

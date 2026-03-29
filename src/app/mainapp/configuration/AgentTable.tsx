@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { ToolsMultiSelect } from "@/components/ui/tools-multi-select"
 const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Objective", sortable: false },
@@ -35,13 +36,16 @@ const tableHeader = [
 export const AgentTable = () => {
   const [agentList, setAgentList] = useState<any>([])
   const [isEditing, setIsEditing] = useState(false)
-  const { access_token } = useAuth() // Call useAuth here
+  const { access_token, role } = useAuth() // Call useAuth here
+  const isIndividual = role === "individual"
   const [isAgent, setIsAgent] = useState(false)
   const [frequency, setFrequency] = useState("")
   const [dayTime, setDayTime] = useState("")
   // Add state for confirmation dialog
   const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<any>(null)
+  const [showDeleteConfirmDialog, setShowDeleteConfirmDialog] = useState(false)
+  const [agentToDelete, setAgentToDelete] = useState<any>(null)
 
   useEffect(() => {
     async function getOrgAgentList() {
@@ -55,10 +59,12 @@ export const AgentTable = () => {
     greeting: "",
     routing_examples: true,
     objective: "",
-    tools_used: "",
+    tools_used: [] as string[], // Array to store selected tools
     primary_instruction: "",
     frequency: null,
     dayTime: null,
+    scheduleTime: null, // Add time field for scheduling
+    timezone: "EST", // Add timezone field with EST as default
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
     active: false,
@@ -71,25 +77,61 @@ export const AgentTable = () => {
   const addInstruction = () => {
     setFormData((prev: any) => ({
       ...prev,
-      tasks: [
-        ...(prev.tasks || []),
-        { _id: Date.now(), tasks: "", tools: "", name: "" },
-      ],
+      tasks: [...(prev.tasks || []), { _id: Date.now(), instruction: "", tools: "", name: "" }],
     }))
   }
   const getDayTimeOptions = () => {
     switch (formData.frequency) {
       case "Daily":
-        return Array.from({ length: 24 }, (_, i) => `${i + 1}`)
+        return [
+          { value: "1", label: "Monday" },
+          { value: "2", label: "Tuesday" },
+          { value: "3", label: "Wednesday" },
+          { value: "4", label: "Thursday" },
+          { value: "5", label: "Friday" },
+          { value: "6", label: "Saturday" },
+          { value: "7", label: "Sunday" },
+        ]
       case "Weekly":
-        return Array.from({ length: 7 }, (_, i) => `W-${i + 1}`)
+        return [
+          { value: "1", label: "Monday" },
+          { value: "2", label: "Tuesday" },
+          { value: "3", label: "Wednesday" },
+          { value: "4", label: "Thursday" },
+          { value: "5", label: "Friday" },
+          { value: "6", label: "Saturday" },
+          { value: "7", label: "Sunday" },
+        ]
       case "Monthly":
-        return Array.from({ length: 28 }, (_, i) => `M-${i + 1}`)
+        return Array.from({ length: 31 }, (_, i) => ({
+          value: `${i + 1}`,
+          label: `${i + 1}`,
+        }))
       case "Quarterly":
-        return ["1", "2", "3"]
+        return [
+          { value: "1", label: "Q1 (Jan-Mar)" },
+          { value: "2", label: "Q2 (Apr-Jun)" },
+          { value: "3", label: "Q3 (Jul-Sep)" },
+          { value: "4", label: "Q4 (Oct-Dec)" },
+        ]
       default:
         return []
     }
+  }
+
+  const getTimezoneOptions = () => {
+    return [
+      { value: "EST", label: "Eastern Standard Time (EST)" },
+      { value: "PST", label: "Pacific Standard Time (PST)" },
+      { value: "CST", label: "Central Standard Time (CST)" },
+      { value: "MST", label: "Mountain Standard Time (MST)" },
+      { value: "UTC", label: "Coordinated Universal Time (UTC)" },
+      { value: "GMT", label: "Greenwich Mean Time (GMT)" },
+      { value: "CET", label: "Central European Time (CET)" },
+      { value: "JST", label: "Japan Standard Time (JST)" },
+      { value: "AEST", label: "Australian Eastern Standard Time (AEST)" },
+      { value: "IST", label: "India Standard Time (IST)" },
+    ]
   }
 
   const removeInstruction = (id: number) => {
@@ -102,9 +144,7 @@ export const AgentTable = () => {
   const updateInstruction = (id: number, field: any, value: any) => {
     setFormData((prev: any) => ({
       ...prev,
-      tasks: prev.tasks.map((item) =>
-        item._id === id ? { ...item, [field]: value } : item
-      ),
+      tasks: prev.tasks.map((item) => (item._id === id ? { ...item, [field]: value } : item)),
     }))
   }
 
@@ -114,8 +154,11 @@ export const AgentTable = () => {
       id: null,
       name: "",
       objective: "",
+      tools_used: [],
       dayTime,
       frequency,
+      scheduleTime: null,
+      timezone: "EST", // Set default timezone
       isAgent,
     })
     setIsEditing(true)
@@ -123,23 +166,54 @@ export const AgentTable = () => {
 
   const handleEdit = (agent: any) => {
     setAddNew(false)
+    // Handle tools_used - convert from string to array if needed for backwards compatibility
+    // If tools_used is not found (undefined/null) or is "NA", default to empty array
+    let toolsUsed: string[] = []
+    if (agent.tools_used != null && agent.tools_used !== "NA") {
+      if (Array.isArray(agent.tools_used)) {
+        toolsUsed = agent.tools_used.filter((t: string) => t !== "NA")
+      } else if (typeof agent.tools_used === "string" && agent.tools_used) {
+        toolsUsed = agent.tools_used
+          .split(",")
+          .map((t: string) => t.trim())
+          .filter((t: string) => t && t !== "NA")
+      }
+    }
+
     setFormData({
       ...agent,
       active: agent.active,
+      tools_used: toolsUsed,
+      scheduleTime: agent.schedule_time || agent.scheduleTime || null,
+      timezone: agent.time_zone || agent.timezone || "EST", // Default to EST if not set
     })
     setIsEditing(true)
   }
 
-  const handleDelete = async (agent: any) => {
+  const handleDelete = (agent: any) => {
+    setAgentToDelete(agent)
+    setShowDeleteConfirmDialog(true)
+  }
+
+  const cancelDeleteAgent = () => {
+    setShowDeleteConfirmDialog(false)
+    setAgentToDelete(null)
+  }
+
+  const confirmDeleteAgent = async () => {
+    if (!agentToDelete) return
+
     try {
-      console.log("Delete agent", agent)
-      await http.delete(`/organization/agent/${agent._id}/instruction`, {
+      await http.delete(`/organization/agent/${agentToDelete._id}/instruction`, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       await fetchOrgAgentInstructions()
       toast.success("Agent deleted successfully")
     } catch (err: any) {
       toast.error(err?.message || "Failed to delete Agent")
+    } finally {
+      setShowDeleteConfirmDialog(false)
+      setAgentToDelete(null)
     }
   }
 
@@ -160,15 +234,36 @@ export const AgentTable = () => {
   const handleSave = async () => {
     setAgentLoading(true)
     let data = { ...formData }
+
+    // Convert tools_used array to comma-separated string for API
+    const toolsUsedString = Array.isArray(data.tools_used)
+      ? data.tools_used.join(",")
+      : data.tools_used || ""
+
+    // Ensure timezone and scheduleTime are included in payload
+    console.log("Saving agent with data:", {
+      ...data,
+      tools_used: toolsUsedString,
+      time_zone: data.timezone || "EST",
+      schedule_time: data.scheduleTime || null,
+    })
+
     try {
       if (data._id) {
-        await http.put("/organization/agent", data, {
+        // Ensure timezone and scheduleTime are explicitly included
+        const updateData = {
+          ...data,
+          tools_used: toolsUsedString,
+          time_zone: data.timezone || "EST",
+          schedule_time: data.scheduleTime || null,
+        }
+        await http.put("/organization/agent", updateData, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         // Update the agent list without re-fetching from API
         setAgentList((prevList: any) =>
           prevList.map((agent: any) =>
-            agent._id === data._id ? { ...agent, ...data } : agent
+            agent._id === data._id ? { ...agent, ...data, tools_used: toolsUsedString } : agent
           )
         )
         setAgentLoading(false)
@@ -176,7 +271,14 @@ export const AgentTable = () => {
         toast.success("Agent updated successfully")
         await fetchOrgAgentInstructions()
       } else {
-        const response = await http.post("/organization/agent", data, {
+        // Ensure timezone and scheduleTime are explicitly included for new agents
+        const createData = {
+          ...data,
+          tools_used: toolsUsedString,
+          time_zone: data.timezone || "EST",
+          schedule_time: data.scheduleTime || null,
+        }
+        const response = await http.post("/organization/agent", createData, {
           headers: { Authorization: `Bearer ${access_token}` },
         })
         await fetchOrgAgentInstructions()
@@ -232,32 +334,42 @@ export const AgentTable = () => {
           <DialogHeader>
             <DialogTitle>Confirm Agent Start</DialogTitle>
             <DialogDescription>
-              Are you sure you want to start the agent "{selectedAgent?.name}"?
-              This action will initiate the agent process.
+              Are you sure you want to start the agent "{selectedAgent?.name}"? This action will
+              initiate the agent process.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              onClick={cancelStartAgent}
-              variant="outline"
-              className="mr-2"
-            >
+            <Button onClick={cancelStartAgent} variant="outline" className="mr-2">
               Cancel
             </Button>
-            <Button
-              onClick={confirmStartAgent}
-              className="bg-green-600 hover:bg-green-700"
-            >
+            <Button onClick={confirmStartAgent} className="bg-green-600 hover:bg-green-700">
               Start Agent
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteConfirmDialog} onOpenChange={setShowDeleteConfirmDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Confirm Delete Agent</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the agent "{agentToDelete?.name}"?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={cancelDeleteAgent} variant="outline" className="mr-2">
+              Cancel
+            </Button>
+            <Button onClick={confirmDeleteAgent} className="bg-red-600 hover:bg-red-700">
+              Delete Agent
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       {isEditing ? (
         <div className="rounded-lg bg-gray-100 p-4">
-          <h2 className="text-lg font-semibold">
-            {!isAddNew ? "Edit Agent" : "Add New Agent"}
-          </h2>
+          <h2 className="text-lg font-semibold">{!isAddNew ? "Edit Agent" : "Add New Agent"}</h2>
           <div className="flex flex-col gap-4">
             <div>
               {" "}
@@ -266,9 +378,7 @@ export const AgentTable = () => {
                 type="text"
                 placeholder="Name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full rounded border p-2"
               />
             </div>
@@ -278,18 +388,19 @@ export const AgentTable = () => {
               <label className="block font-medium">Active</label>{" "}
               <select
                 id="active"
-                value={formData.active}
+                value={formData.active === true ? "true" : formData.active === false ? "false" : ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
-                    active: e.target.value,
+                    active:
+                      e.target.value === "true" ? true : e.target.value === "false" ? false : null,
                   }))
                 }
                 className="w-full rounded border p-2"
               >
                 <option value="">Select</option>
-                <option value={true}>Y</option>
-                <option value={false}>N</option>
+                <option value="true">Y</option>
+                <option value="false">N</option>
               </select>
             </div>
 
@@ -324,10 +435,7 @@ export const AgentTable = () => {
             {formData.isAgent && (
               <>
                 <div>
-                  <label
-                    htmlFor="frequency"
-                    className="mb-1 block text-sm font-semibold"
-                  >
+                  <label htmlFor="frequency" className="mb-1 block text-sm font-semibold">
                     Frequency
                   </label>
                   <select
@@ -349,31 +457,79 @@ export const AgentTable = () => {
                   </select>
                 </div>
                 {formData.frequency && (
-                  <div>
-                    <label
-                      htmlFor="dayTime"
-                      className="mb-1 block text-sm font-semibold"
-                    >
-                      Day/Time
-                    </label>
-                    <select
-                      id="dayTime"
-                      value={formData.dayTime}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          dayTime: e.target.value,
-                        }))
-                      }
-                      className="w-full rounded border p-2"
-                    >
-                      <option value="">Select Option</option>
-                      {getDayTimeOptions().map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
+                        {formData.frequency === "Daily"
+                          ? "Day of Week"
+                          : formData.frequency === "Weekly"
+                            ? "Day of Week"
+                            : formData.frequency === "Monthly"
+                              ? "Day of Month"
+                              : formData.frequency === "Quarterly"
+                                ? "Quarter"
+                                : "Day/Time"}
+                      </label>
+                      <select
+                        id="dayTime"
+                        value={formData.dayTime}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            dayTime: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border p-2"
+                      >
+                        <option value="">Select Option</option>
+                        {getDayTimeOptions().map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
+                        Time
+                      </label>
+                      <input
+                        type="time"
+                        id="scheduleTime"
+                        value={formData.scheduleTime || ""}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            scheduleTime: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border p-2"
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="timezone" className="mb-1 block text-sm font-semibold">
+                        Timezone
+                      </label>
+                      <select
+                        id="timezone"
+                        value={formData.timezone || "EST"}
+                        onChange={(e) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            timezone: e.target.value,
+                          }))
+                        }
+                        className="w-full rounded border p-2"
+                      >
+                        {getTimezoneOptions().map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 )}
               </>
@@ -390,19 +546,23 @@ export const AgentTable = () => {
               />
             </div>
             <div>
-              {" "}
-              <label className="block font-medium">Tools Used</label>{" "}
-              <input
-                type="text"
-                placeholder="Name"
-                value={formData.tools_used}
-                onChange={(e) =>
-                  setFormData({ ...formData, tools_used: e.target.value })
+              <label className="block font-medium">Tools Used</label>
+              <ToolsMultiSelect
+                selectedTools={
+                  Array.isArray(formData.tools_used)
+                    ? formData.tools_used
+                    : typeof formData.tools_used === "string" && formData.tools_used
+                      ? formData.tools_used
+                        .split(",")
+                        .map((t: string) => t.trim())
+                        .filter(Boolean)
+                      : []
                 }
-                className="w-full rounded border p-2"
+                onChange={(tools) => setFormData({ ...formData, tools_used: tools })}
+                placeholder="Select tools..."
               />
             </div>
-            <div className="mb-4">
+            {/* <div className="mb-4">
               <label className="block font-medium">Routing Instruction</label>
               <textarea
                 className="h-20 w-full rounded border p-2"
@@ -414,8 +574,8 @@ export const AgentTable = () => {
                   })
                 }}
               />
-            </div>
-            <div className="mb-4">
+            </div> */}
+            {/* <div className="mb-4">
               <label className="block font-medium">Routing Examples</label>
               <textarea
                 className="h-20 w-full rounded border p-2"
@@ -427,7 +587,7 @@ export const AgentTable = () => {
                   })
                 }}
               />
-            </div>
+            </div> */}
 
             <div className="mb-4">
               <div className="space-y-3">
@@ -469,9 +629,7 @@ export const AgentTable = () => {
                     </div>
 
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Scope
-                      </label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">Scope</label>
                       <textarea
                         className="h-20 w-full rounded border p-2"
                         placeholder="Enter batch process scope..."
@@ -518,57 +676,35 @@ export const AgentTable = () => {
             {formData?.tasks && formData?.tasks.length > 0 && (
               <div className="mt-4 space-y-4">
                 {formData.tasks.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col gap-2 rounded-lg border p-4 shadow"
-                  >
-                    <label
-                      htmlFor={`name-${item._id}`}
-                      className="font-semibold"
-                    >
+                  <div key={item.id} className="flex flex-col gap-2 rounded-lg border p-4 shadow">
+                    <label htmlFor={`name-${item._id}`} className="font-semibold">
                       Task Name
                     </label>
                     <input
                       type="text"
                       placeholder="Name"
                       value={item.name}
-                      onChange={(e) =>
-                        updateInstruction(item._id, "name", e.target.value)
-                      }
+                      onChange={(e) => updateInstruction(item._id, "name", e.target.value)}
                       className="w-full rounded border p-2"
                     />
-                    <label
-                      htmlFor={`tools-${item._id}`}
-                      className="font-semibold"
-                    >
+                    <label htmlFor={`tools-${item._id}`} className="font-semibold">
                       Tools
                     </label>
                     <input
                       type="text"
                       placeholder="Tools"
                       value={item.tools}
-                      onChange={(e) =>
-                        updateInstruction(item._id, "tools", e.target.value)
-                      }
+                      onChange={(e) => updateInstruction(item._id, "tools", e.target.value)}
                       className="w-full rounded border p-2"
                     />
-                    <label
-                      htmlFor={`instruction-${item._id}`}
-                      className="font-semibold"
-                    >
+                    <label htmlFor={`instruction-${item._id}`} className="font-semibold">
                       Instruction
                     </label>
                     <textarea
                       className="h-80 w-full rounded border p-2"
                       placeholder="Instruction"
                       value={item.instruction}
-                      onChange={(e) =>
-                        updateInstruction(
-                          item._id,
-                          "instruction",
-                          e.target.value
-                        )
-                      }
+                      onChange={(e) => updateInstruction(item._id, "instruction", e.target.value)}
                     />
                     <div className="w-400[x]">
                       {" "}
@@ -592,9 +728,7 @@ export const AgentTable = () => {
               >
                 <FaRegSave className="inline" />
                 Save
-                {isAgentLoading && (
-                  <ImSpinner2 className="ml-2 h-5 w-5 animate-spin text-white" />
-                )}
+                {isAgentLoading && <ImSpinner2 className="ml-2 h-5 w-5 animate-spin text-white" />}
               </button>
               <button
                 onClick={handleCancel}
@@ -607,6 +741,7 @@ export const AgentTable = () => {
         </div>
       ) : (
         <>
+          {/* {!isIndividual && (  */}
           <div className="flex justify-end p-3">
             <button
               onClick={handleAddNew}
@@ -618,6 +753,7 @@ export const AgentTable = () => {
               </div>
             </button>
           </div>
+          {/* )} */}
           <Table className="mt-2">
             <TableHeader>
               <TableRow className="bg-[#174894]">
@@ -649,22 +785,23 @@ export const AgentTable = () => {
                             Start
                           </button>
                         )}
-                        <button onClick={() => handleEdit(agent)}>
-                          <FaEdit size={20} />
-                        </button>
-                        <button onClick={() => handleDelete(agent)}>
-                          <MdDelete size={20} />
-                        </button>
+                        {/* {!isIndividual && ( */}
+                        <>
+                          <button onClick={() => handleEdit(agent)}>
+                            <FaEdit size={20} />
+                          </button>
+                          <button onClick={() => handleDelete(agent)}>
+                            <MdDelete size={20} />
+                          </button>
+                        </>
+                        {/* )} */}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell
-                    colSpan={tableHeader.length}
-                    className="py-3 text-center"
-                  >
+                  <TableCell colSpan={tableHeader.length} className="py-3 text-center">
                     No Agent list found
                   </TableCell>
                 </TableRow>

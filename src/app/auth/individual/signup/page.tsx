@@ -4,15 +4,7 @@ import http from "@/config/http"
 import Link from "next/link"
 import React, { useState } from "react"
 import { useForm, SubmitHandler, FieldValues } from "react-hook-form"
-import {
-  Mail,
-  UserRound,
-  Landmark,
-  BookA,
-  UnlockKeyhole,
-  EyeIcon,
-  EyeOffIcon,
-} from "lucide-react"
+import { Mail, UserRound, Landmark, BookA, UnlockKeyhole, EyeIcon, EyeOffIcon } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
@@ -36,14 +28,16 @@ export default function Page() {
   }
 
   const onSubmit: SubmitHandler<FieldValues> = async (data) => {
-    const success = await sendConfirmEmail(data)
-    if (success) {
-      setFormData(data)
+    const formDataWithAccountType = {
+      ...data,
+      account_type: "individual",
+    }
+    const emailSent = await sendConfirmEmail(formDataWithAccountType)
+    if (emailSent) {
+      setFormData(formDataWithAccountType)
       setEnteredDetails(true)
     }
   }
-
-  // Check if both checkboxes are checked
   const isFormValid = privacyPolicyChecked && termsOfUseChecked
 
   return (
@@ -55,10 +49,7 @@ export default function Page() {
         </div>
       )}
       {!enteredDetails ? (
-        <form
-          className="mt-4 flex flex-col gap-2"
-          onSubmit={handleSubmit(onSubmit)}
-        >
+        <form className="mt-4 flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
           <div
             className={`flex rounded-lg border-2 ${errors?.email ? "border-red-700" : "border-[#CCC]"} bg-[#E7E7E7] px-3 py-2`}
           >
@@ -70,18 +61,12 @@ export default function Page() {
               {...register("email", { required: true })}
             />
             <div className="border-l-2 border-[#CCC] pl-2">
-              <Mail
-                className={`${errors?.email ? "text-red-700" : "text-[#CCC]"}`}
-              />
+              <Mail className={`${errors?.email ? "text-red-700" : "text-[#CCC]"}`} />
             </div>
           </div>
           {errors?.email &&
-            (errors?.email?.type === "required" ||
-              errors?.email?.type === "pattern") && (
-              <span
-                role="alert"
-                className="mt-[-10px] text-[12px] text-red-700"
-              >
+            (errors?.email?.type === "required" || errors?.email?.type === "pattern") && (
+              <span role="alert" className="mt-[-10px] text-[12px] text-red-700">
                 {errors?.email?.type === "pattern"
                   ? "Entered value does not match email format"
                   : "Email field is required"}
@@ -97,9 +82,7 @@ export default function Page() {
               {...register("first_name", { required: true })}
             />
             <div className="border-l-2 border-[#CCC] pl-2">
-              <UserRound
-                className={`${errors?.first_name ? "text-red-700" : "text-[#CCC]"}`}
-              />
+              <UserRound className={`${errors?.first_name ? "text-red-700" : "text-[#CCC]"}`} />
             </div>
           </div>
           {errors?.first_name && errors?.first_name?.type === "required" && (
@@ -117,9 +100,7 @@ export default function Page() {
               {...register("last_name", { required: true })}
             />
             <div className="border-l-2 border-[#CCC] pl-2">
-              <UserRound
-                className={`${errors?.last_name ? "text-red-700" : "text-[#CCC]"}`}
-              />
+              <UserRound className={`${errors?.last_name ? "text-red-700" : "text-[#CCC]"}`} />
             </div>
           </div>
           {errors?.last_name && errors?.last_name?.type === "required" && (
@@ -142,15 +123,11 @@ export default function Page() {
               />
             </div>
           </div>
-          {errors?.organization_name &&
-            errors?.organization_name?.type === "required" && (
-              <span
-                role="alert"
-                className="mt-[-10px] text-[12px] text-red-700"
-              >
-                Organization Name field is required
-              </span>
-            )}
+          {errors?.organization_name && errors?.organization_name?.type === "required" && (
+            <span role="alert" className="mt-[-10px] text-[12px] text-red-700">
+              Organization Name field is required
+            </span>
+          )}
           <div
             className={`flex rounded-lg border-2 ${errors?.ai_assistant_name ? "border-red-700" : "border-[#CCC]"} bg-[#E7E7E7] px-3 py-2`}
           >
@@ -161,20 +138,14 @@ export default function Page() {
               {...register("ai_assistant_name", { required: true })}
             />
             <div className="border-l-2 border-[#CCC] pl-2">
-              <BookA
-                className={`${errors?.ai_assistant_name ? "text-red-700" : "text-[#CCC]"}`}
-              />
+              <BookA className={`${errors?.ai_assistant_name ? "text-red-700" : "text-[#CCC]"}`} />
             </div>
           </div>
-          {errors?.ai_assistant_name &&
-            errors?.ai_assistant_name?.type === "required" && (
-              <span
-                role="alert"
-                className="mt-[-10px] text-[12px] text-red-700"
-              >
-                AI Assistant field is required
-              </span>
-            )}
+          {errors?.ai_assistant_name && errors?.ai_assistant_name?.type === "required" && (
+            <span role="alert" className="mt-[-10px] text-[12px] text-red-700">
+              AI Assistant field is required
+            </span>
+          )}
           <div
             className={`flex rounded-lg border-2 ${errors?.password ? "border-red-700" : "border-[#CCC]"} bg-[#E7E7E7] px-3 py-2`}
           >
@@ -188,15 +159,10 @@ export default function Page() {
               {togglePass === "password" ? (
                 <EyeIcon
                   onClick={togglePassword}
-                  className={
-                    errors?.password ? "text-red-700" : "text-[#a2a2a2]"
-                  }
+                  className={errors?.password ? "text-red-700" : "text-[#a2a2a2]"}
                 />
               ) : (
-                <EyeOffIcon
-                  onClick={togglePassword}
-                  className="cursor-pointer text-[#a3a3a3]"
-                />
+                <EyeOffIcon onClick={togglePassword} className="cursor-pointer text-[#a3a3a3]" />
               )}
             </div>
           </div>
@@ -206,50 +172,15 @@ export default function Page() {
             </span>
           )}
 
-          {/* Privacy Policy and Terms of Use Checkboxes - Horizontal Layout */}
-          {/* <div className="mt-2 flex items-center justify-between text-xs">
-            <div className="flex items-center">
-              <Checkbox
-                checked={privacyPolicyChecked}
-                onCheckedChange={(checked) =>
-                  setPrivacyPolicyChecked(checked as boolean)
-                }
-              />
-              <span className="ml-2">
-                I agree with{" "}
-                <Link href="/privacy" className="text-blue-500 hover:underline">
-                  Privacy Policy
-                </Link>
-              </span>
-            </div>
-
-            <div className="flex items-center">
-              <Checkbox
-                checked={termsOfUseChecked}
-                onCheckedChange={(checked) =>
-                  setTermsOfUseChecked(checked as boolean)
-                }
-              />
-              <span className="ml-2">
-                I agree with{" "}
-                <Link href="/terms" className="text-blue-500 hover:underline">
-                  Terms of Use
-                </Link>
-              </span>
-            </div>
-          </div> */}
           <div className="mt-5 rounded-lg bg-gray-100 p-2 text-xs">
             <span>
-              By creating an account, you confirm that you have read and agree
-              to our
+              By creating an Individual account, you confirm that you have read and agree to our
             </span>
             <div className="mt-2 flex items-center gap-4">
               <div className="flex items-center">
                 <Checkbox
                   checked={termsOfUseChecked}
-                  onCheckedChange={(checked) =>
-                    setTermsOfUseChecked(checked as boolean)
-                  }
+                  onCheckedChange={(checked) => setTermsOfUseChecked(checked as boolean)}
                 />
                 <span className="ml-2">
                   <Link
@@ -265,9 +196,7 @@ export default function Page() {
               <div className="flex items-center">
                 <Checkbox
                   checked={privacyPolicyChecked}
-                  onCheckedChange={(checked) =>
-                    setPrivacyPolicyChecked(checked as boolean)
-                  }
+                  onCheckedChange={(checked) => setPrivacyPolicyChecked(checked as boolean)}
                 />
                 <span className="ml-2">
                   <Link
@@ -375,9 +304,7 @@ const EmailConfirmDialog = ({ formData }: { formData: any }) => {
 
   return (
     <div className="mt-4 flex flex-col items-center">
-      <h1 className="mt-2 text-center text-2xl font-semibold">
-        Email Confirmation
-      </h1>
+      <h1 className="mt-2 text-center text-2xl font-semibold">Email Confirmation</h1>
       <input
         className="mt-2 rounded border p-2"
         type="text"
@@ -385,37 +312,25 @@ const EmailConfirmDialog = ({ formData }: { formData: any }) => {
         value={verificationCode}
         onChange={handleCodeChange}
       />
-      <Button
-        onClick={() => handleVerify()}
-        className="mt-2 bg-[#174894] hover:bg-[#173094]"
-      >
+      <Button onClick={() => handleVerify()} className="mt-2 bg-[#174894] hover:bg-[#173094]">
         Verify
       </Button>
       {isValidCode && (
         <div className="mt-4">
-          <p className="text-green-600">
-            Code verified successfully! Creating your account
-          </p>
+          <p className="text-green-600">Code verified successfully! Creating your account</p>
         </div>
       )}
     </div>
   )
 }
 
-const sendConfirmEmail = async (formData: any): Promise<boolean> => {
+const sendConfirmEmail = async (data: any) => {
   try {
-    await http.post("/auth/sendEmailVerifyToken", {
-      email: formData.email,
-      first_name: formData.first_name,
-      last_name: formData.last_name,
-      organization_name: formData.organization_name,
-      ai_assistant_name: formData.ai_assistant_name,
-      password: formData.password,
-    })
+    await http.post("/auth/sendEmailVerifyToken", data)
     toast.success("Verification email sent")
     return true
   } catch (e: any) {
-    toast.error(e?.response?.data?.message || "Something went wrong")
+    toast.error(e?.response?.data?.message)
     return false
   }
 }

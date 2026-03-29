@@ -21,11 +21,13 @@ type UserStore = {
     user_data: UserData,
     access_token: string,
     rolePermission: string[],
-    chatSession: string
+    chatSession: string,
+    role: string
   ) => void
   logoutUser: () => void
   rolePermission: string[]
   chatSession: string
+  role: string | null
   setChatSession: (chatSession: string) => void
 }
 
@@ -43,11 +45,13 @@ const useAuth = create(
       is_logged_in: undefined,
       user_data: null,
       access_token: null,
+      role: null,
       loginUser: (
         user_data: UserData,
         access_token: string,
         rolePermission: string[],
-        chatSession: string
+        chatSession: string,
+        role: string
       ) => {
         set((state) => ({
           ...state,
@@ -56,6 +60,7 @@ const useAuth = create(
           access_token,
           rolePermission,
           chatSession,
+          role: role,
         }))
       },
 
@@ -67,6 +72,7 @@ const useAuth = create(
           access_token: null,
           rolePermission: [],
           chatSession: "",
+          role: null,
         }))
       },
       setChatSession: (chatSession: string) => {
@@ -79,7 +85,7 @@ const useAuth = create(
     {
       name: "agile-user-data", // unique name for the storage
       onRehydrateStorage: () => (state) => {
-        state.setHasHydrated(true)
+        state?.setHasHydrated(true)
       },
     }
   )

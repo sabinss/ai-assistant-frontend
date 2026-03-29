@@ -25,6 +25,7 @@ function getGoogleOAuthURL(orgId: any) {
     response_type: options.response_type,
     access_type: options.access_type,
     prompt: options.prompt,
+    state: options.state,
   })
 
   return `${rootURL}?${qs.toString()}`

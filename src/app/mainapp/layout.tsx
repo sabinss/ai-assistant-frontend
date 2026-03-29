@@ -28,9 +28,9 @@ export default function MainAppLayout({
           }
         >
           <TopNavBar />
-          <div className="relative mt-[64px] flex flex-row p-1">
+          <div className="relative mt-[64px] flex h-[calc(100vh-64px)] min-h-0 flex-row p-1">
             <Sidebar />
-            <div className="h-screen w-full overflow-y-scroll bg-slate-100 p-2 pb-10 text-sm">
+            <div className="mainapp-scroll-area relative isolate min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-2 pb-10 text-sm">
               {children}
             </div>
           </div>
