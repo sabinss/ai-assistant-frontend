@@ -454,6 +454,7 @@ export const AgentTable = () => {
                     <option value="Monthly">Monthly</option>
                     <option value="Weekly">Weekly</option>
                     <option value="Daily">Daily</option>
+                    <option value="Hourly">Hourly</option>
                   </select>
                 </div>
                 {formData.frequency && (
