@@ -81,31 +81,48 @@ export default function ChatTopbar({
   /* Visitor title is public / embed only — ignore store URL when in main app chat */
   const visitorTitle = publicChat
     ? (
-        visitorDisplayNameFromUrl?.trim() ||
-        publicVisitorDisplayName?.trim() ||
-        ""
-      ).trim()
+      visitorDisplayNameFromUrl?.trim() ||
+      publicVisitorDisplayName?.trim() ||
+      ""
+    ).trim()
     : ""
 
   return (
-    <div className="flex  w-full flex-col rounded-md bg-muted p-3 ">
-      <div className="flex items-center justify-between">
-        <div className="title flex">
+    <div
+      className={`flex w-full flex-col rounded-md bg-muted ${publicChat ? "p-2 sm:p-2.5" : "p-3"}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="title flex min-w-0 flex-1 items-center">
           <Image
             src={botImage}
-            className="mr-3 inline rounded-full"
+            className={`inline shrink-0 rounded-full ${publicChat ? "mr-2" : "mr-3"}`}
             alt=""
-            height={30}
-            width={30}
+            height={publicChat ? 28 : 30}
+            width={publicChat ? 28 : 30}
           />
-          <h2 className="inline text-xl font-bold">
-            Chat with{" "}
-            {visitorTitle
-              ? visitorTitle
-              : botName
-                ? botName
-                : "Gabby"}
-          </h2>
+          {publicChat ? (
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              {/* <span className="block truncate text-sm font-semibold leading-tight text-foreground">
+                {botName?.trim() ? botName : "Gabby"}
+              </span> */}
+              {visitorTitle ? (
+                <span
+                  className="block truncate text-xs leading-tight  text-bold"
+                  title={visitorTitle}
+                >
+                  Chatting with {visitorTitle}
+                </span>
+              ) : (
+                <span className="block text-xs leading-tight text-muted-foreground">
+                  We&apos;re here to help
+                </span>
+              )}
+            </div>
+          ) : (
+            <h2 className="inline text-xl font-bold">
+              Chat with {botName ? botName : "Gabby"}
+            </h2>
+          )}
           {/* <span className="inline text-xl font-bold">
             Chat about {publicChat && "Product Knowledge"}
           </span> */}
@@ -137,13 +154,21 @@ export default function ChatTopbar({
             )}
           </div> */}
         </div>
-        <div
-          className=" flex cursor-pointer gap-2  rounded-md border p-2 hover:text-black"
+        <button
+          type="button"
+          className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background/90 font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${publicChat ? "px-2 py-1.5 text-xs" : "gap-2 p-2 text-sm hover:text-black"
+            }`}
+          title="Start a new conversation"
           onClick={changeSession}
         >
-          <GrAdd size={20} />
-          <p>New Session</p>
-        </div>
+          <GrAdd size={publicChat ? 16 : 20} className="shrink-0" />
+          {/* {publicChat ? (
+            <span>New chat</span>
+          ) : (
+            <span>New Session</span>
+          )} */}
+          <span>New Session</span>
+        </button>
       </div>
 
       {/* <div className="flex items-center gap-4 mt-3 w-full">
