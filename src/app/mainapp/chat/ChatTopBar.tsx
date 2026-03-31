@@ -91,8 +91,12 @@ export default function ChatTopbar({
     <div
       className={`flex w-full flex-col rounded-md bg-muted ${publicChat ? "p-2 sm:p-2.5" : "p-3"}`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="title flex min-w-0 flex-1 items-center">
+      <div
+        className={`flex justify-between gap-2 ${publicChat ? "items-start" : "items-center"}`}
+      >
+        <div
+          className={`title flex min-w-0 flex-1 ${publicChat ? "items-start" : "items-center"}`}
+        >
           <Image
             src={botImage}
             className={`inline shrink-0 rounded-full ${publicChat ? "mr-2" : "mr-3"}`}
@@ -101,19 +105,16 @@ export default function ChatTopbar({
             width={publicChat ? 28 : 30}
           />
           {publicChat ? (
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-              {/* <span className="block truncate text-sm font-semibold leading-tight text-foreground">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5 pr-1">
+              <span className="block text-sm font-semibold leading-snug text-foreground">
                 {botName?.trim() ? botName : "Gabby"}
-              </span> */}
+              </span>
               {visitorTitle ? (
-                <span
-                  className="block truncate text-xs leading-tight  text-bold"
-                  title={visitorTitle}
-                >
+                <span className="block max-w-full break-words text-xs font-medium leading-snug text-muted-foreground">
                   Chatting with {visitorTitle}
                 </span>
               ) : (
-                <span className="block text-xs leading-tight text-muted-foreground">
+                <span className="block text-xs leading-snug text-muted-foreground">
                   We&apos;re here to help
                 </span>
               )}
