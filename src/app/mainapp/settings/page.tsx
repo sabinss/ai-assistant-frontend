@@ -43,7 +43,7 @@ export default function Page() {
     zendesk_user: "",
     zendesk_subdomain: "",
     hubspot_bearer_token: "",
-    tenant_isolation: "",
+    tenant_isolation: "Dedicated",
   })
 
   const [supportWorkflowFlag, setSupportWorkflowFlag] = useState(false)
@@ -91,7 +91,7 @@ export default function Page() {
           zendesk_user: orgData?.zendesk_user ?? "",
           zendesk_subdomain: orgData?.zendesk_subdomain ?? "",
           hubspot_bearer_token: orgData?.hubspot_bearer_token ?? "",
-          tenant_isolation: orgData?.tenant_isolation ?? "",
+          tenant_isolation: orgData?.tenant_isolation || "Dedicated",
         })
         setWhatsappConfig(orgData.whatsappConfig)
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
@@ -169,7 +169,7 @@ export default function Page() {
         configuration: "setting",
         orgDbSetting: {
           ...orgSetting,
-          tenant_isolation: orgSetting?.tenant_isolation ?? "",
+          tenant_isolation: orgSetting?.tenant_isolation || "Dedicated",
         },
         whatsappConfig,
       }
@@ -260,7 +260,7 @@ export default function Page() {
           />
         </div>
 
-        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+        {/* <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Database Name.</h3>
           <Input
             name="database_name"
@@ -269,8 +269,8 @@ export default function Page() {
             value={orgSetting?.database_name}
             onChange={handleOrgSettingDb}
           />
-        </div>
-        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+        </div> */}
+        {/* <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Red Shift Work Group</h3>
           <Input
             name="redshit_work_space"
@@ -279,8 +279,8 @@ export default function Page() {
             value={orgSetting?.redshit_work_space}
             onChange={handleOrgSettingDb}
           />
-        </div>
-        <div className="apikeyflex mt-4 flex-col md:w-1/2">
+        </div> */}
+        {/* <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Redshit DB</h3>
           <Input
             name="redshift_db"
@@ -289,18 +289,17 @@ export default function Page() {
             value={orgSetting?.redshift_db}
             onChange={handleOrgSettingDb}
           />
-        </div>
+        </div> */}
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
           <h3 className="text-sm text-primary">Tenant Isolation</h3>
           <select
             name="tenant_isolation"
             className="mt-2 h-10 w-full rounded-md border border-[#CCCCCC] bg-[#F7f7f7] px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={orgSetting?.tenant_isolation ?? ""}
+            value={orgSetting?.tenant_isolation || "Dedicated"}
             onChange={handleOrgSettingDb}
           >
-            <option value="">Select</option>
-            <option value="Shared">Shared</option>
             <option value="Dedicated">Dedicated</option>
+            <option value="Shared">Shared</option>
           </select>
         </div>
         <div className="apikeyflex mt-4 flex-col md:w-1/2">
