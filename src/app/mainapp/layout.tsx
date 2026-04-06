@@ -1,6 +1,7 @@
 "use client"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import CowrkrEmbedGlobal from "./CowrkrEmbedGlobal"
 import Sidebar from "./Sidebar"
 import TopNavBar from "./TopNavBar"
 import useAuth from "@/store/user"
@@ -27,6 +28,7 @@ export default function MainAppLayout({
             </div>
           }
         >
+          <CowrkrEmbedGlobal />
           <TopNavBar />
           <div className="relative mt-[64px] flex h-[calc(100vh-64px)] min-h-0 flex-row p-1">
             <Sidebar />

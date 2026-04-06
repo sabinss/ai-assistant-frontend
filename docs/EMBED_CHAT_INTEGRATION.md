@@ -1,6 +1,8 @@
-# CoWrkr embed chat — client integration guide
+# CoWrkr embed chat — technical reference
 
-This document explains how to add the **floating chat widget** to a customer website using `embedchat.js`. The widget loads your **public chat** page (`/public_chat`) in an iframe behind a bottom-right chat button.
+For a **narrative client guide** (overview, login/logout, framework examples, timing), see **[`COWRKR_CHAT_CLIENT_INTEGRATION.md`](./COWRKR_CHAT_CLIENT_INTEGRATION.md)**.
+
+This document is a concise technical reference for adding the **floating chat widget** with `embedchat.js`. The widget loads your **public chat** page (`/public_chat`) in an iframe behind a bottom-right chat button.
 
 ---
 
@@ -27,12 +29,12 @@ Replace `YOUR_ORG_ID` with the value CoWrkr gave you.
 
 Optional attributes on the same element (if you are not using the JS config object for user fields):
 
-| Attribute | Purpose |
-|-----------|---------|
-| `data-user-name` | Visitor display name in chat |
-| `data-user-email` | Visitor email |
-| `data-user-id` | Visitor id in your system |
-| `data-user-json` | JSON string of a user object (`name` / `displayName`, `email`, `userId` or `id`) |
+| Attribute         | Purpose                                                                          |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `data-user-name`  | Visitor display name in chat                                                     |
+| `data-user-email` | Visitor email                                                                    |
+| `data-user-id`    | Visitor id in your system                                                        |
+| `data-user-json`  | JSON string of a user object (`name` / `displayName`, `email`, `userId` or `id`) |
 
 ---
 
@@ -51,16 +53,16 @@ Before or after loading the script, assign **`window.__cowrkrEmbedConfig`**. Thi
       email: "jane@client.com",
       userId: "user-123",
     },
-  };
+  }
 </script>
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `orgId` | Yes* | Same as `data-org` on `#embed-container`. *One of `orgId` or `data-org` is required. |
-| `user` | No | `name` (or `displayName`), `email`, `userId` (or `id`) — passed into the chat iframe as query params. |
-| `chatOrigin` | Sometimes | HTTPS origin of the CoWrkr app **without** a trailing slash, e.g. `https://app.example.com`. Use when the embed script is loaded from a different host than CoWrkr. |
-| `chatBaseUrl` | Rare | Full URL of the chat page, e.g. `https://app.example.com/public_chat`. If omitted, the script uses `chatOrigin` + `/public_chat` or derives the host from the script’s URL. |
+| Field         | Required  | Description                                                                                                                                                                 |
+| ------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `orgId`       | Yes\*     | Same as `data-org` on `#embed-container`. \*One of `orgId` or `data-org` is required.                                                                                       |
+| `user`        | No        | `name` (or `displayName`), `email`, `userId` (or `id`) — passed into the chat iframe as query params.                                                                       |
+| `chatOrigin`  | Sometimes | HTTPS origin of the CoWrkr app **without** a trailing slash, e.g. `https://app.example.com`. Use when the embed script is loaded from a different host than CoWrkr.         |
+| `chatBaseUrl` | Rare      | Full URL of the chat page, e.g. `https://app.example.com/public_chat`. If omitted, the script uses `chatOrigin` + `/public_chat` or derives the host from the script’s URL. |
 
 ---
 
@@ -69,10 +71,7 @@ Before or after loading the script, assign **`window.__cowrkrEmbedConfig`**. Thi
 Use the **full HTTPS URL** to the script on the CoWrkr deployment:
 
 ```html
-<script
-  src="https://your-cowrkr-frontend.example.com/embedchat.js"
-  async
-></script>
+<script src="https://your-cowrkr-frontend.example.com/embedchat.js" async></script>
 ```
 
 **Order:** Defining `__cowrkrEmbedConfig` in an inline `<script>` **above** this tag is fine. If you set config later (e.g. after your auth SDK loads), call the initializer once config and DOM are ready (Step 5).
@@ -106,8 +105,8 @@ The iframe loads **`{origin}/public_chat?org_id=...&...`**. How `{origin}` is ch
 Example pattern (same idea as React `useEffect`):
 
 ```javascript
-const COWRKR_ORIGIN = "https://your-cowrkr-frontend.example.com";
-const ORG_ID = "your_org_id";
+const COWRKR_ORIGIN = "https://your-cowrkr-frontend.example.com"
+const ORG_ID = "your_org_id"
 
 function setCowrkrEmbedUser(user) {
   window.__cowrkrEmbedConfig = {
@@ -120,21 +119,21 @@ function setCowrkrEmbedUser(user) {
           userId: user.id,
         }
       : {},
-  };
+  }
 
-  const runInit = () => window.__cowrkrEmbedChatInit?.();
+  const runInit = () => window.__cowrkrEmbedChatInit?.()
 
-  let script = document.querySelector(`script[src="${COWRKR_ORIGIN}/embedchat.js"]`);
+  let script = document.querySelector(`script[src="${COWRKR_ORIGIN}/embedchat.js"]`)
   if (!script) {
-    script = document.createElement("script");
-    script.src = `${COWRKR_ORIGIN}/embedchat.js`;
-    script.async = true;
-    script.onload = runInit;
-    document.body.appendChild(script);
+    script = document.createElement("script")
+    script.src = `${COWRKR_ORIGIN}/embedchat.js`
+    script.async = true
+    script.onload = runInit
+    document.body.appendChild(script)
   } else if (window.__cowrkrEmbedChatInit) {
-    runInit();
+    runInit()
   } else {
-    script.addEventListener("load", runInit, { once: true });
+    script.addEventListener("load", runInit, { once: true })
   }
 }
 ```
@@ -153,12 +152,12 @@ On unmount / leaving the page, you may remove the widget from the DOM and delete
 
 ## Troubleshooting
 
-| Symptom | Likely cause | What to do |
-|---------|----------------|------------|
-| No widget | Missing `#embed-container` or missing `orgId` / `data-org` | Add container and org. |
+| Symptom                            | Likely cause                                                  | What to do                                                                                                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| No widget                          | Missing `#embed-container` or missing `orgId` / `data-org`    | Add container and org.                                                                                                                                                                |
 | Iframe refused / “X-Frame-Options” | Framed URL is the **home page** or a page that blocks framing | Ensure iframe URL is `/public_chat`. Set `chatOrigin` or `chatBaseUrl` if the script is hosted on the wrong domain. CoWrkr must serve `/public_chat` with framing allowed for embeds. |
-| Wrong environment | Staging vs production | Use the production `embedchat.js` URL and matching `chatOrigin`. |
-| Stale user after login | Config updated after init | Call `__cowrkrEmbedChatInit()` after updating `__cowrkrEmbedConfig`. |
+| Wrong environment                  | Staging vs production                                         | Use the production `embedchat.js` URL and matching `chatOrigin`.                                                                                                                      |
+| Stale user after login             | Config updated after init                                     | Call `__cowrkrEmbedChatInit()` after updating `__cowrkrEmbedConfig`.                                                                                                                  |
 
 ---
 
@@ -176,13 +175,10 @@ Replace placeholders with your real CoWrkr URL and org id.
       email: "guest@example.com",
       userId: "anonymous",
     },
-  };
+  }
 </script>
 <div id="embed-container" data-org="YOUR_ORG_ID"></div>
-<script
-  src="https://your-cowrkr-frontend.example.com/embedchat.js"
-  async
-></script>
+<script src="https://your-cowrkr-frontend.example.com/embedchat.js" async></script>
 ```
 
 ---

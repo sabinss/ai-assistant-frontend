@@ -208,13 +208,13 @@ export const MessageDiv = ({ msg }: any) => {
             }}
           ></motion.div> */}
           <motion.div
-            className="ml-4 max-w-[90%] space-y-4 break-words rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
+            className="ml-4 max-w-[90%] space-y-4 break-words rounded-md bg-[#F7f7f7] p-5 pl-6 text-black"
             style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             <div
-              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_hr]:hidden [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
               <div className="overflow-x-auto">
@@ -304,11 +304,11 @@ export const MessageDiv = ({ msg }: any) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-            className="float-right max-w-[90%] break-words rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
+            className="float-right max-w-[90%] break-words rounded-md bg-[#ffffff] p-3 text-black"
             style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
           >
             <div
-              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_hr]:hidden [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
               <div className="overflow-x-auto">

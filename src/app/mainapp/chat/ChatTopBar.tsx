@@ -97,17 +97,17 @@ export default function ChatTopbar({
         <div
           className={`title flex min-w-0 flex-1 ${publicChat ? "items-start" : "items-center"}`}
         >
-          <Image
+          {/* <Image
             src={botImage}
             className={`inline shrink-0 rounded-full ${publicChat ? "mr-2" : "mr-3"}`}
             alt=""
             height={publicChat ? 28 : 30}
             width={publicChat ? 28 : 30}
-          />
+          /> */}
           {publicChat ? (
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 pr-1">
               <span className="block text-sm font-semibold leading-snug text-foreground">
-                {botName?.trim() ? botName : "Gabby"}
+                Ask {botName?.trim() ? botName : "Gabby"}
               </span>
               {visitorTitle ? (
                 <span className="block max-w-full break-words text-xs font-medium leading-snug text-muted-foreground">
@@ -157,18 +157,13 @@ export default function ChatTopbar({
         </div>
         <button
           type="button"
-          className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background/90 font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${publicChat ? "px-2 py-1.5 text-xs" : "gap-2 p-2 text-sm hover:text-black"
+          className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background/90 font-medium text-foreground transition-colors hover:bg-accent hover:text-accent-foreground ${publicChat ? "px-2 py-1.5 text-xs" : "gap-2 p-2 text-sm hover:text-black"
             }`}
           title="Start a new conversation"
           onClick={changeSession}
         >
           <GrAdd size={publicChat ? 16 : 20} className="shrink-0" />
-          {/* {publicChat ? (
-            <span>New chat</span>
-          ) : (
-            <span>New Session</span>
-          )} */}
-          <span>New Session</span>
+          <span>New</span>
         </button>
       </div>
 
