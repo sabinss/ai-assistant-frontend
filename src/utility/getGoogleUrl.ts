@@ -15,15 +15,7 @@ function getGoogleOAuthURL(orgId: any) {
       "https://www.googleapis.com/auth/gmail.send",
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.compose",
-    ].join(""),
-    // scope: [
-    //   "openid",
-    //   "profile",
-    //   "email",
-    //   "https://www.googleapis.com/auth/gmail.readonly",
-    //   "https://www.googleapis.com/auth/gmail.send",
-    //   "https://www.googleapis.com/auth/gmail.compose",
-    // ].join(" "),
+    ].join(" "),
   }
 
   const qs = new URLSearchParams({
