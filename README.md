@@ -47,3 +47,9 @@ Solution Prompt
 Recommendation
 Log Prompt
 Enter your prompt	 -->
+
+## cowrkr chat embed publish command
+
+npm run build
+npm login
+npm publish --access public
