@@ -1,81 +1,51 @@
 "use client"
 
 import { useEffect } from "react"
+import { destroy, init } from "cowrkr-embed"
 import useAuth from "@/store/user"
 
-type CowrkrWindow = Window & {
-  __cowrkrEmbedConfig?: {
-    orgId?: string
-    user?: { name?: string; email?: string; userId?: string }
-  }
-  __cowrkrEmbedChatInit?: () => void
-}
-
-/** Same-origin embed; mirrors host app pattern (public/embedchat.js). */
-const EMBED_SCRIPT_PATH = "/embedchat.js"
-
+/**
+ * Help mounts the CoWrkr chat widget via `cowrkr-embed`.
+ * Org id and chat host are fixed inside the package — only pass `user` here.
+ */
 const HelpPage = () => {
   const { user_data } = useAuth()
 
   useEffect(() => {
-    const w = window as CowrkrWindow
-
-    if (!user_data?.organization) {
-      document.querySelectorAll(".cowrkr-chat-root").forEach((el) => el.remove())
-      delete w.__cowrkrEmbedConfig
-      return
-    }
-
     const displayName =
       [user_data?.first_name, user_data?.last_name].filter(Boolean).join(" ").trim() ||
       user_data?.email ||
       ""
 
-    // Plain object read by public/embedchat.js (see getEmbedContext).
-    w.__cowrkrEmbedConfig = {
-      orgId: user_data.organization,
+    init({
       user: {
         name: displayName,
-        email: user_data.email,
-        userId: user_data.user_id,
+        ...(user_data?.email ? { email: user_data.email } : {}),
+        ...(user_data?.user_id != null ? { userId: String(user_data.user_id) } : {}),
+        ...(user_data?.organization
+          ? { company_id: user_data.organization }
+          : {}),
       },
-    }
-
-    const runInit = () => w.__cowrkrEmbedChatInit?.()
-
-    let script = document.querySelector(
-      `script[src="${EMBED_SCRIPT_PATH}"]`
-    ) as HTMLScriptElement | null
-    if (!script) {
-      script = document.createElement("script")
-      script.src = EMBED_SCRIPT_PATH
-      script.async = true
-      script.onload = runInit
-      document.body.appendChild(script)
-    } else if (w.__cowrkrEmbedChatInit) {
-      runInit()
-    } else {
-      script.addEventListener("load", runInit, { once: true })
-    }
+    })
 
     return () => {
-      document.querySelectorAll(".cowrkr-chat-root").forEach((el) => el.remove())
-      delete w.__cowrkrEmbedConfig
+      destroy()
     }
   }, [
-    user_data?.organization,
     user_data?.first_name,
     user_data?.last_name,
     user_data?.email,
     user_data?.user_id,
+    user_data?.organization,
   ])
 
   return (
     <div className="flex min-h-[min(100%,calc(100vh-120px))] w-full flex-col gap-4">
-      {/* data-org is a fallback if __cowrkrEmbedConfig is missing */}
+      <h1 className="text-lg font-semibold text-foreground">Help</h1>
+      <p className="text-muted-foreground">Use the chat bubble to reach support.</p>
+      {/* Widget target; `init()` also creates this id if missing */}
       <div
         id="embed-container"
-        data-org={user_data?.organization ?? ""}
         className="pointer-events-none absolute h-px w-px overflow-hidden whitespace-nowrap border-0 p-0 [clip:rect(0,0,0,0)]"
         aria-hidden
       />
