@@ -10,7 +10,9 @@ import { Switch } from "@/components/ui/switch"
 import { useForm } from "react-hook-form"
 import useAuth from "@/store/user"
 import { getGoogleOAuthURL } from "@/utility/getGoogleUrl"
+import { getOutlookOAuthURL } from "@/utility/getOutlookUrl"
 import GmailLoginButton from "@/components/ui/googleLoginButton"
+import OutlookLoginButton from "@/components/ui/outlookLoginButton"
 import DeleteModal from "./GmailDisconnectModal"
 
 interface FormData {
@@ -34,11 +36,17 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const [isGoogleLogin, setGoogleLogin] = useState(false)
   const [checkingGoogleUser, setCheckingGoogleUser] = useState(false)
   const [googleLoggedInUser, setGoogleLoginUser] = useState<null>(null)
-  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [isOutlookLogin, setOutlookLogin] = useState(false)
+  const [checkingOutlookUser, setCheckingOutlookUser] = useState(false)
+  const [outlookLoggedInUser, setOutlookLoginUser] = useState<null>(null)
+  const [disconnectKind, setDisconnectKind] = useState<
+    "gmail" | "outlook" | null
+  >(null)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     checkGoogleLoggedInUser()
+    checkOutlookLoggedInUser()
   }, [])
 
   const disconnectGoogleUser = async () => {
@@ -80,6 +88,48 @@ export default function EditProfile({ params }: { params: { id: string } }) {
       }
     } catch (err) {
       setCheckingGoogleUser(false)
+    }
+  }
+
+  const disconnectOutlookUser = async () => {
+    try {
+      if (user_data?.email) {
+        const res = await http.post(
+          "/auth/outlook-login/disconnect",
+          { email: user_data.email },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        if (res?.data?.success) {
+          setOutlookLoginUser(null)
+          setOutlookLogin(false)
+        }
+      }
+    } catch (err) {
+      toast.error("Something went wrong")
+    }
+  }
+
+  const checkOutlookLoggedInUser = async () => {
+    try {
+      setCheckingOutlookUser(true)
+      if (user_data?.email) {
+        const res = await http.post(
+          "/auth/outlook-login-verify",
+          { email: user_data.email },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+        if (res?.data?.success) {
+          setOutlookLoginUser(res.data.data.email)
+          setOutlookLogin(true)
+        }
+        setCheckingOutlookUser(false)
+      }
+    } catch (err) {
+      setCheckingOutlookUser(false)
     }
   }
 
@@ -176,13 +226,23 @@ export default function EditProfile({ params }: { params: { id: string } }) {
     }
   }
 
-  const handleDisconnect = async () => {
-    setDeleteModalOpen(() => false)
-    await disconnectGoogleUser()
+  const handleEmailProviderDisconnect = async () => {
+    const kind = disconnectKind
+    setDisconnectKind(null)
+    if (kind === "gmail") {
+      await disconnectGoogleUser()
+    } else if (kind === "outlook") {
+      await disconnectOutlookUser()
+    }
   }
 
   const connectToGmail = () => {
     const url = getGoogleOAuthURL(user_data?.organization)
+    window.location.href = url
+  }
+
+  const connectToOutlook = () => {
+    const url = getOutlookOAuthURL(user_data?.organization)
     window.location.href = url
   }
 
@@ -456,18 +516,31 @@ export default function EditProfile({ params }: { params: { id: string } }) {
           Authorize access to your email box
         </a> */}
         <DeleteModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setDeleteModalOpen(false)} // Close the modal
-          onDelete={handleDisconnect} // Handle the delete action
+          isOpen={disconnectKind !== null}
+          onClose={() => setDisconnectKind(null)}
+          onDelete={handleEmailProviderDisconnect}
         />
         <GmailLoginButton
           isLoggedIn={isGoogleLogin}
           email={googleLoggedInUser}
+          disabled={checkingGoogleUser}
           onClick={() => {
             if (isGoogleLogin) {
-              setDeleteModalOpen(true)
+              setDisconnectKind("gmail")
             } else {
               connectToGmail()
+            }
+          }}
+        />
+        <OutlookLoginButton
+          isLoggedIn={isOutlookLogin}
+          email={outlookLoggedInUser}
+          disabled={checkingOutlookUser}
+          onClick={() => {
+            if (isOutlookLogin) {
+              setDisconnectKind("outlook")
+            } else {
+              connectToOutlook()
             }
           }}
         />
