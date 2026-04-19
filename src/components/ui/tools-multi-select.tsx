@@ -55,6 +55,21 @@ export const AVAILABLE_TOOLS: Tool[] = [
       "Create an email draft in Gmail draft box for a list of recipients with custom subject and body content, without sending it.",
   },
   {
+    name: "read_outlook",
+    description:
+      "Read unread email from a connected Microsoft Outlook / Microsoft 365 mailbox within a time window.",
+  },
+  {
+    name: "create_outlook_email_in_draftbox",
+    description:
+      "Create an email draft in Outlook (Microsoft Graph) for one or more recipients without sending.",
+  },
+  {
+    name: "send_personalized_outlook_emails",
+    description:
+      "Send email to recipients using Outlook / Microsoft Graph with custom subject and body.",
+  },
+  {
     name: "create_zendesk_ticket_for_unresolved_issues",
     description: "Create a support ticket in Zendesk for unresolved customer issues.",
   },
@@ -104,33 +119,32 @@ export const AVAILABLE_TOOLS: Tool[] = [
   },
   {
     name: "get_document",
-    description:
-      "Get entire content of a document",
+    description: "Get entire content of a document",
   },
   {
     name: "update_customer",
-    description: "To add new or update existing company(customer)"
+    description: "To add new or update existing company(customer)",
   },
   {
     name: "update_order",
-    description: "To add new or update existing deal(order)"
+    description: "To add new or update existing deal(order)",
   },
   {
     name: "read_gmail",
-    description: "Read email from Gmail inbox."
+    description: "Read email from Gmail inbox.",
   },
   {
     name: "update_customer_summary",
-    description: "To update customer summary."
+    description: "To update customer summary.",
   },
   {
     name: "query_excel_sql",
-    description: "Query an Excel file or SQL database using natural language."
+    description: "Query an Excel file or SQL database using natural language.",
   },
   {
     name: "scrape_website",
-    description: "Scrape a website and return the content."
-  }
+    description: "Scrape a website and return the content.",
+  },
 ]
 
 interface ToolsMultiSelectProps {

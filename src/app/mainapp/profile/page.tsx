@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch"
 import { useForm } from "react-hook-form"
 import useAuth from "@/store/user"
 import { getGoogleOAuthURL } from "@/utility/getGoogleUrl"
-import { getOutlookOAuthURL } from "@/utility/getOutlookUrl"
+import { buildOutlookOAuthRedirectUrl } from "@/utility/getOutlookUrl"
 import GmailLoginButton from "@/components/ui/googleLoginButton"
 import OutlookLoginButton from "@/components/ui/outlookLoginButton"
 import DeleteModal from "./GmailDisconnectModal"
@@ -39,9 +39,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
   const [isOutlookLogin, setOutlookLogin] = useState(false)
   const [checkingOutlookUser, setCheckingOutlookUser] = useState(false)
   const [outlookLoggedInUser, setOutlookLoginUser] = useState<null>(null)
-  const [disconnectKind, setDisconnectKind] = useState<
-    "gmail" | "outlook" | null
-  >(null)
+  const [disconnectKind, setDisconnectKind] = useState<"gmail" | "outlook" | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -241,9 +239,14 @@ export default function EditProfile({ params }: { params: { id: string } }) {
     window.location.href = url
   }
 
-  const connectToOutlook = () => {
-    const url = getOutlookOAuthURL(user_data?.organization)
-    window.location.href = url
+  const connectToOutlook = async () => {
+    try {
+      const url = await buildOutlookOAuthRedirectUrl(user_data?.organization)
+      window.location.href = url
+    } catch (e) {
+      console.error("[Outlook OAuth] Failed to build authorize URL", e)
+      toast.error("Could not start Outlook connection")
+    }
   }
 
   // Don't render until hydration is complete
@@ -295,40 +298,30 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             placeholder="john@example.com"
             className="w-full cursor-not-allowed rounded-md border border-[#CCCCCC] px-4 py-2 text-[#737373]"
           />
-          {errors.email && (
-            <span className="text-red-500">{errors.email.message}</span>
-          )}
+          {errors.email && <span className="text-red-500">{errors.email.message}</span>}
         </div>
         {/* First Name */}
         <div className="flex flex-col items-center md:flex-row">
-          <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">
-            First Name:
-          </p>
+          <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">First Name:</p>
           <input
             type="text"
             {...register("first_name", { required: "First name is required" })}
             placeholder="John"
             className="w-full rounded-md border border-[#CCCCCC] px-4 py-2 text-[#737373]"
           />
-          {errors.first_name && (
-            <span className="text-red-500">{errors.first_name.message}</span>
-          )}
+          {errors.first_name && <span className="text-red-500">{errors.first_name.message}</span>}
         </div>
 
         {/* Last Name */}
         <div className="flex flex-col items-center md:flex-row">
-          <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">
-            Last Name:
-          </p>
+          <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">Last Name:</p>
           <input
             type="text"
             {...register("last_name", { required: "Last name is required" })}
             placeholder="Doe"
             className="w-full rounded-md border border-[#CCCCCC] px-4 py-2 text-[#737373]"
           />
-          {errors.last_name && (
-            <span className="text-red-500">{errors.last_name.message}</span>
-          )}
+          {errors.last_name && <span className="text-red-500">{errors.last_name.message}</span>}
         </div>
       </div>
 
@@ -363,14 +356,12 @@ export default function EditProfile({ params }: { params: { id: string } }) {
             {/* New Password */}
             <div className="mt-4 flex flex-col items-center md:flex-row">
               <p className="mb-2 text-[14px] text-red-500 md:mb-0">
-                Your password must be 8 character long, combined with uppercase,
-                numbers and symbols.
+                Your password must be 8 character long, combined with uppercase, numbers and
+                symbols.
               </p>
             </div>
             <div className="flex flex-col items-center md:flex-row">
-              <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">
-                Current Password:
-              </p>
+              <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">Current Password:</p>
               <div className="relative w-full md:w-2/3">
                 <input
                   type={showCurrentPassword ? "text" : "password"}
@@ -381,35 +372,27 @@ export default function EditProfile({ params }: { params: { id: string } }) {
                   className="w-full rounded-md border border-[#CCCCCC] px-4 py-2 text-[#737373]"
                 />
                 {errors?.currentPassword && (
-                  <span className="text-red-500">
-                    {errors?.currentPassword?.message}
-                  </span>
+                  <span className="text-red-500">{errors?.currentPassword?.message}</span>
                 )}
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-base leading-5">
                   {!showCurrentPassword ? (
                     <FaEyeSlash
                       size={20}
                       className="cursor-pointer"
-                      onClick={() =>
-                        setShowCurrentPassword(!showCurrentPassword)
-                      }
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     />
                   ) : (
                     <FaEye
                       size={20}
                       className="cursor-pointer"
-                      onClick={() =>
-                        setShowCurrentPassword(!showCurrentPassword)
-                      }
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                     />
                   )}
                 </div>
               </div>
             </div>
             <div className="flex flex-col items-center md:flex-row">
-              <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">
-                New Password:
-              </p>
+              <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">New Password:</p>
               <div className="relative w-full md:w-2/3">
                 <input
                   type={showNewPassword ? "text" : "password"}
@@ -425,9 +408,7 @@ export default function EditProfile({ params }: { params: { id: string } }) {
                   className="w-full rounded-md border border-[#CCCCCC] px-4 py-2 text-[#737373]"
                 />
                 {errors.newPassword && (
-                  <span className="text-red-500">
-                    {errors.newPassword.message}
-                  </span>
+                  <span className="text-red-500">{errors.newPassword.message}</span>
                 )}
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-base leading-5">
                   {!showNewPassword ? (
@@ -449,42 +430,32 @@ export default function EditProfile({ params }: { params: { id: string } }) {
 
             {/* Confirm New Password */}
             <div className="flex flex-col items-center md:flex-row">
-              <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">
-                Confirm New Password:
-              </p>
+              <p className="mb-2 w-full font-semibold md:mb-0 md:w-1/3">Confirm New Password:</p>
               <div className="relative w-full md:w-2/3">
                 <input
                   type={showConfirmNewPassword ? "text" : "password"}
                   {...register("confirmNewPassword", {
                     required: "Confirm password field is required!",
-                    validate: (value) =>
-                      value === watch("newPassword") ||
-                      "Passwords do not match",
+                    validate: (value) => value === watch("newPassword") || "Passwords do not match",
                   })}
                   placeholder="Confirm new password"
                   className="w-full rounded-md border border-[#CCCCCC] px-4 py-2 text-[#737373]"
                 />
                 {errors.confirmNewPassword && (
-                  <span className="text-red-500">
-                    {errors.confirmNewPassword.message}
-                  </span>
+                  <span className="text-red-500">{errors.confirmNewPassword.message}</span>
                 )}
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 text-base leading-5">
                   {!showConfirmNewPassword ? (
                     <FaEyeSlash
                       size={20}
                       className="cursor-pointer"
-                      onClick={() =>
-                        setShowConfirmNewPassword(!showConfirmNewPassword)
-                      }
+                      onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
                     />
                   ) : (
                     <FaEye
                       size={20}
                       className="cursor-pointer"
-                      onClick={() =>
-                        setShowConfirmNewPassword(!showConfirmNewPassword)
-                      }
+                      onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
                     />
                   )}
                 </div>
