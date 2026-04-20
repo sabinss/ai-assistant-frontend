@@ -1,6 +1,7 @@
 "use client"
 import { Suspense, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { CowrkrEmbedHost } from "@/components/CowrkrEmbedHost"
 import Sidebar from "./Sidebar"
 import TopNavBar from "./TopNavBar"
 import useAuth from "@/store/user"
@@ -33,6 +34,7 @@ export default function MainAppLayout({
             <div className="mainapp-scroll-area relative isolate min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-slate-100 p-2 pb-10 text-sm">
               {children}
             </div>
+            <CowrkrEmbedHost />
           </div>
         </Suspense>
       </>
