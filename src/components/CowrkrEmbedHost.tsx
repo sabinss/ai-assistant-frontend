@@ -23,6 +23,7 @@ export function CowrkrEmbedHost() {
       ""
 
     init({
+      ...(process.env.ENVIRONMENT === "staging" ? { chatOrigin: "https://staging.cowrkr.com" } : {}),
       user: {
         name: displayName,
         ...(user_data.email ? { email: user_data.email } : {}),
