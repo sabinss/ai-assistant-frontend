@@ -1,5 +1,5 @@
 "use client"
-import { Info, Phone, Video } from "lucide-react"
+import { Info, Phone, Plus, Video } from "lucide-react"
 import botImage from "@/assets/images/bot.png"
 import Image from "next/image"
 import useNavBarStore from "@/store/store"
@@ -159,13 +159,22 @@ export default function ChatTopbar({
         </div>
         <button
           type="button"
-          className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background/90 font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${publicChat ? "px-2 py-1.5 text-xs" : "gap-2 p-2 text-sm hover:text-black"
+          className={`flex shrink-0 flex-row cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background/90 font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${publicChat ? "px-2 py-1.5 text-xs" : "gap-2 p-2 text-sm hover:text-black"
             }`}
           title="Start a new conversation"
           onClick={changeSession}
         >
-          <GrAdd size={publicChat ? 16 : 20} className="shrink-0" />
-          <span>{publicChat ? "New Qns" : "New Session"}</span>
+          {publicChat ? (
+            <>
+              <Plus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+              <span>New Qns</span>
+            </>
+          ) : (
+            <>
+              <GrAdd size={20} className="shrink-0" aria-hidden />
+              <span>New Session</span>
+            </>
+          )}
         </button>
       </div>
 
