@@ -97,13 +97,15 @@ export default function ChatTopbar({
         <div
           className={`title flex min-w-0 flex-1 ${publicChat ? "items-start" : "items-center"}`}
         >
-          <Image
-            src={botImage}
-            className={`inline shrink-0 rounded-full ${publicChat ? "mr-2" : "mr-3"}`}
-            alt=""
-            height={publicChat ? 28 : 30}
-            width={publicChat ? 28 : 30}
-          />
+          {!publicChat && (
+            <Image
+              src={botImage}
+              className="mr-3 inline shrink-0 rounded-full"
+              alt=""
+              height={30}
+              width={30}
+            />
+          )}
           {publicChat ? (
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 pr-1">
               <span className="block text-sm font-semibold leading-snug text-foreground">
@@ -162,13 +164,8 @@ export default function ChatTopbar({
           title="Start a new conversation"
           onClick={changeSession}
         >
-          <GrAdd size={publicChat ? 16 : 20} className="shrink-0" />
-          {/* {publicChat ? (
-            <span>New chat</span>
-          ) : (
-            <span>New Session</span>
-          )} */}
-          <span>New Session</span>
+          {!publicChat && <GrAdd size={20} className="shrink-0" />}
+          <span>{publicChat ? "New Qns" : "New Session"}</span>
         </button>
       </div>
 
