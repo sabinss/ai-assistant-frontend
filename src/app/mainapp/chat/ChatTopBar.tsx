@@ -164,7 +164,7 @@ export default function ChatTopbar({
           title="Start a new conversation"
           onClick={changeSession}
         >
-          {!publicChat && <GrAdd size={20} className="shrink-0" />}
+          <GrAdd size={publicChat ? 16 : 20} className="shrink-0" />
           <span>{publicChat ? "New Qns" : "New Session"}</span>
         </button>
       </div>
