@@ -1,0 +1,234 @@
+"use client"
+
+import { useState, type CSSProperties, type ReactNode } from "react"
+import Badge from "../shared/Badge"
+import type { ActionItem, ActionTier, ScoreLevel } from "../../types"
+
+const TIER_LEFT_COLORS: Record<ActionTier, string> = {
+  today: "#C0392B",
+  week: "#D4A017",
+  month: "#2E8B57",
+  watch: "#1B3A8C",
+}
+
+const SCORE_CHIP_STYLES: Record<string, CSSProperties> = {
+  high: { background: "#FDF2F2", color: "#C0392B", border: "1px solid #F5C6C6" },
+  med: { background: "#FFFBF0", color: "#7D5A00", border: "1px solid #F0E0A0" },
+  good: { background: "#F0F9F4", color: "#1A5C3A", border: "1px solid #B8DFC8" },
+  opp: { background: "#E8EDF8", color: "#1B3A8C", border: "1px solid #C0CDE8" },
+  default: { background: "#F2F4F8", color: "#4A5168", border: "1px solid #E2E6EF" },
+}
+
+function ScoreChip({ label, level }: { label: string; level: ScoreLevel | "default" }) {
+  const style = SCORE_CHIP_STYLES[level] || SCORE_CHIP_STYLES.default
+  return (
+    <span
+      style={{
+        fontSize: 11,
+        fontFamily: "monospace",
+        padding: "2px 8px",
+        borderRadius: 4,
+        fontWeight: 500,
+        ...style,
+      }}
+    >
+      {label}
+    </span>
+  )
+}
+
+function Btn({
+  onClick,
+  color,
+  hoverBg,
+  borderColor,
+  children,
+}: {
+  onClick: () => void
+  color: string
+  hoverBg?: string
+  borderColor?: string
+  children: ReactNode
+}) {
+  const [hovered, setHovered] = useState(false)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        fontFamily: "inherit",
+        fontSize: 12,
+        fontWeight: 500,
+        padding: "6px 13px",
+        borderRadius: 6,
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        border: `1px solid ${borderColor || color}`,
+        color,
+        background: hovered ? hoverBg || "#F2F5FC" : "#fff",
+        transition: "background 0.12s",
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
+type ActionCardProps = {
+  action: ActionItem
+  onGetDraft: (action: ActionItem) => void
+  onMarkDone: (action: ActionItem) => void
+  onViewAccount: (action: ActionItem) => void
+  onSnooze: (action: ActionItem) => void
+}
+
+export default function ActionCard({
+  action,
+  onGetDraft,
+  onMarkDone,
+  onViewAccount,
+  onSnooze,
+}: ActionCardProps) {
+  const [hovered, setHovered] = useState(false)
+  const tierColor = TIER_LEFT_COLORS[action.tier]
+  const isDone = action.done
+
+  const chips: { label: string; level: ScoreLevel | "default" }[] = []
+  if (action.scores.risk != null)
+    chips.push({ label: `Risk ${action.scores.risk}`, level: action.scores.riskLevel || "default" })
+  if (action.scores.value != null)
+    chips.push({ label: `Value ${action.scores.value}`, level: action.scores.valueLevel || "default" })
+  if (action.scores.opp != null)
+    chips.push({ label: `Opp ${action.scores.opp}`, level: action.scores.oppLevel || "default" })
+  else if (action.scores.risk != null) chips.push({ label: "Opp —", level: "default" })
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#fff",
+        border: `1px solid ${hovered && !isDone ? "#CDD3E0" : "#E2E6EF"}`,
+        borderLeft: `3px solid ${tierColor}`,
+        borderRadius: 10,
+        padding: 15,
+        marginBottom: 8,
+        boxShadow: hovered && !isDone ? "0 2px 8px rgba(0,0,0,0.05)" : "none",
+        transition: "border-color 0.15s, box-shadow 0.15s",
+        opacity: isDone ? 0.45 : action.tier === "watch" ? 0.7 : 1,
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 12, marginBottom: 8 }}>
+        <div style={{ flex: 1 }}>
+          <div
+            style={{
+              fontSize: 14,
+              fontWeight: 600,
+              color: "#1A1F2E",
+              marginBottom: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              flexWrap: "wrap",
+            }}
+          >
+            {action.company}
+            <Badge variant={`stage-${action.stage}`}>{action.stageLabel}</Badge>
+            {action.renewal && (
+              <Badge variant={action.renewalUrgent ? "renewal-urgent" : "renewal"}>
+                Renewal {action.renewal}
+              </Badge>
+            )}
+            {action.promoted && <Badge variant="new-badge">Promoted</Badge>}
+          </div>
+          <div style={{ fontSize: 12.5, color: "#4A5168", fontWeight: 500 }}>{action.actionType}</div>
+        </div>
+        {action.owner && <Badge variant="owner">{action.owner}</Badge>}
+      </div>
+
+      {chips.length > 0 && (
+        <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+          {chips.map((c, i) => (
+            <ScoreChip key={i} label={c.label} level={c.level} />
+          ))}
+        </div>
+      )}
+
+      <div
+        style={{
+          fontSize: 12.5,
+          color: "#4A5168",
+          lineHeight: 1.6,
+          marginBottom: 12,
+          padding: "10px 12px",
+          background: "#F4F6FA",
+          borderRadius: 8,
+          border: "1px solid #E2E6EF",
+        }}
+        dangerouslySetInnerHTML={{ __html: action.whyNow }}
+      />
+
+      {isDone ? (
+        <div style={{ fontSize: 12, color: "#2E7D52", display: "flex", alignItems: "center", gap: 5 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          Done · {action.doneOutcome}
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 7, alignItems: "center", flexWrap: "wrap" }}>
+          {action.draftKey && (
+            <Btn onClick={() => onGetDraft(action)} color="#1B3A8C" hoverBg="#E8EDF8">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4z" />
+              </svg>
+              {action.draftLabel || "Get Draft"}
+            </Btn>
+          )}
+          {action.tier !== "watch" && (
+            <Btn
+              onClick={() => onMarkDone(action)}
+              color="#2E7D52"
+              hoverBg="#F0F9F4"
+              borderColor="#2E7D52"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+              Mark Done
+            </Btn>
+          )}
+          <Btn onClick={() => onViewAccount(action)} color="#4A5168" hoverBg="#F4F6FA" borderColor="#CDD3E0">
+            View Account
+          </Btn>
+          {action.tier === "today" && (
+            <button
+              type="button"
+              onClick={() => onSnooze(action)}
+              style={{
+                background: "transparent",
+                color: "#8B91A3",
+                border: "1px solid transparent",
+                fontSize: 11.5,
+                padding: "6px 13px",
+                borderRadius: 6,
+                cursor: "pointer",
+                fontFamily: "inherit",
+                marginLeft: "auto",
+              }}
+            >
+              Snooze
+            </button>
+          )}
+          {action.tripwire && (
+            <span style={{ fontSize: 11, color: "#8B91A3", marginLeft: 6 }}>{action.tripwire}</span>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}

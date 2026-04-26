@@ -13,6 +13,7 @@ import {
   Settings,
   Cog,
   Bell,
+  ListTodo,
 } from "lucide-react"
 import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
@@ -27,6 +28,11 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       name: "Dashboard",
       path: "/mainapp/dashboard",
       icon: LayoutDashboard,
+    },
+    {
+      name: "Action Center",
+      path: "/mainapp/action-center",
+      icon: ListTodo,
     },
     {
       name: "Notifications",
@@ -146,8 +152,7 @@ function Navbar() {
   const navLinks = getNavLinks([
     ...rolePermission,
     // "customers",
-    ...(role != "individual" ? ["notification", "dashboard"] : []),
-    ,
+    ...(role != "individual" ? ["notification", "dashboard", "action-center"] : []),
   ])
 
   if (isCollapsed && divRef.current) {

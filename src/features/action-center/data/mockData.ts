@@ -1,0 +1,176 @@
+import type { ActionItem, OutcomeOption, SummaryStat } from "../types"
+
+export const CURRENT_USER = {
+  initials: "JT",
+  name: "Jamie Torres",
+  email: "rscowrkr@gmail.com",
+  role: "Customer Success",
+}
+
+export const SUMMARY_STATS: SummaryStat[] = [
+  { id: "today", label: "Today", count: 2, sub: "Act within 24 hours", tier: "today" },
+  { id: "week", label: "This Week", count: 3, sub: "Within 5 business days", tier: "week" },
+  { id: "month", label: "This Month", count: 2, sub: "Preparation needed now", tier: "month" },
+  { id: "watch", label: "Watch", count: 4, sub: "Tripwires active", tier: "watch" },
+]
+
+export const PROMOTED_BANNER = {
+  message:
+    "1 action promoted from Watch — Vertex Infrastructure engagement tripwire fired overnight",
+}
+
+export const ACTIONS: ActionItem[] = [
+  {
+    id: "card-1",
+    tier: "today",
+    company: "Northgate Retail Group",
+    stage: "risk",
+    stageLabel: "At Risk",
+    renewal: "67d",
+    renewalUrgent: true,
+    actionType: "Champion Replacement Outreach",
+    owner: "CSM",
+    scores: { risk: 78, riskLevel: "high", value: 52, opp: null },
+    whyNow:
+      "James Whitfield (Head of Customer Success) confirmed departure end of month. <strong>No successor identified.</strong> Renewal in 67 days. Single contact dependency — Whitfield is the only active contact on record.",
+    draftKey: "northgate-champion",
+    draftLabel: "Get Draft",
+    promoted: false,
+  },
+  {
+    id: "card-2",
+    tier: "today",
+    company: "Castlewood Logistics",
+    stage: "active",
+    stageLabel: "Active",
+    renewal: "41d",
+    renewalUrgent: true,
+    actionType: "Value Recovery Conversation",
+    owner: "CSM",
+    scores: { risk: 74, riskLevel: "high", value: 38, opp: null },
+    whyNow:
+      "3 consecutive <strong>Struggling</strong> value signals from Priya Nair. Severe bulk import ticket open <strong>11 days unresolved.</strong> Renewal 41 days — renewal window adjustment applied. Sentiment trajectory declining.",
+    draftKey: "castlewood-value",
+    draftLabel: "Get Draft",
+    promoted: false,
+  },
+  {
+    id: "card-3",
+    tier: "week",
+    company: "Vertex Infrastructure",
+    stage: "active",
+    stageLabel: "Active",
+    renewal: null,
+    renewalUrgent: false,
+    actionType: "Re-engagement Outreach",
+    owner: "CSM",
+    scores: { risk: 62, riskLevel: "med", value: 61, valueLevel: "good", opp: 55, oppLevel: "opp" },
+    whyNow:
+      "Engagement Active → Passive over 2 scoring periods — <strong>tripwire fired.</strong> Rachel Okonkwo previously highly engaged. Government contract expansion stalled. Inbound/outbound ratio 0.38.",
+    draftKey: "vertex-reengage",
+    draftLabel: "Get Draft",
+    promoted: true,
+  },
+  {
+    id: "card-4",
+    tier: "week",
+    company: "Meridian Facilities Group",
+    stage: "onb",
+    stageLabel: "Onboarding",
+    renewal: null,
+    renewalUrgent: false,
+    actionType: "Feature Activation Session",
+    owner: "CSM",
+    scores: { risk: 58, riskLevel: "med", value: 34, opp: null },
+    whyNow:
+      "Day 71 of onboarding. <strong>Core reporting and automation features never used.</strong> Tom Hargreaves stated team still on spreadsheets. Core adoption rate 0.32 — below 0.50 threshold at day 71.",
+    draftKey: "meridian-feature",
+    draftLabel: "Get Draft",
+    promoted: false,
+  },
+  {
+    id: "card-5",
+    tier: "week",
+    company: "Harmon Financial Services",
+    stage: "active",
+    stageLabel: "Active",
+    renewal: null,
+    renewalUrgent: false,
+    actionType: "Competitive Displacement Defence",
+    owner: "CSM + AE",
+    scores: { risk: 65, riskLevel: "med", value: 57, opp: null },
+    whyNow:
+      'Daniel Frost referenced <strong>"looking at a few options before renewal"</strong> in last chat. Competitive Evaluation override applied. Renewal 67 days.',
+    draftKey: "harmon-competitive",
+    draftLabel: "Get Draft",
+    promoted: false,
+  },
+  {
+    id: "card-6",
+    tier: "month",
+    company: "Vertex Infrastructure",
+    stage: "active",
+    stageLabel: "Active",
+    renewal: null,
+    renewalUrgent: false,
+    actionType: "Expansion Discovery Call",
+    owner: "AE",
+    scores: { risk: 62, value: 61, valueLevel: "good", opp: 72, oppLevel: "opp" },
+    whyNow:
+      "Headcount Growth event — government contract win, 40+ seats needed. Opportunity Score 72. Champion engagement Passive so AE must create momentum. Prepare this week for call next week.",
+    draftKey: "vertex-expansion",
+    draftLabel: "Get Draft",
+    promoted: false,
+  },
+  {
+    id: "card-7",
+    tier: "month",
+    company: "Harmon Financial Services",
+    stage: "active",
+    stageLabel: "Active",
+    renewal: null,
+    renewalUrgent: false,
+    actionType: "Renewal Risk Review",
+    owner: "CS Manager",
+    scores: { risk: 65, riskLevel: "med", value: 57, opp: null },
+    whyNow:
+      "Renewal 67 days. Competitive evaluation in progress. CS Manager alignment needed before any customer-facing call. Risk 65 with 67 days triggers preparation now.",
+    draftKey: "harmon-renewal",
+    draftLabel: "Get Brief",
+    promoted: false,
+  },
+  {
+    id: "card-8",
+    tier: "watch",
+    company: "Meridian Facilities Group",
+    stage: "onb",
+    stageLabel: "Onboarding",
+    renewal: null,
+    renewalUrgent: false,
+    actionType: "Renewal Window Monitor",
+    owner: null,
+    scores: {},
+    whyNow: "Tripwire: days_to_renewal drops below 90. Currently 181 days. No action required.",
+    draftKey: null,
+    draftLabel: null,
+    tripwire: "Fires at <90 days → This Month",
+    promoted: false,
+  },
+]
+
+export const AGENTS = [
+  { id: "analyst", label: "Conversation Analyst Agent" },
+  { id: "scoring", label: "Scoring Agent" },
+  { id: "action", label: "Best Action Agent" },
+  { id: "todo", label: "To Do Agent" },
+]
+
+export const OUTCOME_OPTIONS: OutcomeOption[] = [
+  { value: "", label: "Select outcome…" },
+  { value: "retained", label: "Retained — customer committed to renewing" },
+  { value: "expanded", label: "Expanded — expansion conversation started" },
+  { value: "no_response", label: "No Response — customer did not reply" },
+  { value: "pending", label: "Pending — action taken, awaiting response" },
+  { value: "escalated", label: "Escalated — situation worsened, elevated to manager" },
+  { value: "overridden", label: "Overridden — decided no action needed" },
+]
