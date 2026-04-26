@@ -145,6 +145,10 @@ export const AVAILABLE_TOOLS: Tool[] = [
     name: "scrape_website",
     description: "Scrape a website and return the content.",
   },
+  {
+    name: 'update_action',
+    description: 'Update the action status.',
+  }
 ]
 
 interface ToolsMultiSelectProps {
