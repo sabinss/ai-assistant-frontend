@@ -1,21 +1,33 @@
 "use client"
 
+import Link from "next/link"
 import { useState, useEffect, useCallback } from "react"
 import SummaryCards from "./components/actions/SummaryCards"
 import TierSection from "./components/actions/TierSection"
 import ChatPanel from "./components/chat/ChatPanel"
 import DoneModal from "./components/shared/DoneModal"
 import Toast from "./components/shared/Toast"
-import { fetchActions, fetchSummaryStats, markActionDone, snoozeAction, fetchScoringMeta } from "./api"
+import useAuth from "@/store/user"
+import {
+  fetchActions,
+  fetchSummaryStats,
+  fetchOrganizationActionCenter,
+  markActionDone,
+  snoozeAction,
+  fetchScoringMeta,
+} from "./api"
 import { PROMOTED_BANNER } from "./data/mockData"
 import type { ActionItem, ActionTier, MarkDonePayload, PendingDraft, ScoringMeta, SummaryStat } from "./types"
 
 const TIERS: ActionTier[] = ["today", "week", "month", "watch"]
 
 export default function ActionCenterView() {
+  const { user_data, access_token } = useAuth()
   const [actions, setActions] = useState<ActionItem[]>([])
   const [summaryStats, setSummaryStats] = useState<SummaryStat[]>([])
   const [scoringMeta, setScoringMeta] = useState<ScoringMeta | null>(null)
+  /** Raw GET `/organization/:org_id/action-center` response (wire UI when backend contract is fixed). */
+  const [organizationActionCenter, setOrganizationActionCenter] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
 
   const [modalAction, setModalAction] = useState<ActionItem | null>(null)
@@ -28,6 +40,17 @@ export default function ActionCenterView() {
 
   useEffect(() => {
     async function load() {
+      const orgId = user_data?.organization?.trim()
+      let orgAcPayload: unknown = null
+      if (orgId && access_token) {
+        try {
+          orgAcPayload = await fetchOrganizationActionCenter(orgId, access_token)
+        } catch (err) {
+          console.error("[ActionCenterView] GET organization/.../action-center failed", err)
+        }
+      }
+      setOrganizationActionCenter(orgAcPayload)
+
       const [acts, stats, meta] = await Promise.all([
         fetchActions(),
         fetchSummaryStats(),
@@ -39,7 +62,12 @@ export default function ActionCenterView() {
       setLoading(false)
     }
     void load()
-  }, [])
+  }, [user_data?.organization, access_token])
+
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "development" || organizationActionCenter == null) return
+    console.debug("[ActionCenterView] GET /organization/:org_id/action-center:", organizationActionCenter)
+  }, [organizationActionCenter])
 
   const actionsByTier = TIERS.reduce<Record<ActionTier, ActionItem[]>>(
     (acc, tier) => {
@@ -144,7 +172,22 @@ export default function ActionCenterView() {
             Scored weekly · Last run {scoringMeta?.lastRun}
           </div>
         </div>
-        <div style={{ marginLeft: "auto" }}>
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+          <Link
+            href="/mainapp/action-center/chat"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#1B3A8C",
+              textDecoration: "none",
+              padding: "5px 12px",
+              borderRadius: 8,
+              border: "1px solid #C0CCE8",
+              background: "#fff",
+            }}
+          >
+            Assistant chat →
+          </Link>
           <span
             style={{
               background: "#E8EDF8",
@@ -155,9 +198,8 @@ export default function ActionCenterView() {
               borderRadius: 99,
             }}
           >
-            {`${todayCount} account${todayCount !== 1 ? "s" : ""} need${
-              todayCount === 1 ? "s" : ""
-            } attention today`}
+            {`${todayCount} account${todayCount !== 1 ? "s" : ""} need${todayCount === 1 ? "s" : ""
+              } attention today`}
           </span>
         </div>
       </div>

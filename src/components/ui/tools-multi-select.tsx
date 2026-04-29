@@ -148,6 +148,9 @@ export const AVAILABLE_TOOLS: Tool[] = [
   {
     name: 'update_action',
     description: 'Update the action status.',
+  }, {
+    name: 'update_company_score',
+    description: 'Update the company score.',
   }
 ]
 

@@ -18,11 +18,13 @@ export interface MessageObject {
   isStreaming?: boolean
 }
 
-interface ChatMainProps {
+export interface ChatMainProps {
   initialQuery?: string | null
+  /** Expand to fill a flex parent (e.g. Action Centre chat page) instead of fixed viewport height */
+  fillContainer?: boolean
 }
 
-const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
+const ChatMain: React.FC<ChatMainProps> = ({ initialQuery, fillContainer }) => {
   const [messages, setMessages] = useState<MessageObject[]>([])
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
   const { greeting, botName, setBotName, setGreeting } = useNavBarStore()
@@ -263,7 +265,9 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
       className={`mx-1 flex flex-col px-1 ${
         publicChat
           ? "min-h-0 flex-1 overflow-hidden"
-          : "h-[75vh] md:h-[77vh]"
+          : fillContainer
+            ? "min-h-0 flex-1 overflow-hidden"
+            : "h-[75vh] md:h-[77vh]"
       } `}
     >
       {error && <div className="mb-2 bg-red-500 p-2 text-white">{error}</div>}

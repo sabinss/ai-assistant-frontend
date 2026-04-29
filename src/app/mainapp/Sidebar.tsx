@@ -34,11 +34,11 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       path: "/mainapp/action-center",
       icon: ListTodo,
     },
-    {
-      name: "Notifications",
-      path: "/mainapp/notification",
-      icon: Bell,
-    },
+    // {
+    //   name: "Notifications",
+    //   path: "/mainapp/notification",
+    //   icon: Bell,
+    // },
 
     // {
     //   name: "Dashboard",
