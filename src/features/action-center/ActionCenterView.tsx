@@ -17,6 +17,7 @@ import {
   fetchScoringMeta,
 } from "./api"
 import { PROMOTED_BANNER } from "./data/mockData"
+import { mapOrgPayloadToSummaryStats } from "./mapSummaryFromPayload"
 import type { ActionItem, ActionTier, MarkDonePayload, PendingDraft, ScoringMeta, SummaryStat } from "./types"
 
 const TIERS: ActionTier[] = ["today", "week", "month", "watch"]
@@ -47,8 +48,7 @@ export default function ActionCenterView() {
       if (orgId && access_token) {
         try {
           orgAcPayload = await fetchOrganizationActionCenter(orgId, access_token)
-          console.log("orgAcPayload----", orgAcPayload)
-          if (orgAcPayload != null) {
+          if (orgAcPayload != null && process.env.NODE_ENV === "development") {
             try {
               console.log(
                 "[ActionCenterView] orgAcPayload\n" + JSON.stringify(orgAcPayload, null, 2)
@@ -69,7 +69,8 @@ export default function ActionCenterView() {
         fetchScoringMeta(),
       ])
       setActions(acts)
-      setSummaryStats(stats)
+      const fromApi = mapOrgPayloadToSummaryStats(orgAcPayload)
+      setSummaryStats(fromApi ?? stats)
       setScoringMeta(meta)
       setLoading(false)
     }
@@ -84,7 +85,9 @@ export default function ActionCenterView() {
     { today: [], week: [], month: [], watch: [] }
   )
 
-  const todayCount = actions.filter((a) => a.tier === "today" && !a.done).length
+  const todayCount =
+    summaryStats.find((s) => s.tier === "today")?.count ??
+    actions.filter((a) => a.tier === "today" && !a.done).length
 
   function handleGetDraft(action: ActionItem) {
     if (!action.draftKey) return

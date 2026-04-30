@@ -33,7 +33,6 @@ export const MessageDiv = ({ msg }: any) => {
   const [feedbackLoading, setFeedbackLoading] = useState(false)
 
   const [feedback, setFeedback] = useState(msg.liked ? "liked" : msg.disliked ? "disliked" : null)
-  console.log("****Message Div****", msg.message)
   const submitFeedback = async () => {
     setFeedbackLoading(true)
     console.log("Submit Feedback", selectedFeedback)
