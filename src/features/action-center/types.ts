@@ -11,11 +11,17 @@ export type ActionScores = {
   valueLevel?: ScoreLevel
   opp?: number | null
   oppLevel?: ScoreLevel
+  /** From API `context.engagement_trend` */
+  engagementTrend?: string | null
+  /** From API `context.sentiment_trajectory` */
+  sentimentTrajectory?: string | null
 }
 
 export type ActionItem = {
   id: string
   tier: ActionTier
+  /** Raw `tier` from API (e.g. `this_week`) for section headers */
+  apiTier?: string
   company: string
   stage: ActionStage
   stageLabel: string
@@ -25,6 +31,8 @@ export type ActionItem = {
   owner: string | null
   scores: ActionScores
   whyNow: string
+  /** When false, `whyNow` is plain text (API). Mock rows omit this and render HTML. */
+  whyNowHtml?: boolean
   draftKey: string | null
   draftLabel: string | null
   promoted: boolean

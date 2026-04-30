@@ -27,6 +27,8 @@ const TIER_CONFIG: Record<ActionTier, { label: string; sub: string; pill: CSSPro
 
 type TierSectionProps = {
   tier: ActionTier
+  /** When set (e.g. API `tier` key like `this_week`), shown in the pill instead of the default label */
+  sectionLabel?: string
   actions: ActionItem[]
   onGetDraft: (action: ActionItem) => void
   onMarkDone: (action: ActionItem) => void
@@ -36,6 +38,7 @@ type TierSectionProps = {
 
 export default function TierSection({
   tier,
+  sectionLabel,
   actions,
   onGetDraft,
   onMarkDone,
@@ -44,6 +47,7 @@ export default function TierSection({
 }: TierSectionProps) {
   if (!actions || actions.length === 0) return null
   const cfg = TIER_CONFIG[tier]
+  const pillTitle = sectionLabel ?? cfg.label
 
   return (
     <div style={{ marginBottom: 22 }}>
@@ -59,7 +63,7 @@ export default function TierSection({
             ...cfg.pill,
           }}
         >
-          {cfg.label}
+          {pillTitle}
         </span>
         <span style={{ fontSize: 12, color: "#8B91A3" }}>
           {actions.length} action{actions.length !== 1 ? "s" : ""} {cfg.sub}

@@ -17,10 +17,9 @@ import {
   fetchScoringMeta,
 } from "./api"
 import { PROMOTED_BANNER } from "./data/mockData"
+import { mapOrgPayloadToActionItems, TIER_SECTION_ORDER } from "./mapActionDetailFromPayload"
 import { mapOrgPayloadToSummaryStats } from "./mapSummaryFromPayload"
 import type { ActionItem, ActionTier, MarkDonePayload, PendingDraft, ScoringMeta, SummaryStat } from "./types"
-
-const TIERS: ActionTier[] = ["today", "week", "month", "watch"]
 
 export default function ActionCenterView() {
   const { user_data, access_token, _hasHydrated } = useAuth()
@@ -68,7 +67,8 @@ export default function ActionCenterView() {
         fetchSummaryStats(),
         fetchScoringMeta(),
       ])
-      setActions(acts)
+      const fromDetail = mapOrgPayloadToActionItems(orgAcPayload)
+      setActions(fromDetail ?? acts)
       const fromApi = mapOrgPayloadToSummaryStats(orgAcPayload)
       setSummaryStats(fromApi ?? stats)
       setScoringMeta(meta)
@@ -77,13 +77,15 @@ export default function ActionCenterView() {
     void load()
   }, [_hasHydrated, user_data?.organization, access_token])
 
-  const actionsByTier = TIERS.reduce<Record<ActionTier, ActionItem[]>>(
+  const actionsByTier = TIER_SECTION_ORDER.reduce<Record<ActionTier, ActionItem[]>>(
     (acc, tier) => {
       acc[tier] = actions.filter((a) => a.tier === tier)
       return acc
     },
     { today: [], week: [], month: [], watch: [] }
   )
+
+  const tierSectionsToShow = TIER_SECTION_ORDER.filter((t) => actionsByTier[t].length > 0)
 
   const todayCount =
     summaryStats.find((s) => s.tier === "today")?.count ??
@@ -115,7 +117,7 @@ export default function ActionCenterView() {
     )
     setSummaryStats((prev) =>
       prev.map((s) =>
-        s.id === "today" ? { ...s, count: Math.max(0, s.count - 1) } : s
+        s.tier === modalAction.tier ? { ...s, count: Math.max(0, s.count - 1) } : s
       )
     )
     setModalAction(null)
@@ -246,10 +248,11 @@ export default function ActionCenterView() {
             {PROMOTED_BANNER.message}
           </div>
 
-          {TIERS.map((tier) => (
+          {tierSectionsToShow.map((tier) => (
             <TierSection
               key={tier}
               tier={tier}
+              sectionLabel={actionsByTier[tier][0]?.apiTier}
               actions={actionsByTier[tier]}
               onGetDraft={handleGetDraft}
               onMarkDone={handleMarkDoneClick}

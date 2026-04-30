@@ -11,12 +11,65 @@ const TIER_LEFT_COLORS: Record<ActionTier, string> = {
   watch: "#1B3A8C",
 }
 
+/** Matches section pill colours so the card tier matches `TierSection` / grouping */
+const TIER_BADGE_PILL: Record<ActionTier, CSSProperties> = {
+  today: { background: "#FDF2F2", color: "#C0392B", border: "1px solid #F5C6C6" },
+  week: { background: "#FFFBF0", color: "#7D5A00", border: "1px solid #F0E0A0" },
+  month: { background: "#F0F9F4", color: "#1A5C3A", border: "1px solid #B8DFC8" },
+  watch: { background: "#F0F4FB", color: "#2C4A7A", border: "1px solid #C0CDE8" },
+}
+
+function tierBadgeLabel(action: ActionItem): string {
+  const raw = action.apiTier?.trim()
+  /** Same as `TierSection` pill: uppercase API key (e.g. `this_week` → THIS_WEEK) */
+  if (raw) return raw.replace(/-/g, "_").toUpperCase()
+  const fallback: Record<ActionTier, string> = {
+    today: "TODAY",
+    week: "THIS WEEK",
+    month: "THIS MONTH",
+    watch: "WATCH",
+  }
+  return fallback[action.tier]
+}
+
 const SCORE_CHIP_STYLES: Record<string, CSSProperties> = {
   high: { background: "#FDF2F2", color: "#C0392B", border: "1px solid #F5C6C6" },
   med: { background: "#FFFBF0", color: "#7D5A00", border: "1px solid #F0E0A0" },
   good: { background: "#F0F9F4", color: "#1A5C3A", border: "1px solid #B8DFC8" },
   opp: { background: "#E8EDF8", color: "#1B3A8C", border: "1px solid #C0CDE8" },
   default: { background: "#F2F4F8", color: "#4A5168", border: "1px solid #E2E6EF" },
+}
+
+function levelFromUnitRisk(r: number): ScoreLevel {
+  if (r >= 0.65) return "high"
+  if (r >= 0.35) return "med"
+  return "good"
+}
+
+function levelFromPctRisk(r: number): ScoreLevel {
+  if (r >= 65) return "high"
+  if (r >= 35) return "med"
+  return "good"
+}
+
+function levelFromUnitValue(v: number): ScoreLevel {
+  if (v >= 0.55) return "good"
+  if (v >= 0.35) return "med"
+  return "high"
+}
+
+function levelFromPctValue(v: number): ScoreLevel {
+  if (v >= 55) return "good"
+  if (v >= 35) return "med"
+  return "high"
+}
+
+function levelFromUnitOpp(o: number): ScoreLevel {
+  return o >= 0.45 ? "opp" : "default"
+}
+
+function levelFromPctOpp(o: number): ScoreLevel {
+  return o >= 45 ? "opp" : "default"
 }
 
 function ScoreChip({ label, level }: { label: string; level: ScoreLevel | "default" }) {
@@ -98,13 +151,38 @@ export default function ActionCard({
   const isDone = action.done
 
   const chips: { label: string; level: ScoreLevel | "default" }[] = []
-  if (action.scores.risk != null)
-    chips.push({ label: `Risk ${action.scores.risk}`, level: action.scores.riskLevel || "default" })
-  if (action.scores.value != null)
-    chips.push({ label: `Value ${action.scores.value}`, level: action.scores.valueLevel || "default" })
-  if (action.scores.opp != null)
-    chips.push({ label: `Opp ${action.scores.opp}`, level: action.scores.oppLevel || "default" })
-  else if (action.scores.risk != null) chips.push({ label: "Opp —", level: "default" })
+  const { risk, riskLevel, value, valueLevel, opp, oppLevel, engagementTrend, sentimentTrajectory } =
+    action.scores
+
+  if (risk != null) {
+    const isUnit = risk >= 0 && risk <= 1
+    const label = isUnit ? `Risk ${Math.round(risk * 100)}%` : `Risk ${risk}`
+    const level = riskLevel ?? (isUnit ? levelFromUnitRisk(risk) : levelFromPctRisk(risk))
+    chips.push({ label, level })
+  }
+  if (value != null) {
+    const isUnit = value >= 0 && value <= 1
+    const label = isUnit ? `Value ${Math.round(value * 100)}%` : `Value ${value}`
+    const level = valueLevel ?? (isUnit ? levelFromUnitValue(value) : levelFromPctValue(value))
+    chips.push({ label, level })
+  }
+  if (opp != null) {
+    const isUnit = opp >= 0 && opp <= 1
+    const label = isUnit ? `Opp ${Math.round(opp * 100)}%` : `Opp ${opp}`
+    const level = oppLevel ?? (isUnit ? levelFromUnitOpp(opp) : levelFromPctOpp(opp))
+    chips.push({ label, level })
+  } else if (
+    risk != null &&
+    engagementTrend == null &&
+    sentimentTrajectory == null
+  ) {
+    chips.push({ label: "Opp —", level: "default" })
+  }
+
+  if (engagementTrend)
+    chips.push({ label: `Engagement ${engagementTrend}`, level: "default" })
+  if (sentimentTrajectory)
+    chips.push({ label: `Sentiment ${sentimentTrajectory}`, level: "default" })
 
   return (
     <div
@@ -137,6 +215,19 @@ export default function ActionCard({
             }}
           >
             {action.company}
+            <span
+              style={{
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: "0.05em",
+                padding: "2px 8px",
+                borderRadius: 4,
+                whiteSpace: "nowrap",
+                ...TIER_BADGE_PILL[action.tier],
+              }}
+            >
+              {tierBadgeLabel(action)}
+            </span>
             <Badge variant={`stage-${action.stage}`}>{action.stageLabel}</Badge>
             {action.renewal && (
               <Badge variant={action.renewalUrgent ? "renewal-urgent" : "renewal"}>
@@ -158,19 +249,37 @@ export default function ActionCard({
         </div>
       )}
 
-      <div
-        style={{
-          fontSize: 12.5,
-          color: "#4A5168",
-          lineHeight: 1.6,
-          marginBottom: 12,
-          padding: "10px 12px",
-          background: "#F4F6FA",
-          borderRadius: 8,
-          border: "1px solid #E2E6EF",
-        }}
-        dangerouslySetInnerHTML={{ __html: action.whyNow }}
-      />
+      {action.whyNowHtml === false ? (
+        <div
+          style={{
+            fontSize: 12.5,
+            color: "#4A5168",
+            lineHeight: 1.6,
+            marginBottom: 12,
+            padding: "10px 12px",
+            background: "#F4F6FA",
+            borderRadius: 8,
+            border: "1px solid #E2E6EF",
+            whiteSpace: "pre-wrap",
+          }}
+        >
+          {action.whyNow}
+        </div>
+      ) : (
+        <div
+          style={{
+            fontSize: 12.5,
+            color: "#4A5168",
+            lineHeight: 1.6,
+            marginBottom: 12,
+            padding: "10px 12px",
+            background: "#F4F6FA",
+            borderRadius: 8,
+            border: "1px solid #E2E6EF",
+          }}
+          dangerouslySetInnerHTML={{ __html: action.whyNow }}
+        />
+      )}
 
       {isDone ? (
         <div style={{ fontSize: 12, color: "#2E7D52", display: "flex", alignItems: "center", gap: 5 }}>
