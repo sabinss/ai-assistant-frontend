@@ -22,7 +22,7 @@ import type { ActionItem, ActionTier, MarkDonePayload, PendingDraft, ScoringMeta
 const TIERS: ActionTier[] = ["today", "week", "month", "watch"]
 
 export default function ActionCenterView() {
-  const { user_data, access_token } = useAuth()
+  const { user_data, access_token, _hasHydrated } = useAuth()
   const [actions, setActions] = useState<ActionItem[]>([])
   const [summaryStats, setSummaryStats] = useState<SummaryStat[]>([])
   const [scoringMeta, setScoringMeta] = useState<ScoringMeta | null>(null)
@@ -39,14 +39,26 @@ export default function ActionCenterView() {
   const handleDraftHandled = useCallback(() => setPendingDraft(null), [])
 
   useEffect(() => {
+    if (!_hasHydrated) return
+
     async function load() {
       const orgId = user_data?.organization?.trim()
       let orgAcPayload: unknown = null
       if (orgId && access_token) {
         try {
           orgAcPayload = await fetchOrganizationActionCenter(orgId, access_token)
+          console.log("orgAcPayload----", orgAcPayload)
+          if (orgAcPayload != null) {
+            try {
+              console.log(
+                "[ActionCenterView] orgAcPayload\n" + JSON.stringify(orgAcPayload, null, 2)
+              )
+            } catch {
+              console.log("[ActionCenterView] orgAcPayload (not JSON-serializable)", orgAcPayload)
+            }
+          }
         } catch (err) {
-          console.error("[ActionCenterView] GET organization/.../action-center failed", err)
+          console.error("[ActionCenterView] GET organization/:org_id/action-center failed", err)
         }
       }
       setOrganizationActionCenter(orgAcPayload)
@@ -62,12 +74,7 @@ export default function ActionCenterView() {
       setLoading(false)
     }
     void load()
-  }, [user_data?.organization, access_token])
-
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development" || organizationActionCenter == null) return
-    console.debug("[ActionCenterView] GET /organization/:org_id/action-center:", organizationActionCenter)
-  }, [organizationActionCenter])
+  }, [_hasHydrated, user_data?.organization, access_token])
 
   const actionsByTier = TIERS.reduce<Record<ActionTier, ActionItem[]>>(
     (acc, tier) => {
