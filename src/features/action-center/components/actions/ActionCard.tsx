@@ -312,7 +312,7 @@ export default function ActionCard({
             </Btn>
           )}
           <Btn onClick={() => onViewAccount(action)} color="#4A5168" hoverBg="#F4F6FA" borderColor="#CDD3E0">
-            View Account
+            View Accounts
           </Btn>
           {action.tier === "today" && (
             <button

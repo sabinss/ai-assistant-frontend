@@ -33,8 +33,14 @@ export default function ActionCenterView() {
   const [modalAction, setModalAction] = useState<ActionItem | null>(null)
   const [pendingDraft, setPendingDraft] = useState<PendingDraft | null>(null)
   const [toast, setToast] = useState("")
+  /** `null` = show all tier sections; otherwise only that tier’s `TierSection` is shown. */
+  const [summaryTierFilter, setSummaryTierFilter] = useState<ActionTier | null>(null)
 
   const showToast = useCallback((msg: string) => setToast(msg), [])
+
+  const handleSummaryTierClick = useCallback((tier: ActionTier) => {
+    setSummaryTierFilter((prev) => (prev === tier ? null : tier))
+  }, [])
 
   const handleDraftHandled = useCallback(() => setPendingDraft(null), [])
 
@@ -85,7 +91,10 @@ export default function ActionCenterView() {
     { today: [], week: [], month: [], watch: [] }
   )
 
-  const tierSectionsToShow = TIER_SECTION_ORDER.filter((t) => actionsByTier[t].length > 0)
+  const tiersWithActions = TIER_SECTION_ORDER.filter((t) => actionsByTier[t].length > 0)
+  const tierSectionsToShow = summaryTierFilter
+    ? tiersWithActions.filter((t) => t === summaryTierFilter)
+    : tiersWithActions
 
   const todayCount =
     summaryStats.find((s) => s.tier === "today")?.count ??
@@ -179,9 +188,9 @@ export default function ActionCenterView() {
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>Action Centre</div>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>Customer Intelligence Briefing</div>
           <div style={{ fontSize: 12, color: "#8B91A3" }}>
-            Scored weekly · Last run {scoringMeta?.lastRun}
+            Customer sentiment, engagement, and value signals turned into prioritized actions.
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
@@ -225,7 +234,11 @@ export default function ActionCenterView() {
             minWidth: 0,
           }}
         >
-          <SummaryCards stats={summaryStats} />
+          <SummaryCards
+            stats={summaryStats}
+            selectedTier={summaryTierFilter}
+            onTierClick={handleSummaryTierClick}
+          />
 
           <div
             style={{
