@@ -1,4 +1,4 @@
-import React, { CSSProperties, useEffect, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import { MessageDiv } from "./MessageDiv"
 import { MessageObject } from "./ChatMain"
 import { motion } from "framer-motion"
@@ -6,8 +6,6 @@ import useNavBarStore from "@/store/store"
 import useFormStore from "@/store/formdata"
 import useChatConfig from "@/store/useChatSetting"
 import usePublicChat from "@/store/public_chat"
-import BeatLoader from "react-spinners/BeatLoader"
-
 interface ChatListProps {
   messages: MessageObject[]
 }
@@ -47,15 +45,10 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
       }
       : null
 
-  const override: CSSProperties = {
-    display: "block",
-    marginLeft: "10px",
-  }
-
   return (
     <div
       ref={chatListRef}
-      className=" flex h-full w-full flex-col gap-5 overflow-y-scroll px-2"
+      className="flex h-full w-full flex-col gap-2.5 overflow-y-scroll bg-[#F4F6FA] px-3.5 py-3.5 font-sans"
     >
       <MessageDiv key="greeting" msg={greeting_message} />
 
@@ -68,34 +61,27 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
         // Check if this is a streaming message with a status
         if (msg.isStreaming && msg.status) {
           return (
-            <div
-              key={`${msg.id}-${index}`}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                marginBottom: 20,
-                marginLeft: 12,
-              }}
-            >
-              <p
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "bold",
-                  margin: 0,
-                  lineHeight: "1",
-                }}
+            <div key={`${msg.id}-${index}`} className="flex flex-col items-start gap-1">
+              <div
+                className="flex max-w-[90%] flex-wrap items-center gap-2 rounded-[10px] border border-[#E2E6EF] bg-white px-3 py-2"
+                style={{ borderBottomLeftRadius: 3 }}
               >
-                {msg.status}
-              </p>
-              <BeatLoader
-                style={{ marginTop: 8, marginLeft: 5 }}
-                color={"#174894"}
-                loading={true}
-                cssOverride={override}
-                size={10}
-                aria-label="Loading Spinner"
-                data-testid="loader"
-              />
+                <p className="m-0 text-[13px] font-semibold leading-none text-[#1A1F2E]">
+                  {msg.status}
+                </p>
+                <span className="inline-flex gap-1">
+                  {[0, 150, 300].map((d) => (
+                    <span
+                      key={d}
+                      className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B91A3]"
+                      style={{
+                        animation: "chatTypingBounce 1.2s ease-in-out infinite",
+                        animationDelay: `${d}ms`,
+                      }}
+                    />
+                  ))}
+                </span>
+              </div>
             </div>
           )
         }
@@ -105,35 +91,33 @@ const ChatList: React.FC<ChatListProps> = ({ messages }: ChatListProps) => {
       })}
 
       {isMessageLoading && !messages.some((msg) => msg.isStreaming) && (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            marginBottom: 20,
-            marginLeft: 12,
-          }}
-        >
-          <p
-            style={{
-              fontSize: "18px",
-              fontWeight: "bold",
-              margin: 0,
-              lineHeight: "1",
-            }}
+        <div className="flex flex-col items-start gap-1">
+          <div
+            className="flex max-w-[90%] flex-wrap items-center gap-2 rounded-[10px] border border-[#E2E6EF] bg-white px-3 py-2"
+            style={{ borderBottomLeftRadius: 3 }}
           >
-            Analyzing
-          </p>
-          <BeatLoader
-            style={{ marginTop: 8, marginLeft: 5 }}
-            color={"#174894"}
-            loading={true}
-            cssOverride={override}
-            size={10}
-            aria-label="Loading Spinner"
-            data-testid="loader"
-          />
+            <p className="m-0 text-[13px] font-semibold leading-none text-[#1A1F2E]">Analyzing</p>
+            <span className="inline-flex gap-1">
+              {[0, 150, 300].map((d) => (
+                <span
+                  key={d}
+                  className="inline-block h-[5px] w-[5px] rounded-full bg-[#8B91A3]"
+                  style={{
+                    animation: "chatTypingBounce 1.2s ease-in-out infinite",
+                    animationDelay: `${d}ms`,
+                  }}
+                />
+              ))}
+            </span>
+          </div>
         </div>
       )}
+      <style>{`
+        @keyframes chatTypingBounce {
+          0%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-4px); }
+        }
+      `}</style>
     </div>
   )
 }

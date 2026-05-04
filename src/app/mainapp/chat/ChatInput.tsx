@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-import { buttonVariants } from "@/components/ui/button"
-import { cn, generateSessionIdLength5 } from "@/lib/utils"
-import { IoMdSend } from "react-icons/io"
+import { generateSessionIdLength5 } from "@/lib/utils"
 import { MdStop } from "react-icons/md"
 import http from "@/config/http"
 import useFormStore from "@/store/formdata"
@@ -724,13 +722,71 @@ const ChatInput: React.FC<ChildProps> = ({
     )
   }
   return (
-    <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
-      <div className="w-8/10 flex flex-col rounded-md border border-[#D7D7D7] bg-background p-2">
-        <div className="flex flex-row justify-between">
-          <div className="flex-grow">
-            {" "}
+    <div className="sticky bottom-0 shrink-0 border-t border-[#E2E6EF] bg-white font-sans">
+      {!publicChat && (
+        <div className="flex flex-wrap gap-1.5 border-b border-[#E2E6EF] px-3 py-2.5">
+          {visibleAgents.map((agent: any, index: number) => {
+            const isSelected = selectedAgents.some(
+              (a: any) => (typeof a === "object" ? a?.name : a) === agent.name
+            )
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSelected) {
+                    handleAgentRemove(agent.name)
+                  } else {
+                    switchToAgent(agent)
+                  }
+                }}
+                key={index}
+                className={`rounded-full border px-2.5 py-1 text-[11px] transition-all duration-150 ${isSelected
+                  ? "border-[#1B3A8C] bg-[#E8EDF8] font-medium text-[#1B3A8C]"
+                  : "border-[#CDD3E0] bg-white font-normal text-[#4A5168] hover:border-[#B8C0D4]"
+                  }`}
+              >
+                {agent.name}
+              </button>
+            )
+          })}
+          {remainingAgents.length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowDropdown((prev) => !prev)}
+                className="rounded-full border border-[#CDD3E0] bg-white px-2.5 py-1 text-[11px] font-normal text-[#4A5168] hover:border-[#B8C0D4]"
+              >
+                +{remainingAgents.length}
+              </button>
+              {showDropdown && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute bottom-full z-10 mb-2 max-h-60 w-40 overflow-y-auto rounded-md border border-[#E2E6EF] bg-white p-2 shadow-lg"
+                >
+                  {remainingAgents.map((agent, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleDropdownSelect(agent)}
+                      className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-[#E8EDF8] ${selectedAgents.some((a: any) => (typeof a === "object" ? a?.name : a) === agent?.name)
+                        ? "font-semibold text-[#1B3A8C]"
+                        : "text-[#4A5168]"
+                        }`}
+                    >
+                      {agent.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="px-3 pb-3 pt-2.5">
+        <div className="flex w-full items-end gap-2 rounded-lg border border-[#CDD3E0] bg-white px-2.5 py-2">
+          <div className="min-w-0 flex-1">
             <textarea
-              rows={3}
+              rows={1}
               ref={textareaRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -740,112 +796,45 @@ const ChatInput: React.FC<ChildProps> = ({
               placeholder={
                 historyLoading ? "Loading chat…" : isMessageLoading ? "....." : "Type your message here..."
               }
-              className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
+              className="max-h-20 min-h-5 w-full resize-none overflow-y-auto border-none bg-transparent py-0.5 text-[13px] text-[#1A1F2E] outline-none placeholder:text-[#8B91A3] active:border-none disabled:cursor-not-allowed"
             />
           </div>
-          <div>
+          <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
             {!publicChat && (
               <button
                 type="button"
                 onClick={togglePopup}
-                className="mx-2 rounded-md bg-gray-200 p-2 hover:bg-gray-300"
+                className="rounded-md bg-[#F4F6FA] p-1.5 text-[#4A5168] hover:bg-[#E8EDF8]"
               >
-                <FaRegLightbulb size={18} />
+                <FaRegLightbulb size={16} />
               </button>
             )}
-
-            {/* Send/Stop message button */}
-            <div className="m-2 flex w-20 items-center justify-center">
-              <span className="text-sm text-[#838383]">{message?.length}/4000</span>
-              {isMessageLoading ? (
-                <button
-                  type="button"
-                  onClick={handleStopStreaming}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
-                    "h-9 w-9",
-                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                  )}
-                  title="Stop streaming"
-                >
-                  <MdStop size={22} className="text-red-600" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={sendMessage}
-                  disabled={historyLoading}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
-                    "h-9 w-9",
-                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white disabled:opacity-40"
-                  )}
-                >
-                  <IoMdSend size={20} className=" text-[#174894]" />
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Custom agent list */}
-        {!publicChat && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {visibleAgents.map((agent: any, index: number) => {
-              const isSelected = selectedAgents.some(
-                (a: any) => (typeof a === "object" ? a?.name : a) === agent.name
-              )
-              return (
-                <div
-                  onClick={() => {
-                    if (isSelected) {
-                      handleAgentRemove(agent.name)
-                    } else {
-                      switchToAgent(agent)
-                    }
-                  }}
-                  key={index}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${isSelected
-                    ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                    }`}
-                >
-                  {agent.name}
-                </div>
-              )
-            })}
-            {/* Show ellipsis if more agents */}
-            {remainingAgents.length > 0 && (
-              <div className="relative">
-                <div
-                  onClick={() => setShowDropdown((prev) => !prev)}
-                  className="flex cursor-pointer items-center gap-2 rounded-full border bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
-                >
-                  +{remainingAgents.length}
-                </div>
-                {showDropdown && (
-                  <div
-                    ref={dropdownRef}
-                    className="absolute bottom-full z-10 mb-2 max-h-60 w-40 overflow-y-auto rounded-md border bg-white p-2 shadow-lg"
-                  >
-                    {remainingAgents.map((agent, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handleDropdownSelect(agent)}
-                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.some((a: any) => (typeof a === "object" ? a?.name : a) === agent?.name)
-                          ? "font-semibold text-blue-600"
-                          : "text-gray-700"
-                          }`}
-                      >
-                        {agent.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <span className="text-[10.5px] text-[#8B91A3]">{message?.length}/4000</span>
+            {isMessageLoading ? (
+              <button
+                type="button"
+                onClick={handleStopStreaming}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-transparent hover:bg-[#F4F6FA]"
+                title="Stop streaming"
+              >
+                <MdStop size={20} className="text-red-600" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={sendMessage}
+                disabled={historyLoading}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1B3A8C] text-white hover:opacity-90 disabled:opacity-40"
+                title="Send"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+                </svg>
+              </button>
             )}
           </div>
-        )}
+        </div>
+      </div>
 
         {/* Prompts Modal */}
         {showPopup && (
@@ -891,7 +880,6 @@ const ChatInput: React.FC<ChildProps> = ({
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }

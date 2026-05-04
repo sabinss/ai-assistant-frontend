@@ -4,7 +4,6 @@ import botImage from "@/assets/images/bot.png"
 import Image from "next/image"
 import useNavBarStore from "@/store/store"
 export const TopbarIcons = [{ icon: Info }]
-import { GrAdd } from "react-icons/gr"
 import useAuth from "@/store/user"
 import http from "@/config/http"
 import { IoIosArrowDropdown } from "react-icons/io"
@@ -89,42 +88,47 @@ export default function ChatTopbar({
 
   return (
     <div
-      className={`flex w-full flex-col rounded-md bg-muted ${publicChat ? "p-2 sm:p-2.5" : "p-3"}`}
+      className={`flex w-full shrink-0 flex-col border-b border-[#E2E6EF] bg-white font-sans ${publicChat ? "px-3 py-2.5 sm:px-4" : "px-4 py-3"}`}
     >
       <div
         className={`flex justify-between gap-2 ${publicChat ? "items-start" : "items-center"}`}
       >
         <div
-          className={`title flex min-w-0 flex-1 ${publicChat ? "items-start" : "items-center"}`}
+          className={`title flex min-w-0 flex-1 gap-2.5 ${publicChat ? "items-start" : "items-center"}`}
         >
           {!publicChat && (
-            <Image
-              src={botImage}
-              className="mr-3 inline shrink-0 rounded-full"
-              alt=""
-              height={30}
-              width={30}
-            />
+            <div className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#1B3A8C]">
+              <Image
+                src={botImage}
+                className="rounded-full"
+                alt=""
+                height={22}
+                width={22}
+              />
+            </div>
           )}
           {publicChat ? (
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 pr-1">
-              <span className="block text-sm font-semibold leading-snug text-foreground">
+              <span className="block text-[13.5px] font-semibold leading-snug text-[#1A1F2E]">
                 {botName?.trim() ? botName : "Gabby"}
               </span>
               {visitorTitle ? (
-                <span className="block max-w-full break-words text-xs font-medium leading-snug text-muted-foreground">
+                <span className="block max-w-full break-words text-[11px] font-medium leading-snug text-[#8B91A3]">
                   Chatting with {visitorTitle}
                 </span>
               ) : (
-                <span className="block text-xs leading-snug text-muted-foreground">
+                <span className="block text-[11px] leading-snug text-[#8B91A3]">
                   We&apos;re here to help
                 </span>
               )}
             </div>
           ) : (
-            <h2 className="inline text-xl font-bold">
-              Chat with {botName ? botName : "Gabby"}
-            </h2>
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <span className="text-[13.5px] font-semibold leading-snug text-[#1A1F2E]">
+                Chat with {botName ? botName : "Gabby"}
+              </span>
+              <span className="text-[11px] leading-snug text-[#8B91A3]">We&apos;re here to help</span>
+            </div>
           )}
           {/* <span className="inline text-xl font-bold">
             Chat about {publicChat && "Product Knowledge"}
@@ -159,7 +163,7 @@ export default function ChatTopbar({
         </div>
         <button
           type="button"
-          className={`flex shrink-0 flex-row cursor-pointer items-center gap-1.5 rounded-md border border-border bg-background/90 font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground ${publicChat ? "px-2 py-1.5 text-xs" : "gap-2 p-2 text-sm hover:text-black"
+          className={`flex shrink-0 cursor-pointer items-center gap-1 border-0 bg-transparent font-sans font-medium transition-opacity hover:opacity-80 ${publicChat ? "text-xs text-[#1B3A8C]" : "text-[12px] text-[#1B3A8C]"
             }`}
           title="Start a new conversation"
           onClick={changeSession}
@@ -171,8 +175,20 @@ export default function ChatTopbar({
             </>
           ) : (
             <>
-              <GrAdd size={20} className="shrink-0" aria-hidden />
-              <span>New Session</span>
+              <svg
+                width="13"
+                height="13"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#1B3A8C"
+                strokeWidth="2"
+                className="shrink-0"
+                aria-hidden
+              >
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span className="font-medium">New Session</span>
             </>
           )}
         </button>
