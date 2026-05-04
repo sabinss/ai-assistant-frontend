@@ -15,15 +15,30 @@ import { runPublicConversationAdd, type PublicChatPayload } from "./publicConver
 interface ChildProps {
   appendMessage: (newMessage: any) => void
   agentList: any[]
+  /** True after org agent instruction fetch finished (success or error). */
+  agentListReady?: boolean
   initialQuery?: string | null
+  /** With `initialQuery`: select this agent (name match, case-insensitive) before auto-send. */
+  bootstrapAgentName?: string | null
+  onBootstrapAgentMissing?: () => void
   /** Public / Help only: wait for history load so replies are not cleared by a late fetch */
   historyLoading?: boolean
+}
+
+function normalizeAgentDisplayName(name: unknown): string {
+  return String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
 }
 
 const ChatInput: React.FC<ChildProps> = ({
   appendMessage,
   agentList,
+  agentListReady = false,
   initialQuery,
+  bootstrapAgentName = null,
+  onBootstrapAgentMissing,
   historyLoading = false,
 }) => {
   const { botName } = useNavBarStore()
@@ -53,6 +68,10 @@ const ChatInput: React.FC<ChildProps> = ({
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
   const [hasAutoSent, setHasAutoSent] = useState(false) // Flag to prevent multiple auto-sends
   const abortControllerRef = useRef<AbortController | null>(null) // For cancelling fetch requests
+  const accountBootstrapSelectAppliedRef = useRef(false)
+  const accountBootstrapPendingMessageRef = useRef<string | null>(null)
+  /** Exact `agent.name` from API when bootstrap matched — used on send so the request always hits that agent. */
+  const accountBootstrapResolvedAgentNameRef = useRef<string | null>(null)
 
   // Helper function to check if opened from email link
   const isFromEmailLink = () => {
@@ -164,7 +183,10 @@ const ChatInput: React.FC<ChildProps> = ({
     }
   }
 
-  const sendMessageToBackend = async (query: string) => {
+  const sendMessageToBackend = async (
+    query: string,
+    opts?: { forceAgentName?: string }
+  ) => {
     // Add user message to Chat list
     updateMessageLoading(true)
     appendMessage({
@@ -189,9 +211,10 @@ const ChatInput: React.FC<ChildProps> = ({
           setPublicChatResponse,
         })
       } else {
-        // Prioritize agent selection
-        // For individual users, if no agent is selected, use "search agent"
-        if (selectedAgents.length > 0) {
+        const forced = opts?.forceAgentName?.trim()
+        if (forced) {
+          await handleCustomAgentStreaming(query, forced)
+        } else if (selectedAgents.length > 0) {
           // Always use non-streaming for agent for now
           await handleCustomAgentStreaming(query)
         } else if (role === "individual") {
@@ -632,6 +655,9 @@ const ChatInput: React.FC<ChildProps> = ({
   // Handle initial query from URL parameters
   useEffect(() => {
     if (initialQuery && initialQuery.trim() !== "" && !hasAutoSent) {
+      if (bootstrapAgentName?.trim()) {
+        return
+      }
       // Check if this is from an email link by looking for emailId parameter
       const isFromEmail = isFromEmailLink()
 
@@ -668,7 +694,74 @@ const ChatInput: React.FC<ChildProps> = ({
 
       return () => clearTimeout(timer)
     }
-  }, [initialQuery])
+  }, [initialQuery, bootstrapAgentName, hasAutoSent])
+
+  // Action centre "View account": pick agent by name, new session, then send company as first message.
+  useEffect(() => {
+    if (!initialQuery?.trim() || !bootstrapAgentName?.trim() || hasAutoSent) return
+    if (!agentListReady) return
+    if (accountBootstrapSelectAppliedRef.current) return
+
+    const want = normalizeAgentDisplayName(bootstrapAgentName)
+    const found = agentList.find(
+      (a: any) => normalizeAgentDisplayName(a?.name) === want
+    )
+    if (!found) {
+      onBootstrapAgentMissing?.()
+      setHasAutoSent(true)
+      accountBootstrapResolvedAgentNameRef.current = null
+      return
+    }
+
+    accountBootstrapSelectAppliedRef.current = true
+    accountBootstrapPendingMessageRef.current = initialQuery.trim()
+    accountBootstrapResolvedAgentNameRef.current =
+      typeof found.name === "string" && found.name.trim() !== ""
+        ? found.name.trim()
+        : bootstrapAgentName.trim()
+    setSelectedAgents([found])
+  }, [
+    initialQuery,
+    bootstrapAgentName,
+    agentListReady,
+    agentList,
+    hasAutoSent,
+    onBootstrapAgentMissing,
+  ])
+
+  useEffect(() => {
+    const pending = accountBootstrapPendingMessageRef.current
+    if (!pending || !bootstrapAgentName?.trim() || hasAutoSent) return
+
+    const want = normalizeAgentDisplayName(bootstrapAgentName)
+    const first = selectedAgents[0]
+    const name =
+      typeof first === "object" && first?.name != null ? first.name : first
+    if (normalizeAgentDisplayName(name) !== want) return
+
+    const t = window.setTimeout(async () => {
+      if (accountBootstrapPendingMessageRef.current !== pending) return
+      accountBootstrapPendingMessageRef.current = null
+      const agentNameForSend = accountBootstrapResolvedAgentNameRef.current
+      accountBootstrapResolvedAgentNameRef.current = null
+      setMessage("")
+      await sendMessageToBackend(pending, {
+        forceAgentName: agentNameForSend ?? undefined,
+      })
+      setHasAutoSent(true)
+      accountBootstrapSelectAppliedRef.current = false
+    }, 900)
+
+    return () => window.clearTimeout(t)
+  }, [selectedAgents, bootstrapAgentName, hasAutoSent])
+
+  useEffect(() => {
+    if (!initialQuery?.trim() && !bootstrapAgentName?.trim()) {
+      accountBootstrapSelectAppliedRef.current = false
+      accountBootstrapPendingMessageRef.current = null
+      accountBootstrapResolvedAgentNameRef.current = null
+    }
+  }, [initialQuery, bootstrapAgentName])
 
   useEffect(() => {
     if (selectedAgents.length > 0) {
