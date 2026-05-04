@@ -30,7 +30,7 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       icon: LayoutDashboard,
     },
     {
-      name: "Action Center",
+      name: "Intel Brief",
       path: "/mainapp/action-center",
       icon: ListTodo,
     },

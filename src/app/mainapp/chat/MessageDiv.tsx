@@ -1,15 +1,12 @@
 "use client"
 import React, { useState } from "react"
 import { BiLike, BiDislike, BiSolidLike, BiSolidDislike } from "react-icons/bi"
-import Image from "next/image"
 import http from "@/config/http"
-import bot from "@/assets/images/bot.png"
 import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 import { motion } from "framer-motion"
 import useAuth from "@/store/user" // Import useAuth hook
 import usePublicChat from "@/store/public_chat"
-import useNavBarStore from "@/store/store"
 import { marked } from "marked"
 import DOMPurify from "dompurify"
 import ReactMarkdown from "react-markdown"
@@ -24,7 +21,6 @@ function stripAnsPrefix(id: unknown): string {
 export const MessageDiv = ({ msg }: any) => {
   const { access_token, user_data } = useAuth() // Call useAuth here
   const { publicChat, publicChatHeaders } = usePublicChat()
-  const { botName } = useNavBarStore()
   const [showFeedbackModal, setFeedbackModal] = useState(false)
   const [feedbackMsg, setFeedbackMsg] = useState("")
   const [feedbackId, setFeedbackId] = useState(null)
@@ -188,32 +184,22 @@ export const MessageDiv = ({ msg }: any) => {
   }
 
   return (
-    <div className="content m-2 flex gap-1 text-sm">
+    <div className="w-full text-sm">
       {msg.sender !== "user" ? (
-        <div className="group relative w-full pb-6">
-          <div className="timeandname  mb-2 flex items-center justify-start gap-2 text-[#838383] ">
-            <Image src={bot} className="rounded-full" alt="" height={30} width={30} />
-            <span className="font-medium">
-              {publicChat ? (botName ?? "Gabby") : botName}
-            </span>
-            <span>{msg.time}</span>
-          </div>
-          {/* <motion.div
-            className="ml-4 max-w-[90%] space-y-4 rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]" // Add space or extra padding if needed
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            dangerouslySetInnerHTML={{
-              __html: cleanAndConvertMessage(msg.message),
-            }}
-          ></motion.div> */}
-          <motion.div
-            className="ml-4 max-w-[90%] space-y-4 break-words rounded-md border-[#838383] bg-[#F7f7f7] p-5 pl-6 text-black shadow-[1px_1px_10px_rgba(0,0,0,0.2)]"
-            style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
+        <div className="group relative w-full pb-4">
+          <div className="flex flex-col items-start gap-1">
+            <motion.div
+              className="max-w-[90%] break-words rounded-[10px] border border-[#E2E6EF] bg-white px-3 py-[9px] text-[13px] leading-[1.55] text-[#1A1F2E]"
+              style={{
+                wordBreak: "break-word",
+                overflowWrap: "break-word",
+                borderBottomLeftRadius: 3,
+              }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
             <div
-              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              className="markdown-content prose prose-sm prose-neutral max-w-none break-words text-[13px] leading-[1.55] text-[#1A1F2E] [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
               <div className="overflow-x-auto">
@@ -249,12 +235,15 @@ export const MessageDiv = ({ msg }: any) => {
               </div>
             </div>
           </motion.div>
-          <div className="likebuttons absolute  left-2 py-1 pl-2">
+            {msg.time ? (
+              <div className="px-1 text-[10px] text-[#8B91A3]">{msg.time}</div>
+            ) : null}
+          <div className="likebuttons flex gap-2 py-1 pl-1">
             {msg.id !== "greeting" &&
               msg.id !== "agent_greeting" &&
               msg.id !== "loading" &&
               (msg.id?.startsWith("ANS_") || msg.conversationId?.startsWith("ANS_")) && (
-                <span className=" hidden gap-2 transition-all duration-100 group-hover:flex ">
+                <span className="hidden gap-2 transition-all duration-100 group-hover:flex">
                   {feedback === null && (
                     <>
                       <div
@@ -292,22 +281,23 @@ export const MessageDiv = ({ msg }: any) => {
                 </span>
               )}
           </div>
+          </div>
         </div>
       ) : (
-        <div className="w-full justify-end">
-          <div className="timeandname mb-2 flex items-center justify-end gap-2 text-sm text-[#838383]">
-            <span>{msg.sender}</span>
-            <span>{msg.time}</span>
-          </div>
+        <div className="flex w-full flex-col items-end gap-1 pb-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.2 }}
-            className="float-right max-w-[90%] break-words rounded-md border-[#e7e7e7] bg-[#ffffff] p-3 text-black shadow-[1px_2px_10px_rgba(0,0,0,0.15)]"
-            style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
+            className="max-w-[90%] break-words rounded-[10px] bg-[#1B3A8C] px-3 py-[9px] text-[13px] leading-[1.55] text-white shadow-none"
+            style={{
+              wordBreak: "break-word",
+              overflowWrap: "break-word",
+              borderBottomRightRadius: 3,
+            }}
           >
             <div
-              className="markdown-content prose prose-lg prose-gray max-w-none break-words text-sm [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
+              className="markdown-content prose prose-sm prose-invert max-w-none break-words text-[13px] leading-[1.55] [&_*]:break-words [&_code]:break-all [&_li]:break-words [&_p]:break-words [&_pre]:break-words [&_pre_code]:break-all"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
               <div className="overflow-x-auto">
@@ -343,6 +333,9 @@ export const MessageDiv = ({ msg }: any) => {
               </div>
             </div>
           </motion.div>
+          {msg.time ? (
+            <div className="px-1 text-[10px] text-[#8B91A3]">{msg.time}</div>
+          ) : null}
         </div>
       )}
 
