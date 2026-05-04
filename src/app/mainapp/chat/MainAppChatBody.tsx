@@ -7,6 +7,8 @@ import usePublicChat from "@/store/public_chat"
 
 export type MainAppChatBodyProps = {
   initialQuery?: string | null
+  bootstrapAgentName?: string | null
+  onBootstrapAgentMissing?: () => void
   /** Use flex-fill layout for nested shells (e.g. Action Centre page) */
   fillContainer?: boolean
 }
@@ -15,7 +17,12 @@ export type MainAppChatBodyProps = {
  * Shared inner chat UI for `/mainapp/chat` and `/mainapp/action-center/chat`
  * so behaviour (agents, streaming, sessions, public-chat flags) stays identical.
  */
-export function MainAppChatBody({ initialQuery = null, fillContainer }: MainAppChatBodyProps) {
+export function MainAppChatBody({
+  initialQuery = null,
+  bootstrapAgentName = null,
+  onBootstrapAgentMissing,
+  fillContainer,
+}: MainAppChatBodyProps) {
   const { setPublicChat, setPublicChatHeaders } = usePublicChat()
 
   useEffect(() => {
@@ -30,7 +37,12 @@ export function MainAppChatBody({ initialQuery = null, fillContainer }: MainAppC
           <ChatTopBar />
         </div>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <ChatMain initialQuery={initialQuery} fillContainer />
+          <ChatMain
+            initialQuery={initialQuery}
+            bootstrapAgentName={bootstrapAgentName}
+            onBootstrapAgentMissing={onBootstrapAgentMissing}
+            fillContainer
+          />
         </div>
       </>
     )
@@ -39,7 +51,11 @@ export function MainAppChatBody({ initialQuery = null, fillContainer }: MainAppC
   return (
     <>
       <ChatTopBar />
-      <ChatMain initialQuery={initialQuery} />
+      <ChatMain
+        initialQuery={initialQuery}
+        bootstrapAgentName={bootstrapAgentName}
+        onBootstrapAgentMissing={onBootstrapAgentMissing}
+      />
     </>
   )
 }

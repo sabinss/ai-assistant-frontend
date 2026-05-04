@@ -32,6 +32,7 @@ export default function ActionCenterView() {
 
   const [modalAction, setModalAction] = useState<ActionItem | null>(null)
   const [pendingDraft, setPendingDraft] = useState<PendingDraft | null>(null)
+  const [pendingAccountView, setPendingAccountView] = useState<{ company: string } | null>(null)
   const [toast, setToast] = useState("")
   /** `null` = show all tier sections; otherwise only that tier’s `TierSection` is shown. */
   const [summaryTierFilter, setSummaryTierFilter] = useState<ActionTier | null>(null)
@@ -43,6 +44,7 @@ export default function ActionCenterView() {
   }, [])
 
   const handleDraftHandled = useCallback(() => setPendingDraft(null), [])
+  const handleAccountViewHandled = useCallback(() => setPendingAccountView(null), [])
 
   useEffect(() => {
     if (!_hasHydrated) return
@@ -139,7 +141,7 @@ export default function ActionCenterView() {
   }
 
   function handleViewAccount(action: ActionItem) {
-    showToast(`Account view: ${action.company}`)
+    setPendingAccountView({ company: action.company })
   }
 
   if (loading) {
@@ -278,6 +280,8 @@ export default function ActionCenterView() {
         <ChatPanel
           pendingDraft={pendingDraft}
           onDraftHandled={handleDraftHandled}
+          pendingAccountView={pendingAccountView}
+          onAccountViewHandled={handleAccountViewHandled}
           onToast={showToast}
         />
       </div>
