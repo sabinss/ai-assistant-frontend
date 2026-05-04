@@ -13,13 +13,13 @@ import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { formatCurrency } from "@/utility"
 import { generateSessionIdLength5 } from "@/lib/utils"
-import { AlertCircle, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/useDebounce"
 import { IoReturnUpBackOutline } from "react-icons/io5"
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState("alert")
+  const [activeTab, setActiveTab] = useState("customer")
   const [usageFunnelSearchInput, setUsageFunnelSearchInput] = useState("") // New state for search input
 
   const [loading, setLoading] = useState(false)
@@ -41,9 +41,6 @@ export default function Dashboard() {
   const usageFunnelData = useChurnDashboardStore((s) => s.usageFunnelData?.data)
   const usageFunnelPagination = useChurnDashboardStore((s) => s.usageFunnelData?.pagination)
   const usageFunnelTableColumns = useChurnDashboardStore((s) => s.usageFunnelTableColumns)
-  const fetchCustomerAlertData = useChurnDashboardStore((s) => s.fetchCustomerAlertData)
-  const customerAlertData = useChurnDashboardStore((s) => s.customerAlertData?.data)
-  const customerAlertDataLoading = useChurnDashboardStore((s) => s.customerAlertDataLoading)
   const fetchCustomerStageList = useChurnDashboardStore((s) => s.fetchCustomerStageList)
   const customerStageList = useChurnDashboardStore((s) => s.customerStageList)
   const customerStageListLoading = useChurnDashboardStore((s) => s.customerStageListLoading)
@@ -79,9 +76,6 @@ export default function Dashboard() {
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
 
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null)
-  const [alertData, setAlertData] = useState<any>([])
-  const [updatingAlert, setUpdatingAlert] = useState<string | null>(null)
-  const [addressedFilter, setAddressedFilter] = useState<string>("all") // "all", "addressed", "not_addressed"
   const [stats, setStats] = useState<
     Array<{
       id: string
@@ -125,29 +119,6 @@ export default function Dashboard() {
     )
   }, [orgCustomerData?.customers, searchTerm])
   console.log("filteredCustomers", filteredCustomers)
-  // Filter alert data based on search term and addressed status
-  const filteredAlertData = useMemo(() => {
-    if (!customerAlertData) return []
-
-    let filtered = customerAlertData
-
-    // Filter by search term (company name)
-    if (searchTerm) {
-      filtered = filtered.filter((alert: any) =>
-        alert?.company_name?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    // Filter by addressed status
-    if (addressedFilter === "addressed") {
-      filtered = filtered.filter((alert: any) => alert?.addressed === true)
-    } else if (addressedFilter === "not_addressed") {
-      filtered = filtered.filter((alert: any) => alert?.addressed === false)
-    }
-
-    return filtered
-  }, [customerAlertData, searchTerm, addressedFilter])
-
   const getScoreColorClass = (score: number, type: "health" | "risk"): string => {
     const riskLevels = [
       { min: 0, max: 20, className: "bg-red-600" },
@@ -213,12 +184,6 @@ export default function Dashboard() {
       getCustomerConversationMessage()
     }
   }, [selectedCustomer?._id])
-
-  useEffect(() => {
-    if (access_token && !customerAlertData) {
-      fetchCustomerAlertData(access_token)
-    }
-  }, [user_data?.organization])
 
   // Fetch customer stage list
   useEffect(() => {
@@ -306,6 +271,16 @@ export default function Dashboard() {
 
     const totalCustomers = scoreDashboardData?.customer_count
 
+    const rawExpansionAccounts = scoreDashboardData?.expansion_account_count
+    const expansionCount =
+      rawExpansionAccounts != null && rawExpansionAccounts !== ""
+        ? Number(rawExpansionAccounts)
+        : NaN
+    const expansionSubtitle =
+      totalCustomers > 0 && Number.isFinite(expansionCount)
+        ? `${((expansionCount / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`
+        : "N/A"
+
     setStats([
       {
         id: "total",
@@ -331,8 +306,8 @@ export default function Dashboard() {
       {
         id: "expansion",
         title: "Expansion Opportunities",
-        value: scoreDashboardData?.expansion_account_count?.toString(),
-        subtitle: `${((scoreDashboardData?.expansion_account_count / totalCustomers) * 100).toFixed(1)}% of ${totalCustomers} customers`,
+        value: Number.isFinite(expansionCount) ? String(expansionCount) : "N/A",
+        subtitle: expansionSubtitle,
       },
     ])
   }, [customerScoreData])
@@ -343,42 +318,6 @@ export default function Dashboard() {
       minute: "numeric",
       hour12: true,
     })
-  }
-
-  const handleAlertAddressToggle = async (alertId: string, currentAddressed: boolean) => {
-    if (!access_token) return
-
-    setUpdatingAlert(alertId)
-    try {
-      const response = await http.put(
-        `/customer/alert/${alertId}/address`,
-        { addressed: !currentAddressed },
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      )
-
-      if (response.status === 200) {
-        // Update the local state to reflect the change
-        const updatedAlertData = customerAlertData?.map((alert: any) =>
-          alert.alert_id === alertId ? { ...alert, addressed: !currentAddressed } : alert
-        )
-
-        // Update the store with the new data
-        useChurnDashboardStore.setState((state) => ({
-          ...state,
-          customerAlertData: {
-            ...state.customerAlertData,
-            data: updatedAlertData,
-          },
-        }))
-      }
-    } catch (error) {
-      console.error("Error updating alert address status:", error)
-      // You might want to show a toast notification here
-    } finally {
-      setUpdatingAlert(null)
-    }
   }
 
   const sendCustomerMessageToBackend = async (message: string) => {
@@ -557,16 +496,6 @@ export default function Dashboard() {
         {/* Tab Header */}
         <div className="flex space-x-4 border-b border-gray-300">
           <button
-            onClick={() => setActiveTab("alert")}
-            className={`flex items-center gap-2 rounded-t-lg px-4 py-2 font-medium transition ${activeTab === "alert"
-              ? "border-b-2 border-blue-500 bg-blue-100 text-blue-700"
-              : "text-gray-500 hover:text-gray-700"
-              }`}
-          >
-            <AlertCircle size={18} />
-            Alert
-          </button>
-          <button
             onClick={() => setActiveTab("customer")}
             className={`rounded-t-lg px-4 py-2 font-medium transition ${activeTab === "customer"
               ? "border-b-2 border-blue-500 bg-blue-100 text-blue-700"
@@ -588,117 +517,6 @@ export default function Dashboard() {
 
         {/* Tab Content */}
         <div className="mt-4">
-          {activeTab === "alert" && (
-            <div className="rounded-xl border bg-white p-4 shadow-sm">
-              <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center">
-                <input
-                  type="text"
-                  placeholder="Search by company name..."
-                  className="w-full rounded border px-3 py-2 sm:w-1/3"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <select
-                  value={addressedFilter}
-                  onChange={(e) => setAddressedFilter(e.target.value)}
-                  className="w-full rounded border px-3 py-2 sm:w-1/4"
-                >
-                  <option value="all">All Alerts</option>
-                  <option value="addressed">Addressed</option>
-                  <option value="not_addressed">Not Addressed</option>
-                </select>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="border-b text-gray-600">
-                    <tr>
-                      <th className="p-2">Company Name</th>
-                      <th className="w-1/2 p-2">Alert</th>
-                      <th className="p-2">Date</th>
-                      <th className="p-2">Owner</th>
-                      <th className="p-2">Source</th>
-                      <th className="p-2">Addressed</th>
-                      <th className="p-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-gray-700">
-                    {customerAlertDataLoading ? (
-                      <>
-                        {[...Array(5)].map((_, index) => (
-                          <tr key={index} className="animate-pulse border-b">
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-32 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-8 w-8 rounded-full bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-16 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-20 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-4 w-24 rounded bg-gray-200"></div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="h-6 w-6 rounded bg-gray-200"></div>
-                            </td>
-                          </tr>
-                        ))}
-                      </>
-                    ) : filteredAlertData?.length === 0 ? (
-                      <tr>
-                        <td className="py-6 text-center" colSpan={8}>
-                          {searchTerm || addressedFilter !== "all"
-                            ? "No alerts match your filters"
-                            : "No alert to display"}
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredAlertData?.map((item: any, index: number) => {
-                        return (
-                          <tr
-                            key={item?.company_id || index}
-                            className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50"
-                          >
-                            <td className="px-6 py-4">{item?.company_name}</td>
-                            <td className="px-4 py-4">{item?.alert ?? "N/A"}</td>
-                            <td className="px-6 py-4">{item?.week_date ?? "N/A"}</td>
-                            <td className="px-6 py-4">{item?.owner_id ?? "N/A"}</td>
-                            <td className="px-6 py-4">{item?.source ?? "N/A"}</td>
-                            <td className="px-6 py-4">
-                              <input
-                                type="checkbox"
-                                checked={item?.addressed}
-                                onChange={() =>
-                                  handleAlertAddressToggle(item?.alert_id, item?.addressed)
-                                }
-                                disabled={updatingAlert === item?.alert_id}
-                                className={`h-4 w-4 cursor-pointer ${updatingAlert === item?.alert_id ? "opacity-50" : ""
-                                  }`}
-                              />
-                              {updatingAlert === item?.alert_id && (
-                                <span className="ml-2 text-xs text-gray-500">Updating...</span>
-                              )}
-                            </td>
-                          </tr>
-                        )
-                      })
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
           {activeTab === "customer" && (
             <>
               {/* Customer Overview Table */}
@@ -792,10 +610,18 @@ export default function Dashboard() {
                         filteredCustomers.map((customer: any, index: number) => {
                           const healthScore = customer?.health_score
                           const riskScore = customer?.churn_risk_score
-                          const oppScore = customer?.expansion_opp_score
+                          const rawExpansionOpp =
+                            customer?.expansion_opp_score ??
+                            customer?.expansion_score ??
+                            customer?.expansion
+                          const oppScore =
+                            rawExpansionOpp != null && rawExpansionOpp !== ""
+                              ? Number(rawExpansionOpp)
+                              : NaN
+                          const hasExpansionScore = Number.isFinite(oppScore)
 
                           const healthColorClass = getScoreColorClass(healthScore ?? 0, "health")
-                          const oppColor = getScoreColorClass(oppScore ?? 0, "health")
+                          const oppColor = getScoreColorClass(oppScore, "health")
                           return (
                             <tr
                               key={customer.id || index}
@@ -824,7 +650,7 @@ export default function Dashboard() {
                                 )}
                               </td>
                               <td className="px-6 py-4">
-                                {oppScore ? (
+                                {hasExpansionScore ? (
                                   <Chip
                                     value={oppScore}
                                     otherClasses={`text-white font-bold w-9 h-9  text-white flex items-center justify-center ${oppColor}`}

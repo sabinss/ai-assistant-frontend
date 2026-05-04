@@ -786,7 +786,7 @@ const ChatInput: React.FC<ChildProps> = ({
         <div className="flex w-full items-end gap-2 rounded-lg border border-[#CDD3E0] bg-white px-2.5 py-2">
           <div className="min-w-0 flex-1">
             <textarea
-              rows={1}
+              rows={3}
               ref={textareaRef}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
@@ -796,7 +796,7 @@ const ChatInput: React.FC<ChildProps> = ({
               placeholder={
                 historyLoading ? "Loading chat…" : isMessageLoading ? "....." : "Type your message here..."
               }
-              className="max-h-20 min-h-5 w-full resize-none overflow-y-auto border-none bg-transparent py-0.5 text-[13px] text-[#1A1F2E] outline-none placeholder:text-[#8B91A3] active:border-none disabled:cursor-not-allowed"
+              className="max-h-36 min-h-[4.5rem] w-full resize-none overflow-y-auto border-none bg-transparent py-1.5 text-[13px] leading-normal text-[#1A1F2E] outline-none placeholder:text-[#8B91A3] active:border-none disabled:cursor-not-allowed"
             />
           </div>
           <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
