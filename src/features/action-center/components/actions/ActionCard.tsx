@@ -308,10 +308,10 @@ export default function ActionCard({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: 7,
-              marginBottom: detailExpanded ? 10 : 12,
-              padding: "6px 10px",
-              borderRadius: 6,
+              gap: 5,
+              marginBottom: detailExpanded ? 8 : 10,
+              padding: "4px 8px",
+              borderRadius: 5,
               border: `1px solid ${hovered && !isDone ? "#CDD3E0" : "#E2E6EF"}`,
               background: detailExpanded ? "#F4F6FA" : "#fff",
               cursor: "pointer",
@@ -322,15 +322,15 @@ export default function ActionCard({
           >
             <IoDocumentTextOutline
               aria-hidden
-              size={16}
+              size={13}
               strokeWidth={2}
               style={{ flexShrink: 0, color: tierColor }}
             />
             <span
               style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#1A1F2E",
+                fontSize: 11,
+                fontWeight: 500,
+                color: "#4A5168",
                 letterSpacing: "-0.01em",
                 whiteSpace: "nowrap",
               }}
@@ -339,7 +339,7 @@ export default function ActionCard({
             </span>
             <IoChevronDown
               aria-hidden
-              size={14}
+              size={12}
               style={{
                 flexShrink: 0,
                 color: "#8B91A3",
