@@ -16,6 +16,7 @@ import {
 } from "./api"
 import { PROMOTED_BANNER } from "./data/mockData"
 import { mapOrgPayloadToActionItems, TIER_SECTION_ORDER } from "./mapActionDetailFromPayload"
+import { buildDraftBestActionChatMessage } from "./buildDraftBestActionChatMessage"
 import {
   deriveSummaryStatsFromActions,
   mapOrgPayloadToSummaryStats,
@@ -43,6 +44,9 @@ export default function ActionCenterView() {
   const [modalAction, setModalAction] = useState<ActionItem | null>(null)
   const [pendingDraft, setPendingDraft] = useState<PendingDraft | null>(null)
   const [pendingAccountView, setPendingAccountView] = useState<{ company: string } | null>(null)
+  const [pendingDraftBestAction, setPendingDraftBestAction] = useState<{ message: string } | null>(
+    null
+  )
   const [toast, setToast] = useState("")
   /** `null` = show all tier sections; otherwise only that tier’s `TierSection` is shown. */
   const [summaryTierFilter, setSummaryTierFilter] = useState<ActionTier | null>(null)
@@ -55,6 +59,7 @@ export default function ActionCenterView() {
 
   const handleDraftHandled = useCallback(() => setPendingDraft(null), [])
   const handleAccountViewHandled = useCallback(() => setPendingAccountView(null), [])
+  const handleDraftBestActionHandled = useCallback(() => setPendingDraftBestAction(null), [])
 
   const loadActionCenter = useCallback(async () => {
     setLoadError(null)
@@ -171,6 +176,15 @@ export default function ActionCenterView() {
 
   function handleViewAccount(action: ActionItem) {
     setPendingAccountView({ company: action.company })
+  }
+
+  function handleDraftBestAction(action: ActionItem) {
+    const message = buildDraftBestActionChatMessage(action)
+    if (!message.trim()) {
+      showToast("No description or action detail to send.")
+      return
+    }
+    setPendingDraftBestAction({ message })
   }
 
   if (loading) {
@@ -375,6 +389,7 @@ export default function ActionCenterView() {
               onGetDraft={handleGetDraft}
               onMarkDone={handleMarkDoneClick}
               onViewAccount={handleViewAccount}
+              onDraftBestAction={handleDraftBestAction}
               onSnooze={handleSnooze}
             />
           ))}
@@ -385,6 +400,8 @@ export default function ActionCenterView() {
           onDraftHandled={handleDraftHandled}
           pendingAccountView={pendingAccountView}
           onAccountViewHandled={handleAccountViewHandled}
+          pendingDraftBestAction={pendingDraftBestAction}
+          onDraftBestActionHandled={handleDraftBestActionHandled}
           onToast={showToast}
         />
       </div>

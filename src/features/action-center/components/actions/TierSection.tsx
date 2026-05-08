@@ -33,6 +33,7 @@ type TierSectionProps = {
   onGetDraft: (action: ActionItem) => void
   onMarkDone: (action: ActionItem) => void
   onViewAccount: (action: ActionItem) => void
+  onDraftBestAction: (action: ActionItem) => void
   onSnooze: (action: ActionItem) => void
 }
 
@@ -43,6 +44,7 @@ export default function TierSection({
   onGetDraft,
   onMarkDone,
   onViewAccount,
+  onDraftBestAction,
   onSnooze,
 }: TierSectionProps) {
   if (!actions || actions.length === 0) return null
@@ -77,6 +79,7 @@ export default function TierSection({
           onGetDraft={onGetDraft}
           onMarkDone={onMarkDone}
           onViewAccount={onViewAccount}
+          onDraftBestAction={onDraftBestAction}
           onSnooze={onSnooze}
         />
       ))}

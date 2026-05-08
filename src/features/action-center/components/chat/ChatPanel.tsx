@@ -7,11 +7,16 @@ import type { PendingDraft } from "../../types"
 /** Agent chip label to select when opening chat from "View account" (match is case-insensitive). */
 const ACCOUNT_SUMMARY_AGENT_NAME = "Account Summary"
 
+/** Agent chip for "Draft Best Action" (match is case-insensitive). */
+const DRAFT_BEST_ACTION_AGENT_NAME = "Draft Best Action"
+
 type ChatPanelProps = {
   pendingDraft: PendingDraft | null
   onDraftHandled: () => void
   pendingAccountView: { company: string } | null
   onAccountViewHandled: () => void
+  pendingDraftBestAction: { message: string } | null
+  onDraftBestActionHandled: () => void
   /** Optional; retained for `ActionCentreView` — main chat UI handles feedback via `ChatMain` */
   onToast?: (msg: string) => void
 }
@@ -25,10 +30,15 @@ export default function ChatPanel({
   onDraftHandled,
   pendingAccountView,
   onAccountViewHandled,
+  pendingDraftBestAction,
+  onDraftBestActionHandled,
   onToast,
 }: ChatPanelProps) {
   const [bootstrapQuery, setBootstrapQuery] = useState<string | null>(null)
   const [bootstrapAgentName, setBootstrapAgentName] = useState<string | null>(null)
+  const [bootstrapAgentMissingMessage, setBootstrapAgentMissingMessage] = useState(
+    "Account summary agent not found"
+  )
   const [chatKey, setChatKey] = useState(0)
 
   useEffect(() => {
@@ -41,11 +51,21 @@ export default function ChatPanel({
 
   useEffect(() => {
     if (!pendingAccountView) return
+    setBootstrapAgentMissingMessage("Account summary agent not found")
     setBootstrapAgentName(ACCOUNT_SUMMARY_AGENT_NAME)
     setBootstrapQuery(pendingAccountView.company)
     setChatKey((k) => k + 1)
     onAccountViewHandled()
   }, [pendingAccountView, onAccountViewHandled])
+
+  useEffect(() => {
+    if (!pendingDraftBestAction) return
+    setBootstrapAgentMissingMessage("Draft Best Action agent not found")
+    setBootstrapAgentName(DRAFT_BEST_ACTION_AGENT_NAME)
+    setBootstrapQuery(pendingDraftBestAction.message)
+    setChatKey((k) => k + 1)
+    onDraftBestActionHandled()
+  }, [pendingDraftBestAction, onDraftBestActionHandled])
 
   return (
     <div
@@ -70,7 +90,7 @@ export default function ChatPanel({
           fillContainer
           initialQuery={bootstrapQuery}
           bootstrapAgentName={bootstrapAgentName}
-          onBootstrapAgentMissing={() => onToast?.("Account summary agent not found")}
+          onBootstrapAgentMissing={() => onToast?.(bootstrapAgentMissingMessage)}
         />
       </div>
     </div>

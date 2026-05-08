@@ -3,7 +3,8 @@
 import { useState, type CSSProperties, type ReactNode } from "react"
 import Badge from "../shared/Badge"
 import type { ActionDetailPart, ActionItem, ActionTier, ScoreLevel } from "../../types"
-import { IoIosArrowDropdown } from "react-icons/io";
+import { IoDocumentTextOutline } from "react-icons/io5"
+import { IoIosArrowDropdown } from "react-icons/io"
 
 const TIER_LEFT_COLORS: Record<ActionTier, string> = {
   today: "#C0392B",
@@ -144,6 +145,7 @@ type ActionCardProps = {
   onGetDraft: (action: ActionItem) => void
   onMarkDone: (action: ActionItem) => void
   onViewAccount: (action: ActionItem) => void
+  onDraftBestAction: (action: ActionItem) => void
   onSnooze: (action: ActionItem) => void
 }
 
@@ -152,6 +154,7 @@ export default function ActionCard({
   onGetDraft,
   onMarkDone,
   onViewAccount,
+  onDraftBestAction,
   onSnooze,
 }: ActionCardProps) {
   const [hovered, setHovered] = useState(false)
@@ -308,7 +311,7 @@ export default function ActionCard({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: 10,
+              gap: 12,
               marginBottom: detailExpanded ? 10 : 12,
               padding: "10px 12px",
               borderRadius: 8,
@@ -322,13 +325,40 @@ export default function ActionCard({
           >
             <span
               style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: "#1A1F2E",
-                letterSpacing: "-0.01em",
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                flex: 1,
+                minWidth: 0,
               }}
             >
-              View action detail
+              <span
+                aria-hidden
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  width: 36,
+                  height: 36,
+                  borderRadius: 8,
+                  background: `${tierColor}14`,
+                  border: `1px solid ${tierColor}33`,
+                  color: tierColor,
+                }}
+              >
+                <IoDocumentTextOutline size={20} strokeWidth={1.75} />
+              </span>
+              <span
+                style={{
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  color: "#1A1F2E",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                View action detail
+              </span>
             </span>
             <span
               aria-hidden
@@ -453,6 +483,17 @@ export default function ActionCard({
           )}
           <Btn onClick={() => onViewAccount(action)} color="#4A5168" hoverBg="#F4F6FA" borderColor="#CDD3E0">
             View Accounts
+          </Btn>
+          <Btn
+            onClick={() => onDraftBestAction(action)}
+            color="#1B3A8C"
+            hoverBg="#E8EDF8"
+            borderColor="#C0CCE8"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M12 20h9M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4z" />
+            </svg>
+            Draft Best Action
           </Btn>
           {action.tier === "today" && (
             <button
