@@ -9,8 +9,6 @@ import DoneModal from "./components/shared/DoneModal"
 import Toast from "./components/shared/Toast"
 import useAuth from "@/store/user"
 import {
-  fetchActions,
-  fetchSummaryStats,
   fetchOrganizationActionCenter,
   markActionDone,
   snoozeAction,
@@ -18,17 +16,29 @@ import {
 } from "./api"
 import { PROMOTED_BANNER } from "./data/mockData"
 import { mapOrgPayloadToActionItems, TIER_SECTION_ORDER } from "./mapActionDetailFromPayload"
-import { mapOrgPayloadToSummaryStats } from "./mapSummaryFromPayload"
+import {
+  deriveSummaryStatsFromActions,
+  mapOrgPayloadToSummaryStats,
+} from "./mapSummaryFromPayload"
 import type { ActionItem, ActionTier, MarkDonePayload, PendingDraft, ScoringMeta, SummaryStat } from "./types"
+
+function actionCenterErrorMessage(err: unknown): string {
+  if (err && typeof err === "object" && "response" in err) {
+    const data = (err as { response?: { data?: { message?: string; error?: string } } }).response?.data
+    const msg = data?.message ?? data?.error
+    if (typeof msg === "string" && msg.trim()) return msg.trim()
+  }
+  if (err instanceof Error && err.message.trim()) return err.message.trim()
+  return "Something went wrong while loading Action Center."
+}
 
 export default function ActionCenterView() {
   const { user_data, access_token, _hasHydrated } = useAuth()
   const [actions, setActions] = useState<ActionItem[]>([])
   const [summaryStats, setSummaryStats] = useState<SummaryStat[]>([])
   const [scoringMeta, setScoringMeta] = useState<ScoringMeta | null>(null)
-  /** Raw GET `/organization/:org_id/action-center` response (wire UI when backend contract is fixed). */
-  const [organizationActionCenter, setOrganizationActionCenter] = useState<unknown>(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const [modalAction, setModalAction] = useState<ActionItem | null>(null)
   const [pendingDraft, setPendingDraft] = useState<PendingDraft | null>(null)
@@ -46,44 +56,63 @@ export default function ActionCenterView() {
   const handleDraftHandled = useCallback(() => setPendingDraft(null), [])
   const handleAccountViewHandled = useCallback(() => setPendingAccountView(null), [])
 
-  useEffect(() => {
-    if (!_hasHydrated) return
+  const loadActionCenter = useCallback(async () => {
+    setLoadError(null)
+    const orgId = user_data?.organization?.trim()
 
-    async function load() {
-      const orgId = user_data?.organization?.trim()
-      let orgAcPayload: unknown = null
-      if (orgId && access_token) {
+    if (!_hasHydrated) {
+      return
+    }
+
+    if (!orgId || !access_token) {
+      setActions([])
+      setSummaryStats([])
+      setScoringMeta(null)
+      setLoadError(
+        "Organization or sign-in is required. Check that you are logged in and your profile includes an organization."
+      )
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+    try {
+      const orgAcPayload = await fetchOrganizationActionCenter(orgId, access_token)
+
+      if (process.env.NODE_ENV === "development" && orgAcPayload != null) {
         try {
-          orgAcPayload = await fetchOrganizationActionCenter(orgId, access_token)
-          if (orgAcPayload != null && process.env.NODE_ENV === "development") {
-            try {
-              console.log(
-                "[ActionCenterView] orgAcPayload\n" + JSON.stringify(orgAcPayload, null, 2)
-              )
-            } catch {
-              console.log("[ActionCenterView] orgAcPayload (not JSON-serializable)", orgAcPayload)
-            }
-          }
-        } catch (err) {
-          console.error("[ActionCenterView] GET organization/:org_id/action-center failed", err)
+          console.log("[ActionCenterView] org payload\n" + JSON.stringify(orgAcPayload, null, 2))
+        } catch {
+          console.log("[ActionCenterView] org payload (not JSON-serializable)", orgAcPayload)
         }
       }
-      setOrganizationActionCenter(orgAcPayload)
 
-      const [acts, stats, meta] = await Promise.all([
-        fetchActions(),
-        fetchSummaryStats(),
-        fetchScoringMeta(),
-      ])
-      const fromDetail = mapOrgPayloadToActionItems(orgAcPayload)
-      setActions(fromDetail ?? acts)
-      const fromApi = mapOrgPayloadToSummaryStats(orgAcPayload)
-      setSummaryStats(fromApi ?? stats)
-      setScoringMeta(meta)
+      const mappedActions = mapOrgPayloadToActionItems(orgAcPayload) ?? []
+      setActions(mappedActions)
+
+      const statsFromPayload = mapOrgPayloadToSummaryStats(orgAcPayload)
+      setSummaryStats(statsFromPayload ?? deriveSummaryStatsFromActions(mappedActions))
+
+      try {
+        const meta = await fetchScoringMeta()
+        setScoringMeta(meta)
+      } catch {
+        setScoringMeta(null)
+      }
+    } catch (err: unknown) {
+      console.error("[ActionCenterView] fetchOrganizationActionCenter failed", err)
+      setActions([])
+      setSummaryStats([])
+      setScoringMeta(null)
+      setLoadError(actionCenterErrorMessage(err))
+    } finally {
       setLoading(false)
     }
-    void load()
   }, [_hasHydrated, user_data?.organization, access_token])
+
+  useEffect(() => {
+    void loadActionCenter()
+  }, [loadActionCenter])
 
   const actionsByTier = TIER_SECTION_ORDER.reduce<Record<ActionTier, ActionItem[]>>(
     (acc, tier) => {
@@ -160,6 +189,80 @@ export default function ActionCenterView() {
         }}
       >
         Loading…
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div
+        style={{
+          height: "100%",
+          minHeight: 280,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#F4F6FA",
+          fontFamily: "Inter, sans-serif",
+          padding: 24,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 420,
+            width: "100%",
+            background: "#fff",
+            borderRadius: 12,
+            border: "1px solid #E2E6EF",
+            boxShadow: "0 4px 24px rgba(26, 31, 46, 0.06)",
+            padding: "28px 26px",
+            textAlign: "center",
+          }}
+        >
+          <div
+            style={{
+              width: 44,
+              height: 44,
+              margin: "0 auto 16px",
+              borderRadius: 10,
+              background: "#FDF2F2",
+              border: "1px solid #F5C6C6",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#C0392B",
+            }}
+            aria-hidden
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v5M12 16h.01" strokeLinecap="round" />
+            </svg>
+          </div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: "#1A1F2E", marginBottom: 8 }}>
+            Couldn’t load Action Center
+          </div>
+          <div style={{ fontSize: 13, color: "#4A5168", lineHeight: 1.55, marginBottom: 22 }}>
+            {loadError}
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadActionCenter()}
+            style={{
+              fontFamily: "inherit",
+              fontSize: 13,
+              fontWeight: 600,
+              color: "#fff",
+              background: "#1B3A8C",
+              border: "none",
+              borderRadius: 8,
+              padding: "10px 20px",
+              cursor: "pointer",
+            }}
+          >
+            Try again
+          </button>
+        </div>
       </div>
     )
   }

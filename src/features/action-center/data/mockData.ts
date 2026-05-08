@@ -33,6 +33,17 @@ export const ACTIONS: ActionItem[] = [
     scores: { risk: 78, riskLevel: "high", value: 52, opp: null },
     whyNow:
       "James Whitfield (Head of Customer Success) confirmed departure end of month. <strong>No successor identified.</strong> Renewal in 67 days. Single contact dependency — Whitfield is the only active contact on record.",
+    actionDetailParts: [
+      {
+        body:
+          "<p><strong>Recommended playbook</strong></p><ol><li>Confirm Whitfield’s last day and identify interim buyer-side champion.</li><li>Schedule executive sponsor call within 5 business days.</li><li>Update CRM with succession risk and single-threading flags.</li></ol>",
+        html: true,
+      },
+      {
+        body: "Stakeholder map: Whitfield (exit), procurement contact pending verification.",
+        html: false,
+      },
+    ],
     draftKey: "northgate-champion",
     draftLabel: "Get Draft",
     promoted: false,

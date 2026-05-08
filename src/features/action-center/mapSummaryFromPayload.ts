@@ -1,5 +1,5 @@
 import { SUMMARY_STATS } from "./data/mockData"
-import type { ActionTier, SummaryStat } from "./types"
+import type { ActionItem, ActionTier, SummaryStat } from "./types"
 
 /** API keys on `actionStats[i]` → internal tier keys used by `SummaryCards` */
 const API_TO_TIER: { apiKey: string; tier: ActionTier }[] = [
@@ -47,4 +47,22 @@ export function mapOrgPayloadToSummaryStats(payload: unknown): SummaryStat[] | n
   if (row == null || typeof row !== "object") return null
   const stats = mapActionStatsRowToSummaryStats(row as Record<string, unknown>)
   return stats.length > 0 ? stats : null
+}
+
+/** Tier counts for summary cards when `actionStats` is absent but actions were mapped (not mock fallback). */
+export function deriveSummaryStatsFromActions(actions: ActionItem[]): SummaryStat[] {
+  const counts: Record<ActionTier, number> = {
+    today: 0,
+    week: 0,
+    month: 0,
+    watch: 0,
+  }
+  for (const a of actions) {
+    if (a.done) continue
+    counts[a.tier] += 1
+  }
+  return SUMMARY_STATS.map((t) => ({
+    ...t,
+    count: counts[t.tier],
+  }))
 }

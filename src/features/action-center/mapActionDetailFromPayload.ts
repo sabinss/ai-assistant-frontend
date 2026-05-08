@@ -1,4 +1,4 @@
-import type { ActionItem, ActionScores, ActionStage, ActionTier } from "./types"
+import type { ActionDetailPart, ActionItem, ActionScores, ActionStage, ActionTier } from "./types"
 
 /** Canonical UI order for tier sections and sorting `actionDetails` */
 export const TIER_SECTION_ORDER: ActionTier[] = ["today", "week", "month", "watch"]
@@ -55,6 +55,43 @@ function renewalFromDueDate(due: unknown): { renewal: string | null; renewalUrge
   return { renewal, renewalUrgent }
 }
 
+function parseActionDetailFromRow(row: Record<string, unknown>): {
+  parts: ActionDetailPart[] | null
+  legacyDetail: string | null
+  legacyHtml: boolean
+} {
+  const raw =
+    row.action_details ?? row.actionDetails ?? row.action_detail ?? row.actionDetail
+
+  if (Array.isArray(raw)) {
+    const parts: ActionDetailPart[] = []
+    for (const item of raw) {
+      if (item == null || typeof item !== "object") continue
+      const o = item as Record<string, unknown>
+      const text = o.action_detail ?? o.actionDetail
+      if (typeof text !== "string" || !text.trim()) continue
+      const body = text.trim()
+      const flag = o.action_detail_html ?? o.actionDetailHtml ?? o.action_detail_is_html
+      const html =
+        typeof flag === "boolean" ? flag : /<[^>]+>/.test(body)
+      parts.push({ body, html })
+    }
+    if (parts.length > 0) {
+      return { parts, legacyDetail: null, legacyHtml: false }
+    }
+  }
+
+  if (typeof raw === "string" && raw.trim() !== "") {
+    const legacyDetail = raw.trim()
+    const flag = row.action_detail_html ?? row.actionDetailHtml ?? row.action_detail_is_html
+    const legacyHtml =
+      typeof flag === "boolean" ? flag : /<[^>]+>/.test(raw)
+    return { parts: null, legacyDetail, legacyHtml }
+  }
+
+  return { parts: null, legacyDetail: null, legacyHtml: false }
+}
+
 export function mapActionDetailRow(row: Record<string, unknown>): ActionItem | null {
   const tier = normalizeApiTier(row.tier)
   if (!tier) return null
@@ -74,6 +111,8 @@ export function mapActionDetailRow(row: Record<string, unknown>): ActionItem | n
   const assigned = row.assigned_to
   const owner = typeof assigned === "string" && assigned.trim() ? assigned.trim() : null
 
+  const { parts, legacyDetail, legacyHtml } = parseActionDetailFromRow(row)
+
   return {
     id,
     tier,
@@ -88,6 +127,9 @@ export function mapActionDetailRow(row: Record<string, unknown>): ActionItem | n
     scores,
     whyNow: typeof row.description === "string" ? row.description : "",
     whyNowHtml: false,
+    actionDetail: legacyDetail,
+    actionDetailHtml: legacyHtml,
+    actionDetailParts: parts ?? undefined,
     draftKey: null,
     draftLabel: null,
     promoted: false,
