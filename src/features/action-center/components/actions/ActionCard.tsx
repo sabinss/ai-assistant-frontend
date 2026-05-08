@@ -2,7 +2,8 @@
 
 import { useState, type CSSProperties, type ReactNode } from "react"
 import Badge from "../shared/Badge"
-import type { ActionItem, ActionTier, ScoreLevel } from "../../types"
+import type { ActionDetailPart, ActionItem, ActionTier, ScoreLevel } from "../../types"
+import { IoIosArrowDropdown } from "react-icons/io";
 
 const TIER_LEFT_COLORS: Record<ActionTier, string> = {
   today: "#C0392B",
@@ -17,6 +18,13 @@ const TIER_BADGE_PILL: Record<ActionTier, CSSProperties> = {
   week: { background: "#FFFBF0", color: "#7D5A00", border: "1px solid #F0E0A0" },
   month: { background: "#F0F9F4", color: "#1A5C3A", border: "1px solid #B8DFC8" },
   watch: { background: "#F0F4FB", color: "#2C4A7A", border: "1px solid #C0CDE8" },
+}
+
+function actionDetailPartUsesHtml(part: ActionDetailPart): boolean {
+  return (
+    part.html === true ||
+    (part.html !== false && typeof part.body === "string" && /<[^>]+>/.test(part.body))
+  )
 }
 
 function tierBadgeLabel(action: ActionItem): string {
@@ -147,8 +155,16 @@ export default function ActionCard({
   onSnooze,
 }: ActionCardProps) {
   const [hovered, setHovered] = useState(false)
+  const [detailExpanded, setDetailExpanded] = useState(false)
   const tierColor = TIER_LEFT_COLORS[action.tier]
   const isDone = action.done
+  const hasActionDetail =
+    (action.actionDetailParts?.length ?? 0) > 0 || Boolean(action.actionDetail?.trim())
+  const legacyDetailUsesHtml =
+    action.actionDetailHtml === true ||
+    (action.actionDetailHtml !== false &&
+      typeof action.actionDetail === "string" &&
+      /<[^>]+>/.test(action.actionDetail))
 
   const chips: { label: string; level: ScoreLevel | "default" }[] = []
   const { risk, riskLevel, value, valueLevel, opp, oppLevel, engagementTrend, sentimentTrajectory } =
@@ -255,7 +271,7 @@ export default function ActionCard({
             fontSize: 12.5,
             color: "#4A5168",
             lineHeight: 1.6,
-            marginBottom: 12,
+            marginBottom: hasActionDetail ? 10 : 12,
             padding: "10px 12px",
             background: "#F4F6FA",
             borderRadius: 8,
@@ -271,7 +287,7 @@ export default function ActionCard({
             fontSize: 12.5,
             color: "#4A5168",
             lineHeight: 1.6,
-            marginBottom: 12,
+            marginBottom: hasActionDetail ? 10 : 12,
             padding: "10px 12px",
             background: "#F4F6FA",
             borderRadius: 8,
@@ -279,6 +295,130 @@ export default function ActionCard({
           }}
           dangerouslySetInnerHTML={{ __html: action.whyNow }}
         />
+      )}
+
+      {hasActionDetail && (
+        <>
+          <button
+            type="button"
+            onClick={() => setDetailExpanded((v) => !v)}
+            aria-expanded={detailExpanded}
+            style={{
+              width: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
+              marginBottom: detailExpanded ? 10 : 12,
+              padding: "10px 12px",
+              borderRadius: 8,
+              border: `1px solid ${hovered && !isDone ? "#CDD3E0" : "#E2E6EF"}`,
+              background: detailExpanded ? "#F4F6FA" : "#fff",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              textAlign: "left",
+              transition: "background 0.15s, border-color 0.15s",
+            }}
+          >
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#1A1F2E",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              View action detail
+            </span>
+            <span
+              aria-hidden
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+                width: 28,
+                height: 28,
+                borderRadius: 6,
+                background: "#fff",
+                border: "1px solid #E2E6EF",
+                color: tierColor,
+                transition: "transform 0.2s ease",
+                transform: detailExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+              }}
+            >
+              <IoIosArrowDropdown size={18} />
+            </span>
+          </button>
+
+          {detailExpanded &&
+            ((action.actionDetailParts?.length ?? 0) > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                  marginBottom: 12,
+                }}
+              >
+                {(action.actionDetailParts ?? []).map((part, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      fontSize: 12.5,
+                      color: "#4A5168",
+                      lineHeight: 1.6,
+                      padding: "10px 12px",
+                      background: "#fff",
+                      borderRadius: 8,
+                      border: "1px solid #E2E6EF",
+                      borderLeft: `3px solid ${tierColor}`,
+                    }}
+                  >
+                    {actionDetailPartUsesHtml(part) ? (
+                      <div dangerouslySetInnerHTML={{ __html: part.body }} />
+                    ) : (
+                      <div style={{ whiteSpace: "pre-wrap" }}>{part.body}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : action.actionDetail?.trim() ? (
+              !legacyDetailUsesHtml ? (
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: "#4A5168",
+                    lineHeight: 1.6,
+                    marginBottom: 12,
+                    padding: "10px 12px",
+                    background: "#fff",
+                    borderRadius: 8,
+                    border: "1px solid #E2E6EF",
+                    borderLeft: `3px solid ${tierColor}`,
+                    whiteSpace: "pre-wrap",
+                  }}
+                >
+                  {action.actionDetail}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    fontSize: 12.5,
+                    color: "#4A5168",
+                    lineHeight: 1.6,
+                    marginBottom: 12,
+                    padding: "10px 12px",
+                    background: "#fff",
+                    borderRadius: 8,
+                    border: "1px solid #E2E6EF",
+                    borderLeft: `3px solid ${tierColor}`,
+                  }}
+                  dangerouslySetInnerHTML={{ __html: action.actionDetail ?? "" }}
+                />
+              )
+            ) : null)}
+        </>
       )}
 
       {isDone ? (

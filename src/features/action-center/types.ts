@@ -4,6 +4,12 @@ export type ActionStage = "onb" | "active" | "risk"
 
 export type ScoreLevel = "high" | "med" | "good" | "opp" | "default"
 
+export type ActionDetailPart = {
+  body: string
+  /** Explicit HTML from API; otherwise inferred from markup in `body`. */
+  html?: boolean
+}
+
 export type ActionScores = {
   risk?: number | null
   riskLevel?: ScoreLevel
@@ -33,6 +39,12 @@ export type ActionItem = {
   whyNow: string
   /** When false, `whyNow` is plain text (API). Mock rows omit this and render HTML. */
   whyNowHtml?: boolean
+  /** From API `action_detail` / `actionDetail` — expanded “View action detail” panel (single string). */
+  actionDetail?: string | null
+  /** When false, `actionDetail` is plain text. */
+  actionDetailHtml?: boolean
+  /** From API when `action_detail` / `actionDetail` is an array of `{ action_detail: string, ... }`. */
+  actionDetailParts?: ActionDetailPart[]
   draftKey: string | null
   draftLabel: string | null
   promoted: boolean
