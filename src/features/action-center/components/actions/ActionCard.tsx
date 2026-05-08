@@ -3,8 +3,7 @@
 import { useState, type CSSProperties, type ReactNode } from "react"
 import Badge from "../shared/Badge"
 import type { ActionDetailPart, ActionItem, ActionTier, ScoreLevel } from "../../types"
-import { IoDocumentTextOutline } from "react-icons/io5"
-import { IoIosArrowDropdown } from "react-icons/io"
+import { IoChevronDown, IoDocumentTextOutline } from "react-icons/io5"
 
 const TIER_LEFT_COLORS: Record<ActionTier, string> = {
   today: "#C0392B",
@@ -307,78 +306,47 @@ export default function ActionCard({
             onClick={() => setDetailExpanded((v) => !v)}
             aria-expanded={detailExpanded}
             style={{
-              width: "100%",
-              display: "flex",
+              display: "inline-flex",
               alignItems: "center",
-              justifyContent: "space-between",
-              gap: 12,
+              gap: 7,
               marginBottom: detailExpanded ? 10 : 12,
-              padding: "10px 12px",
-              borderRadius: 8,
+              padding: "6px 10px",
+              borderRadius: 6,
               border: `1px solid ${hovered && !isDone ? "#CDD3E0" : "#E2E6EF"}`,
               background: detailExpanded ? "#F4F6FA" : "#fff",
               cursor: "pointer",
               fontFamily: "inherit",
-              textAlign: "left",
+              maxWidth: "100%",
               transition: "background 0.15s, border-color 0.15s",
             }}
           >
-            <span
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              <span
-                aria-hidden
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  width: 36,
-                  height: 36,
-                  borderRadius: 8,
-                  background: `${tierColor}14`,
-                  border: `1px solid ${tierColor}33`,
-                  color: tierColor,
-                }}
-              >
-                <IoDocumentTextOutline size={20} strokeWidth={1.75} />
-              </span>
-              <span
-                style={{
-                  fontSize: 12.5,
-                  fontWeight: 600,
-                  color: "#1A1F2E",
-                  letterSpacing: "-0.01em",
-                }}
-              >
-                View action detail
-              </span>
-            </span>
-            <span
+            <IoDocumentTextOutline
               aria-hidden
+              size={16}
+              strokeWidth={2}
+              style={{ flexShrink: 0, color: tierColor }}
+            />
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-                width: 28,
-                height: 28,
-                borderRadius: 6,
-                background: "#fff",
-                border: "1px solid #E2E6EF",
-                color: tierColor,
-                transition: "transform 0.2s ease",
-                transform: detailExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                fontSize: 12,
+                fontWeight: 600,
+                color: "#1A1F2E",
+                letterSpacing: "-0.01em",
+                whiteSpace: "nowrap",
               }}
             >
-              <IoIosArrowDropdown size={18} />
+              View action detail
             </span>
+            <IoChevronDown
+              aria-hidden
+              size={14}
+              style={{
+                flexShrink: 0,
+                color: "#8B91A3",
+                transition: "transform 0.2s ease",
+                transform: detailExpanded ? "rotate(180deg)" : "rotate(0deg)",
+              }}
+            />
           </button>
 
           {detailExpanded &&

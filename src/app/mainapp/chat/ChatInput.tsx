@@ -929,50 +929,50 @@ const ChatInput: React.FC<ChildProps> = ({
         </div>
       </div>
 
-        {/* Prompts Modal */}
-        {showPopup && (
-          <div
-            className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50"
-            onClick={handleBackgroundClick} // Close when clicking outside
-          >
-            <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
-              <h2 className="mb-4 text-center text-2xl font-semibold">Select Prompt</h2>
+      {/* Prompts Modal */}
+      {showPopup && (
+        <div
+          className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50"
+          onClick={handleBackgroundClick} // Close when clicking outside
+        >
+          <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
+            <h2 className="mb-4 text-center text-2xl font-semibold">Select Prompt</h2>
 
-              {/* Columns for Categories */}
-              <div className="grid grid-cols-3 gap-6">
-                {chatPrompts?.map((categoryData: any, index) => (
-                  <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
-                    <h3 className="text-xl font-semibold">{categoryData.category}</h3>
-                    <ul className="mt-2 space-y-2">
-                      {categoryData.prompts.map((prompt: any, promptIndex: number) => (
-                        <React.Fragment key={promptIndex}>
-                          <li
-                            className="cursor-pointer text-gray-700 hover:text-blue-500"
-                            onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
-                          >
-                            {prompt.text}
-                          </li>
-                          {promptIndex !== categoryData.prompts.length - 1 && (
-                            <hr className="border-gray-300" />
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+            {/* Columns for Categories */}
+            <div className="grid grid-cols-3 gap-6">
+              {chatPrompts?.map((categoryData: any, index) => (
+                <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
+                  <h3 className="text-xl font-semibold">{categoryData.category}</h3>
+                  <ul className="mt-2 space-y-2">
+                    {categoryData.prompts.map((prompt: any, promptIndex: number) => (
+                      <React.Fragment key={promptIndex}>
+                        <li
+                          className="cursor-pointer text-gray-700 hover:text-blue-500"
+                          onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
+                        >
+                          {prompt.text}
+                        </li>
+                        {promptIndex !== categoryData.prompts.length - 1 && (
+                          <hr className="border-gray-300" />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
 
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => setShowPopup(false)}
-                  className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-                >
-                  Close
-                </button>
-              </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+              >
+                Close
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   )
 }
