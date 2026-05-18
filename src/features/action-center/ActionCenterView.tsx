@@ -23,6 +23,9 @@ import {
 } from "./mapSummaryFromPayload"
 import type { ActionItem, ActionTier, MarkDonePayload, PendingDraft, ScoringMeta, SummaryStat } from "./types"
 
+// i need full screen icon
+import { Fullscreen } from "lucide-react"
+
 function actionCenterErrorMessage(err: unknown): string {
   if (err && typeof err === "object" && "response" in err) {
     const data = (err as { response?: { data?: { message?: string; error?: string } } }).response?.data
@@ -307,27 +310,13 @@ export default function ActionCenterView() {
         }}
       >
         <div>
-          <div style={{ fontSize: 15, fontWeight: 600 }}>Customer Intelligence Briefing</div>
+          <div style={{ fontSize: 15, fontWeight: 600 }}>Intel Briefing</div>
           <div style={{ fontSize: 12, color: "#8B91A3" }}>
             Customer sentiment, engagement, and value signals turned into prioritized actions.
           </div>
         </div>
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-          <Link
-            href="/mainapp/action-center/chat"
-            style={{
-              fontSize: 12,
-              fontWeight: 600,
-              color: "#1B3A8C",
-              textDecoration: "none",
-              padding: "5px 12px",
-              borderRadius: 8,
-              border: "1px solid #C0CCE8",
-              background: "#fff",
-            }}
-          >
-            Assistant chat →
-          </Link>
+
           <span
             style={{
               background: "#E8EDF8",
@@ -341,6 +330,25 @@ export default function ActionCenterView() {
             {`${todayCount} account${todayCount !== 1 ? "s" : ""} need${todayCount === 1 ? "s" : ""
               } attention today`}
           </span>
+
+          <Link
+            href="/mainapp/action-center/chat"
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#1B3A8C",
+              textDecoration: "none",
+              padding: "5px 12px",
+              borderRadius: 8,
+              border: "1px solid #C0CCE8",
+              background: "#fff",
+            }}
+          >
+            {/* Assistant chat → */}
+            <Fullscreen className="w-4 h-4" />
+          </Link>
+
+
         </div>
       </div>
 

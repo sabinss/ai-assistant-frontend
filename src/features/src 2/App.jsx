@@ -179,7 +179,7 @@ export default function App() {
               <SummaryCards stats={summaryStats} />
 
               {/* Promoted banner */}
-              <div
+              {/* <div
                 style={{
                   background: "#E8EDF8",
                   border: "1px solid #C0CCE8",
@@ -205,7 +205,7 @@ export default function App() {
                   <polyline points="17 6 23 6 23 12" />
                 </svg>
                 {PROMOTED_BANNER.message}
-              </div>
+              </div> */}
 
               {TIERS.map((tier) => (
                 <TierSection
