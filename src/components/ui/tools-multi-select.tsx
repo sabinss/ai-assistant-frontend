@@ -151,6 +151,10 @@ export const AVAILABLE_TOOLS: Tool[] = [
   }, {
     name: 'update_company_score',
     description: 'Update the company score.',
+  },
+  {
+    name: 'bulk_import_companies_and_deals ',
+    description: 'Bulk import companies and deals from a file.',
   }
 ]
 
