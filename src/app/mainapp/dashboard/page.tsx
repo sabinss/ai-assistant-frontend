@@ -559,9 +559,9 @@ export default function Dashboard() {
                     <thead className="border-b text-gray-600">
                       <tr>
                         <th className="p-2">Customer</th>
-                        <th className="p-2">Health Score</th>
-                        <th className="p-2">Churn Risk</th>
-                        <th className="p-2">Expansion Opportunity</th>
+                        <th className="p-2">Value Score</th>
+                        <th className="p-2">Risk</th>
+                        <th className="p-2">Opportunity</th>
                         <th className="p-2">Phase</th>
                         <th className="p-2">ARR</th>
                         <th className="p-2">Renewal Date</th>
