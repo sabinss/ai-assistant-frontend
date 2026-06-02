@@ -608,7 +608,7 @@ export default function Dashboard() {
                         </tr>
                       ) : (
                         filteredCustomers.map((customer: any, index: number) => {
-                          const healthScore = customer?.health_score
+                          const healthScore = customer?.value_realisation_score ?? customer?.health_score
                           const riskScore = customer?.churn_risk_score
                           const rawExpansionOpp =
                             customer?.expansion_opp_score ??
