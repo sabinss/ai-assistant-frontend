@@ -47,7 +47,7 @@ export default function Dashboard() {
   const fetchStageDropdownList = useChurnDashboardStore((s) => s.fetchStageDropdownList)
   const stageDropdownList = useChurnDashboardStore((s) => s.stageDropdownList)
   const stageDropdownListLoading = useChurnDashboardStore((s) => s.stageDropdownListLoading)
-
+  console.log('usageFunnelTableColumns', usageFunnelTableColumns)
   const fetchCustomerScoreData = useChurnDashboardStore((s) => s.fetchCustomerScoreData)
   const customerScoreData = useChurnDashboardStore((s) => s.customerScoreData)
   // pagination
@@ -233,7 +233,6 @@ export default function Dashboard() {
         const redshiftCustomerDetails = redshiftRes?.data?.data || []
         // const scoreDashboardData = redshiftRes?.data?.scoreDashboardData || []
         // setScoreDashboardData(scoreDashboardData)
-        console.log("redshiftCustomerDetails", redshiftCustomerDetails)
         const { totalPages, totalRecords, hasNextPage, hasPrevPage, nextPage, prevPage } =
           redshiftRes?.data?.pagination
 

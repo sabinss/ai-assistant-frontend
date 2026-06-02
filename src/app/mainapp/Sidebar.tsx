@@ -88,11 +88,11 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       path: "/mainapp/organization",
       icon: TrendingUp,
     },
-    {
-      name: "Help",
-      path: "/mainapp/help",
-      icon: Info,
-    },
+    // {
+    //   name: "Help",
+    //   path: "/mainapp/help",
+    //   icon: Info,
+    // },
   ]
 
   const quickLinks = [

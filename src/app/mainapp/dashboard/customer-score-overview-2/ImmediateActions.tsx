@@ -244,7 +244,7 @@ export default function ImmediateActions({
                         {/* {isCritical ? "Critical" : "High"} */}
                         {item.scoreLabel}
                       </span>
-                      <ChevronRight
+                      {/* <ChevronRight
                         size={20}
                         className="cursor-pointer text-gray-400 transition-colors hover:text-gray-600"
                         onClick={() => {
@@ -259,7 +259,7 @@ export default function ImmediateActions({
                           }
                           setSelectedCustomer(customerData)
                         }}
-                      />
+                      /> */}
                     </div>
                   </div>
                 )
