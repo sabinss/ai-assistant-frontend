@@ -766,7 +766,7 @@ export default function Page() {
                     >
                       {isCritical ? "Critical" : "High"}
                     </span>
-                    <ChevronRight
+                    {/* <ChevronRight
                       size={20}
                       className="cursor-pointer text-gray-400 transition-colors hover:text-gray-600"
                       onClick={() => {
@@ -782,7 +782,7 @@ export default function Page() {
                         }
                         setSelectedCustomer(customerData)
                       }}
-                    />
+                    /> */}
                   </div>
                 </div>
               )

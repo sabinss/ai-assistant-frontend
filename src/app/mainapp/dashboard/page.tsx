@@ -662,7 +662,7 @@ export default function Dashboard() {
                               <td className="px-6 py-4">{customer.stage ?? "N/A"}</td>
                               <td className="px-6 py-4">{customer.arr ?? "N/A"}</td>
                               <td className="px-6 py-4">{customer.renewal_date ?? "N/A"}</td>
-                              <td className="px-6 py-4">
+                              {/* <td className="px-6 py-4">
                                 <MdKeyboardArrowRight
                                   size={25}
                                   className="cursor-pointer"
@@ -677,7 +677,7 @@ export default function Dashboard() {
                                     setSelectedCustomer(customer)
                                   }}
                                 />
-                              </td>
+                              </td> */}
                             </tr>
                           )
                         })
