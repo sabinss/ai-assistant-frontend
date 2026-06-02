@@ -560,9 +560,9 @@ export default function Dashboard() {
                       <tr>
                         <th className="p-2">Customer</th>
                         <th className="p-2">Value Score</th>
-                        <th className="p-2">Risk</th>
-                        <th className="p-2">Opportunity</th>
-                        <th className="p-2">Phase</th>
+                        <th className="p-2">Risk Score</th>
+                        <th className="p-2">Opportunity Score</th>
+                        <th className="p-2">Stage</th>
                         <th className="p-2">ARR</th>
                         <th className="p-2">Renewal Date</th>
                         <th className="p-2"></th>
@@ -659,7 +659,7 @@ export default function Dashboard() {
                                   "N/A"
                                 )}
                               </td>
-                              <td className="px-6 py-4">{customer.phase ?? "N/A"}</td>
+                              <td className="px-6 py-4">{customer.stage ?? "N/A"}</td>
                               <td className="px-6 py-4">{customer.arr ?? "N/A"}</td>
                               <td className="px-6 py-4">{customer.renewal_date ?? "N/A"}</td>
                               <td className="px-6 py-4">
