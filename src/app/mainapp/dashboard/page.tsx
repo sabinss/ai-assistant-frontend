@@ -114,6 +114,8 @@ export default function Dashboard() {
   const filteredCustomers = useMemo(() => {
     if (!orgCustomerData?.customers) return []
 
+    console.log('orgCustomerData', orgCustomerData)
+
     return orgCustomerData?.customers.filter((customer: any) =>
       customer?.name?.toLowerCase().includes(searchTerm.toLowerCase())
     )
