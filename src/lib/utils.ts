@@ -22,3 +22,8 @@ export function generateUniqueSessionId(): string {
 export function generateSessionIdLength5(): number {
   return Math.floor(10000 + Math.random() * 90000)
 }
+
+/** Converts a snake_case string to a capitalized label. e.g. "company_name" → "Company name" */
+export function formatColumnLabel(value: string): string {
+  return value.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase())
+}

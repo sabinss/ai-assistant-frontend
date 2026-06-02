@@ -12,7 +12,7 @@ import { trackEvent } from "@/utility/tracking"
 import { useRouter } from "next/navigation"
 import { useChurnDashboardStore } from "@/store/churn_dashboard"
 import { formatCurrency } from "@/utility"
-import { generateSessionIdLength5 } from "@/lib/utils"
+import { generateSessionIdLength5, formatColumnLabel } from "@/lib/utils"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useDebounce } from "@/hooks/useDebounce"
@@ -47,7 +47,6 @@ export default function Dashboard() {
   const fetchStageDropdownList = useChurnDashboardStore((s) => s.fetchStageDropdownList)
   const stageDropdownList = useChurnDashboardStore((s) => s.stageDropdownList)
   const stageDropdownListLoading = useChurnDashboardStore((s) => s.stageDropdownListLoading)
-  console.log('usageFunnelTableColumns', usageFunnelTableColumns)
   const fetchCustomerScoreData = useChurnDashboardStore((s) => s.fetchCustomerScoreData)
   const customerScoreData = useChurnDashboardStore((s) => s.customerScoreData)
   // pagination
@@ -774,7 +773,7 @@ export default function Dashboard() {
                     <tr className="border-b odd:bg-white even:bg-gray-100 hover:bg-gray-50">
                       {usageFunnelTableColumns?.map((column: string, index: number) => (
                         <th className="p-2" key={index}>
-                          {column}
+                          {formatColumnLabel(column)}
                         </th>
                       ))}
                     </tr>
