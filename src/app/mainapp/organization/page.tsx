@@ -12,7 +12,7 @@ import { toast } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
 
 const SUBSCRIPTION_PLANS = ["Free", "Starter", "Growth", "Expansion"] as const
-const INDUSTRIES = ["SaaS", "MSP", "PhotoStudio", "Staffing", "ITConsulting", "Accounting"] as const
+const INDUSTRIES = ["SaaS", "MSP", "PhotoStudio", "Staffing", "ITConsulting", "Accounting", 'Dental Clinic'] as const
 
 export default function Edit() {
   const { access_token, user_data } = useAuth() // Call useAuth here
@@ -33,7 +33,7 @@ export default function Edit() {
   const [industry, setIndustry] = useState<string>(INDUSTRIES[0])
   const [isUpdatingDetail, setIsUpdatingDetail] = useState(false)
   const [isLoadingDetail, setIsLoadingDetail] = useState(false)
-
+  const [isDentalClinic, setIsDentalClinic] = useState(false)
   useEffect(() => {
     if (isEditable) {
       organizationInputRef.current.focus()
@@ -47,10 +47,15 @@ export default function Edit() {
         headers: { Authorization: `Bearer ${access_token}` },
       })
       const org_data = response?.data?.org
+      console.log("org_data", org_data)
       setOrganizationId(org_data._id)
       setAssistantName(org_data.assistant_name)
       setBotName(org_data.assistant_name)
       setOrganizationName(org_data.name)
+
+      if (org_data.industry == "Dental Clinic") {
+        setIsDentalClinic(true)
+      }
     } catch (err) {
       console.error(err)
     }
@@ -308,7 +313,8 @@ export default function Edit() {
               <label className="mb-1 block text-sm text-[#838383]">Industry</label>
               <select
                 className="w-full rounded-md border border-gray-300 bg-gray-50 p-2 text-[#333333] outline-none focus:border-[#174894] focus:ring-1 focus:ring-[#174894]"
-                value={industry}
+                value={isDentalClinic ? "Dental Clinic" : industry}
+                disabled={isDentalClinic}
                 onChange={(e) => setIndustry(e.target.value)}
               >
                 {INDUSTRIES.map((ind) => (
