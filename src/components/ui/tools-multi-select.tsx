@@ -119,7 +119,7 @@ export const AVAILABLE_TOOLS: Tool[] = [
   },
   {
     name: "get_document",
-    description: "Get entire content of a document",
+    description: "Get entire content of a document by file name",
   },
   {
     name: "update_customer",
