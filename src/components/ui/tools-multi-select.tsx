@@ -79,6 +79,11 @@ export const AVAILABLE_TOOLS: Tool[] = [
       "Send a WhatsApp message to a business organization using the specified phone number and message content.",
   },
   {
+    name: "send_sms_tool",
+    description:
+      "Send an SMS via Twilio using from/to phone numbers in E.164 format and a message body.",
+  },
+  {
     name: "add_company_engagement_summary_score",
     description:
       "Add or update company engagement summary scores (health score, churn risk score, expansion opportunity score) in Redshift or RDS for a specific company.",
@@ -146,16 +151,17 @@ export const AVAILABLE_TOOLS: Tool[] = [
     description: "Scrape a website and return the content.",
   },
   {
-    name: 'update_action',
-    description: 'Update the action status.',
-  }, {
-    name: 'update_company_score',
-    description: 'Update the company score.',
+    name: "update_action",
+    description: "Update the action status.",
   },
   {
-    name: 'bulk_import_companies_and_deals ',
-    description: 'Bulk import companies and deals from a file.',
-  }
+    name: "update_company_score",
+    description: "Update the company score.",
+  },
+  {
+    name: "bulk_import_companies_and_deals ",
+    description: "Bulk import companies and deals from a file.",
+  },
 ]
 
 interface ToolsMultiSelectProps {
