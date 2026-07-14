@@ -148,8 +148,81 @@ export default function PrivacyPage() {
         </div>
 
         <div>
+          <h2 className="text-xl font-semibold">11. SMS Communications</h2>
+          <p>
+            If you choose to opt in to receive SMS (text) messages from
+            CoWrkr.ai, we may collect and use your mobile phone number to send
+            service-related communications, including:
+          </p>
+          <ul className="mt-2 list-disc pl-6">
+            <li>Demo reminders</li>
+            <li>Customer support messages</li>
+            <li>Onboarding updates</li>
+            <li>Account notifications</li>
+          </ul>
+
+          <h3 className="mt-4 text-lg font-semibold">SMS Consent</h3>
+          <p>
+            We only send SMS messages to individuals who have expressly opted in
+            to receive them. Your consent to receive SMS messages is voluntary
+            and is not a condition of purchasing any product or service.
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold">Mobile Information</h3>
+          <p>
+            When you opt in to receive SMS communications, we may collect:
+          </p>
+          <ul className="mt-2 list-disc pl-6">
+            <li>Mobile phone number</li>
+            <li>Name</li>
+            <li>Email address (if provided)</li>
+            <li>Date and time of consent</li>
+            <li>Consent source</li>
+            <li>Records of SMS communications</li>
+          </ul>
+
+          <h3 className="mt-4 text-lg font-semibold">
+            How We Use Mobile Information
+          </h3>
+          <p>Your mobile information is used solely to:</p>
+          <ul className="mt-2 list-disc pl-6">
+            <li>Deliver requested SMS communications</li>
+            <li>Provide customer support</li>
+            <li>Send onboarding updates</li>
+            <li>Send account-related notifications</li>
+            <li>Maintain records of your communication preferences</li>
+          </ul>
+
+          <h3 className="mt-4 text-lg font-semibold">
+            Sharing of Mobile Information
+          </h3>
+          <p>
+            No mobile information will be shared with third parties or
+            affiliates for marketing or promotional purposes.
+          </p>
+          <p className="mt-2">
+            Text messaging originator opt-in data and consent will not be shared
+            with any third parties except with service providers that support
+            the delivery of our SMS communications.
+          </p>
+
+          <h3 className="mt-4 text-lg font-semibold">Opting Out</h3>
+          <p>
+            You may opt out of SMS communications at any time by replying STOP
+            to any text message.
+          </p>
+          <p className="mt-2">
+            For assistance, reply HELP or contact us at{" "}
+            <a href="mailto:support@mycowrk.ai" className="text-blue-500">
+              support@mycowrk.ai
+            </a>
+            .
+          </p>
+        </div>
+
+        <div>
           <h2 className="text-xl font-semibold">
-            11. Changes to This Privacy Policy
+            12. Changes to This Privacy Policy
           </h2>
           <p>
             We may update this Privacy Policy from time to time to reflect
@@ -161,7 +234,7 @@ export default function PrivacyPage() {
         </div>
 
         <div>
-          <h2 className="text-xl font-semibold">12. Contact Us</h2>
+          <h2 className="text-xl font-semibold">13. Contact Us</h2>
           <p>
             If you have any questions or concerns about this Privacy Policy or
             our data practices, please contact us at:

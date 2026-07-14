@@ -15,7 +15,7 @@ export default function MasterSubscriptionAgreement() {
             of the Statement of Work Effective Date of the initial Statement of
             Work executed between Agilemove, a Florida corporation ("Agilemove"
             or "Company") and the Customer identified in such Statement of Work
-            ("Customer").
+            ("Customer"). CoWrkr is a product of Agilemove.
           </p>
 
           <p>
@@ -472,7 +472,96 @@ export default function MasterSubscriptionAgreement() {
           </p>
 
           <h2 className="mt-6 text-lg font-semibold text-gray-800">
-            18. Communications and Notices
+            18. SMS Messaging Terms
+          </h2>
+          <p>
+            The following terms apply if you choose to receive SMS (text)
+            messages from CoWrkr.ai.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Program Description
+          </h3>
+          <p>CoWrkr.ai may send SMS messages related to:</p>
+          <ul className="list-inside list-disc space-y-1">
+            <li>Demo reminders</li>
+            <li>Customer support</li>
+            <li>Onboarding updates</li>
+            <li>Account notifications</li>
+          </ul>
+          <p>
+            These messages are intended to support your use of CoWrkr.ai
+            services and are not a substitute for email or in-application
+            communications.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Consent
+          </h3>
+          <p>
+            By providing your mobile phone number and expressly opting in, you
+            consent to receive SMS messages from CoWrkr.ai for the purposes
+            described above.
+          </p>
+          <p>
+            Your consent is voluntary and is not a condition of purchasing any
+            product or service.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Message Frequency
+          </h3>
+          <p>
+            Message frequency varies depending on your interactions with
+            CoWrkr.ai.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Message and Data Rates
+          </h3>
+          <p>
+            Message and data rates may apply based on your wireless carrier
+            plan.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Opt-Out
+          </h3>
+          <p>
+            You may unsubscribe from SMS messages at any time by replying STOP.
+          </p>
+          <p>
+            After opting out, you will no longer receive SMS messages unless you
+            provide new consent.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">Help</h3>
+          <p>
+            Reply HELP for assistance or contact{" "}
+            <a href="mailto:support@mycowrk.ai" className="text-blue-500">
+              support@mycowrk.ai
+            </a>
+            .
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Carrier Disclaimer
+          </h3>
+          <p>
+            Wireless carriers are not liable for delayed or undelivered messages.
+          </p>
+
+          <h3 className="mt-4 text-base font-semibold text-gray-800">
+            Changes
+          </h3>
+          <p>
+            CoWrkr.ai may modify or discontinue its SMS messaging program at any
+            time. Any material changes will be reflected in the applicable legal
+            documents published on our website.
+          </p>
+
+          <h2 className="mt-6 text-lg font-semibold text-gray-800">
+            19. Communications and Notices
           </h2>
           <p>
             Legal notices (including claimed breaches or Agreement/Statement of
@@ -489,7 +578,7 @@ export default function MasterSubscriptionAgreement() {
           </p>
 
           <h2 className="mt-6 text-lg font-semibold text-gray-800">
-            19. Assignment Rights
+            20. Assignment Rights
           </h2>
           <p>
             Neither party may assign this Agreement to third parties without
@@ -504,7 +593,7 @@ export default function MasterSubscriptionAgreement() {
           </p>
 
           <h2 className="mt-6 text-lg font-semibold text-gray-800">
-            20. Confidential Information
+            21. Confidential Information
           </h2>
           <p>
             Parties receiving confidential information agree to implement
@@ -552,7 +641,7 @@ export default function MasterSubscriptionAgreement() {
           </p>
 
           <h2 className="mt-6 text-lg font-semibold text-gray-800">
-            21. Governing Law and General Provisions
+            22. Governing Law and General Provisions
           </h2>
           <p>
             This Agreement is governed by Florida law and controlling United
@@ -590,7 +679,7 @@ export default function MasterSubscriptionAgreement() {
             extent, with remaining provision enforceability unimpaired.
           </p>
           <h2 className="mt-6 text-lg font-semibold text-gray-800">
-            22. Definitions
+            23. Definitions
           </h2>
           <p>As used in this Agreement and associated Statement(s) of Work:</p>
           <ul className="list-inside list-disc space-y-2">
@@ -702,6 +791,13 @@ export default function MasterSubscriptionAgreement() {
             By executing a Statement of Work that references this Agreement,
             Customer acknowledges reading, understanding, and agreeing to be
             bound by this Master Subscription Agreement.
+          </p>
+          <p className="mt-4 text-sm">
+            For questions about this Agreement, contact us at{" "}
+            <a href="mailto:cowrkr@mycowrkr.ai" className="text-blue-500">
+              cowrkr@mycowrkr.ai
+            </a>
+            .
           </p>
           {/* Continue adding sections similarly from the PDF... */}
         </div>
