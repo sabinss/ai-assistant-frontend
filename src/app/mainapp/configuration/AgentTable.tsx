@@ -30,6 +30,7 @@ import { ToolsMultiSelect } from "@/components/ui/tools-multi-select"
 const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Objective", sortable: false },
+  { name: "Active", sortable: false },
   { name: "Actions", sortable: false },
 ]
 
@@ -774,6 +775,17 @@ export const AgentTable = () => {
                   >
                     <TableCell className="py-3">{agent.name}</TableCell>
                     <TableCell className="py-3">{agent.objective}</TableCell>
+                    <TableCell className="py-3">
+                      {agent.active ? (
+                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                          Inactive
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="py-3">
                       <div className="flex  justify-start gap-2">
                         {agent.isAgent && (
