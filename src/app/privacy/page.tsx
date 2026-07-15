@@ -213,8 +213,8 @@ export default function PrivacyPage() {
           </p>
           <p className="mt-2">
             For assistance, reply HELP or contact us at{" "}
-            <a href="mailto:support@mycowrk.ai" className="text-blue-500">
-              support@mycowrk.ai
+            <a href="mailto:cowrkr@mycowrkr.ai" className="text-blue-500">
+              cowrkr@mycowrkr.ai
             </a>
             .
           </p>

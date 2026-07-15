@@ -538,12 +538,10 @@ export default function MasterSubscriptionAgreement() {
           <h3 className="mt-4 text-base font-semibold text-gray-800">Help</h3>
           <p>
             Reply HELP for assistance or contact{" "}
-            <a href="mailto:support@mycowrk.ai" className="text-blue-500">
-              support@mycowrk.ai
+            <a href="mailto:cowrkr@mycowrkr.ai" className="text-blue-500">
+              cowrkr@mycowrkr.ai
             </a>
-            .
           </p>
-
           <h3 className="mt-4 text-base font-semibold text-gray-800">
             Carrier Disclaimer
           </h3>
