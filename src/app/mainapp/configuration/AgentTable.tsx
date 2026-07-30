@@ -443,9 +443,14 @@ export const AgentTable = () => {
                     id="frequency"
                     value={formData.frequency}
                     onChange={(e) => {
+                      const nextFrequency = e.target.value
                       setFormData((prev) => ({
                         ...prev,
-                        frequency: e.target.value,
+                        frequency: nextFrequency,
+                        ...(nextFrequency === "Hourly" ? { dayTime: null } : {}),
+                        ...(nextFrequency === "Realtime"
+                          ? { dayTime: null, scheduleTime: null }
+                          : {}),
                       }))
                     }}
                     className="w-full rounded border p-2"
@@ -456,59 +461,64 @@ export const AgentTable = () => {
                     <option value="Weekly">Weekly</option>
                     <option value="Daily">Daily</option>
                     <option value="Hourly">Hourly</option>
+                    <option value="Realtime">RealTime</option>
                   </select>
                 </div>
                 {formData.frequency && (
                   <div className="space-y-3">
-                    <div>
-                      <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
-                        {formData.frequency === "Daily"
-                          ? "Day of Week"
-                          : formData.frequency === "Weekly"
+                    {formData.frequency !== "Hourly" && formData.frequency !== "Realtime" && (
+                      <div>
+                        <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
+                          {formData.frequency === "Daily"
                             ? "Day of Week"
-                            : formData.frequency === "Monthly"
-                              ? "Day of Month"
-                              : formData.frequency === "Quarterly"
-                                ? "Quarter"
-                                : "Day/Time"}
-                      </label>
-                      <select
-                        id="dayTime"
-                        value={formData.dayTime}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            dayTime: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded border p-2"
-                      >
-                        <option value="">Select Option</option>
-                        {getDayTimeOptions().map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                            : formData.frequency === "Weekly"
+                              ? "Day of Week"
+                              : formData.frequency === "Monthly"
+                                ? "Day of Month"
+                                : formData.frequency === "Quarterly"
+                                  ? "Quarter"
+                                  : "Day/Time"}
+                        </label>
+                        <select
+                          id="dayTime"
+                          value={formData.dayTime}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              dayTime: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded border p-2"
+                        >
+                          <option value="">Select Option</option>
+                          {getDayTimeOptions().map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-                    <div>
-                      <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
-                        Time
-                      </label>
-                      <input
-                        type="time"
-                        id="scheduleTime"
-                        value={formData.scheduleTime || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            scheduleTime: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded border p-2"
-                      />
-                    </div>
+                    {formData.frequency !== "Realtime" && (
+                      <div>
+                        <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
+                          Time
+                        </label>
+                        <input
+                          type="time"
+                          id="scheduleTime"
+                          value={formData.scheduleTime || ""}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              scheduleTime: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded border p-2"
+                        />
+                      </div>
+                    )}
 
                     <div>
                       <label htmlFor="timezone" className="mb-1 block text-sm font-semibold">
