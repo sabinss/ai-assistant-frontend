@@ -47,6 +47,7 @@ export async function buildOutlookOAuthRedirectUrl(orgId: string | undefined): P
     "User.Read",
     "Mail.Read",
     "Mail.ReadWrite",
+    "Mail.Send",
   ].join(" ")
 
   const qs = new URLSearchParams({
