@@ -84,6 +84,11 @@ export const AVAILABLE_TOOLS: Tool[] = [
       "Send an SMS via Twilio using from/to phone numbers in E.164 format and a message body.",
   },
   {
+    name: "send_mms_tool",
+    description:
+      "Send an MMS via Twilio using from/to phone numbers in E.164 format, a message body, and a media URL.",
+  },
+  {
     name: "add_company_engagement_summary_score",
     description:
       "Add or update company engagement summary scores (health score, churn risk score, expansion opportunity score) in Redshift or RDS for a specific company.",
