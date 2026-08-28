@@ -43,6 +43,7 @@ export default function Page() {
   const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
 
   const [telnyxApiKey, setTelnyxApiKey] = useState("")
+  const [telnyxPublicKey, setTelnyxPublicKey] = useState("")
   const [showTelnyxField, setShowTelnyxField] = useState(false)
   const toggleShowTelnyxField = () => setShowTelnyxField((prev) => !prev)
 
@@ -115,6 +116,7 @@ export default function Page() {
           authToken: orgData?.twilioAuthToken || "",
         })
         setTelnyxApiKey(orgData?.telnyx_api_key || "")
+        setTelnyxPublicKey(orgData?.telnyx_public_key || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -181,6 +183,7 @@ export default function Page() {
             account_sid: twilioConfig.accountSid,
             auth_token: twilioConfig.authToken,
             telnyx_api_key: telnyxApiKey,
+            telnyx_public_key: telnyxPublicKey,
           },
           {
             headers: { Authorization: `Bearer ${access_token}` },
@@ -507,6 +510,17 @@ export default function Page() {
             placeholder="Enter your Telnyx API Key"
             value={telnyxApiKey}
             onChange={(e) => setTelnyxApiKey(e.target.value)}
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Public Key
+          </label>
+          <input
+            type={showTelnyxField ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx Public Key"
+            value={telnyxPublicKey}
+            onChange={(e) => setTelnyxPublicKey(e.target.value)}
           />
         </div>
 
