@@ -42,6 +42,10 @@ export default function Page() {
   const [showTwilioFields, setShowTwilioFields] = useState(false)
   const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
 
+  const [telnyxApiKey, setTelnyxApiKey] = useState("")
+  const [showTelnyxField, setShowTelnyxField] = useState(false)
+  const toggleShowTelnyxField = () => setShowTelnyxField((prev) => !prev)
+
   const [orgSetting, setOrgSetting] = useState({
     database_name: "",
     redshit_work_space: "",
@@ -110,6 +114,7 @@ export default function Page() {
           accountSid: orgData?.twilioAccountSid || "",
           authToken: orgData?.twilioAuthToken || "",
         })
+        setTelnyxApiKey(orgData?.telnyx_api_key || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -175,6 +180,7 @@ export default function Page() {
           {
             account_sid: twilioConfig.accountSid,
             auth_token: twilioConfig.authToken,
+            telnyx_api_key: telnyxApiKey,
           },
           {
             headers: { Authorization: `Bearer ${access_token}` },
@@ -468,6 +474,39 @@ export default function Page() {
                 authToken: e.target.value,
               }))
             }
+          />
+        </div>
+
+        {/* Telnyx Section */}
+        <div className="mt-6 rounded-lg border border-[#E2E6EF] p-4 md:w-1/2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-primary">Telnyx</h3>
+            <button
+              type="button"
+              className="cursor-pointer text-gray-500"
+              onClick={toggleShowTelnyxField}
+              aria-label={
+                showTelnyxField
+                  ? "Hide Telnyx API key"
+                  : "Show Telnyx API key"
+              }
+            >
+              {showTelnyxField ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Connect your Telnyx account for messaging.
+          </p>
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            API Key
+          </label>
+          <input
+            type={showTelnyxField ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx API Key"
+            value={telnyxApiKey}
+            onChange={(e) => setTelnyxApiKey(e.target.value)}
           />
         </div>
 
