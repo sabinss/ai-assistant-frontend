@@ -43,14 +43,6 @@ export default function Page() {
   const [savingTwilioCredentials, setSavingTwilioCredentials] = useState(false)
   const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
 
-  const [twilioConfig, setTwilioConfig] = useState({
-    accountSid: "",
-    authToken: "",
-  })
-  const [showTwilioFields, setShowTwilioFields] = useState(false)
-  const [savingTwilioCredentials, setSavingTwilioCredentials] = useState(false)
-  const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
-
   const [orgSetting, setOrgSetting] = useState({
     database_name: "",
     redshit_work_space: "",
@@ -92,6 +84,7 @@ export default function Page() {
 
   useEffect(() => {
     async function getOrgDetails() {
+      if (!access_token) return
       try {
         setIsLoading(true)
         const res = await http.get("/organization/", {
@@ -109,10 +102,14 @@ export default function Page() {
           hubspot_bearer_token: orgData?.hubspot_bearer_token ?? "",
           tenant_isolation: orgData?.tenant_isolation || "Dedicated",
         })
-        setWhatsappConfig(orgData.whatsappConfig)
+        setWhatsappConfig(orgData?.whatsappConfig ?? {
+          whatsappPhoneNumber: null,
+          whatsappToken: null,
+          whatsAppPhoneNumberId: null,
+        })
         setTwilioConfig({
-          accountSid: orgData?.twilioAccountSid ?? "",
-          authToken: orgData?.twilioAuthToken ?? "",
+          accountSid: orgData?.twilioAccountSid || "",
+          authToken: orgData?.twilioAuthToken || "",
         })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
