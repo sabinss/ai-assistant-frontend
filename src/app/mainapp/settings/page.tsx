@@ -40,7 +40,6 @@ export default function Page() {
     authToken: "",
   })
   const [showTwilioFields, setShowTwilioFields] = useState(false)
-  const [savingTwilioCredentials, setSavingTwilioCredentials] = useState(false)
   const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
 
   const [orgSetting, setOrgSetting] = useState({
@@ -153,31 +152,6 @@ export default function Page() {
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
-      // let hasError = false
-      // // Reset errors
-      // setErrors({
-      //   apiKey: false,
-      //   prompt: false,
-      //   greeting: false,
-      // })
-
-      // Validate fields
-      // if (!apiKey) {
-      //   setErrors(prevErrors => ({ ...prevErrors, apiKey: true }));
-      //   hasError = true;
-      // }
-      // if (!prompt) {
-      //   setErrors((prevErrors) => ({ ...prevErrors, prompt: true }))
-      //   hasError = true
-      // }
-      // // if (!greeting) {
-      // //   setErrors(prevErrors => ({ ...prevErrors, greeting: true }));
-      // //   hasError = true;
-      // // }
-
-      // if (hasError) {
-      //   return
-      // }
 
       const data = {
         selectedModel,
@@ -193,43 +167,26 @@ export default function Page() {
       await http.put("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
+
+      const orgId = organizationData?._id ?? user_data?.organization
+      if (orgId) {
+        await http.put(
+          `/organization/${orgId}/twilio-credentials`,
+          {
+            account_sid: twilioConfig.accountSid,
+            auth_token: twilioConfig.authToken,
+          },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+      }
+
       toast.success("Organization data updated successfully")
     } catch (e) {
       console.log("Error updating organization data", e)
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleSaveTwilioCredentials = async () => {
-    const orgId = organizationData?._id ?? user_data?.organization
-    if (!orgId) {
-      toast.error("Organization not found")
-      return
-    }
-    if (!twilioConfig.accountSid.trim() || !twilioConfig.authToken.trim()) {
-      toast.error("Account SID and Auth Token are required")
-      return
-    }
-
-    try {
-      setSavingTwilioCredentials(true)
-      await http.put(
-        `/organization/${orgId}/twilio-credentials`,
-        {
-          account_sid: twilioConfig.accountSid.trim(),
-          auth_token: twilioConfig.authToken.trim(),
-        },
-        {
-          headers: { Authorization: `Bearer ${access_token}` },
-        }
-      )
-      toast.success("Twilio credentials saved successfully")
-    } catch (e) {
-      console.log("Error saving Twilio credentials", e)
-      toast.error("Failed to save Twilio credentials")
-    } finally {
-      setSavingTwilioCredentials(false)
     }
   }
 
@@ -512,15 +469,6 @@ export default function Page() {
               }))
             }
           />
-
-          <Button
-            type="button"
-            className="mt-4 bg-[#174894] hover:bg-[#174894]/90"
-            disabled={savingTwilioCredentials}
-            onClick={handleSaveTwilioCredentials}
-          >
-            {savingTwilioCredentials ? "Saving..." : "Save Twilio Credentials"}
-          </Button>
         </div>
 
         {/* <div className="prompt mt-4">
