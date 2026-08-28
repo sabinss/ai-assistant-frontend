@@ -35,6 +35,14 @@ export default function Page() {
     whatsAppPhoneNumberId: null,
   })
 
+  const [twilioConfig, setTwilioConfig] = useState({
+    accountSid: "",
+    authToken: "",
+  })
+  const [showTwilioFields, setShowTwilioFields] = useState(false)
+  const [savingTwilioCredentials, setSavingTwilioCredentials] = useState(false)
+  const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
+
   const [orgSetting, setOrgSetting] = useState({
     database_name: "",
     redshit_work_space: "",
@@ -94,6 +102,16 @@ export default function Page() {
           tenant_isolation: orgData?.tenant_isolation || "Dedicated",
         })
         setWhatsappConfig(orgData.whatsappConfig)
+        setTwilioConfig({
+          accountSid:
+            orgData?.twilioConfig?.accountSid ??
+            orgData?.twilio_account_sid ??
+            "",
+          authToken:
+            orgData?.twilioConfig?.authToken ??
+            orgData?.twilio_auth_token ??
+            "",
+        })
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -181,6 +199,38 @@ export default function Page() {
       console.log("Error updating organization data", e)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSaveTwilioCredentials = async () => {
+    const orgId = organizationData?._id ?? user_data?.organization
+    if (!orgId) {
+      toast.error("Organization not found")
+      return
+    }
+    if (!twilioConfig.accountSid.trim() || !twilioConfig.authToken.trim()) {
+      toast.error("Account SID and Auth Token are required")
+      return
+    }
+
+    try {
+      setSavingTwilioCredentials(true)
+      await http.put(
+        `/organization/${orgId}/twilio-credentials`,
+        {
+          account_sid: twilioConfig.accountSid.trim(),
+          auth_token: twilioConfig.authToken.trim(),
+        },
+        {
+          headers: { Authorization: `Bearer ${access_token}` },
+        }
+      )
+      toast.success("Twilio credentials saved successfully")
+    } catch (e) {
+      console.log("Error saving Twilio credentials", e)
+      toast.error("Failed to save Twilio credentials")
+    } finally {
+      setSavingTwilioCredentials(false)
     }
   }
 
@@ -410,6 +460,66 @@ export default function Page() {
             }
           />
         </div>
+
+        {/* Twilio Section */}
+        <div className="mt-6 rounded-lg border border-[#E2E6EF] p-4 md:w-1/2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-primary">Twilio</h3>
+            <button
+              type="button"
+              className="cursor-pointer text-gray-500"
+              onClick={toggleShowTwilioFields}
+              aria-label={showTwilioFields ? "Hide Twilio credentials" : "Show Twilio credentials"}
+            >
+              {showTwilioFields ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Connect your Twilio account for SMS messaging.
+          </p>
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Account SID
+          </label>
+          <input
+            type={showTwilioFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Twilio Account SID"
+            value={twilioConfig.accountSid}
+            onChange={(e) =>
+              setTwilioConfig((prev) => ({
+                ...prev,
+                accountSid: e.target.value,
+              }))
+            }
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Auth Token
+          </label>
+          <input
+            type={showTwilioFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Twilio Auth Token"
+            value={twilioConfig.authToken}
+            onChange={(e) =>
+              setTwilioConfig((prev) => ({
+                ...prev,
+                authToken: e.target.value,
+              }))
+            }
+          />
+
+          <Button
+            type="button"
+            className="mt-4 bg-[#174894] hover:bg-[#174894]/90"
+            disabled={savingTwilioCredentials}
+            onClick={handleSaveTwilioCredentials}
+          >
+            {savingTwilioCredentials ? "Saving..." : "Save Twilio Credentials"}
+          </Button>
+        </div>
+
         {/* <div className="prompt mt-4">
           <h3 className="text-sm">Enter your Greeting</h3>
           <Textarea
