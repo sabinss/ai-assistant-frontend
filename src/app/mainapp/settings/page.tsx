@@ -43,6 +43,14 @@ export default function Page() {
   const [savingTwilioCredentials, setSavingTwilioCredentials] = useState(false)
   const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
 
+  const [twilioConfig, setTwilioConfig] = useState({
+    accountSid: "",
+    authToken: "",
+  })
+  const [showTwilioFields, setShowTwilioFields] = useState(false)
+  const [savingTwilioCredentials, setSavingTwilioCredentials] = useState(false)
+  const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
+
   const [orgSetting, setOrgSetting] = useState({
     database_name: "",
     redshit_work_space: "",
