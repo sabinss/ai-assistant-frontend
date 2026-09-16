@@ -172,6 +172,10 @@ export const AVAILABLE_TOOLS: Tool[] = [
     name: "bulk_import_companies_and_deals ",
     description: "Bulk import companies and deals from a file.",
   },
+  {
+    name: "place_call_telnyx ⁠",
+    description: "Place a call using Telnyx with from/to phone numbers in E.164 format and a message body.",
+  },
 ]
 
 interface ToolsMultiSelectProps {
