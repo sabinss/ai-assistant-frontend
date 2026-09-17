@@ -44,6 +44,8 @@ export default function Page() {
 
   const [telnyxApiKey, setTelnyxApiKey] = useState("")
   const [telnyxPublicKey, setTelnyxPublicKey] = useState("")
+  const [telnyxVoiceAssistantId, setTelnyxVoiceAssistantId] = useState("")
+  const [telnyxTexmlAppId, setTelnyxTexmlAppId] = useState("")
   const [showTelnyxField, setShowTelnyxField] = useState(false)
   const toggleShowTelnyxField = () => setShowTelnyxField((prev) => !prev)
 
@@ -117,6 +119,8 @@ export default function Page() {
         })
         setTelnyxApiKey(orgData?.telnyx_api_key || "")
         setTelnyxPublicKey(orgData?.telnyx_public_key || "")
+        setTelnyxVoiceAssistantId(orgData?.telnyx_voice_assistant_id || "")
+        setTelnyxTexmlAppId(orgData?.telnyx_texml_app_id || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -184,6 +188,8 @@ export default function Page() {
             auth_token: twilioConfig.authToken,
             telnyx_api_key: telnyxApiKey,
             telnyx_public_key: telnyxPublicKey,
+            telnyx_voice_assistant_id: telnyxVoiceAssistantId,
+            telnyx_texml_app_id: telnyxTexmlAppId,
           },
           {
             headers: { Authorization: `Bearer ${access_token}` },
@@ -521,6 +527,28 @@ export default function Page() {
             placeholder="Enter your Telnyx Public Key"
             value={telnyxPublicKey}
             onChange={(e) => setTelnyxPublicKey(e.target.value)}
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Voice Assistant ID
+          </label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx AI Assistant ID for voice calls"
+            value={telnyxVoiceAssistantId}
+            onChange={(e) => setTelnyxVoiceAssistantId(e.target.value)}
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            TeXML Application ID
+          </label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx TeXML Application ID for voice calls"
+            value={telnyxTexmlAppId}
+            onChange={(e) => setTelnyxTexmlAppId(e.target.value)}
           />
         </div>
 
