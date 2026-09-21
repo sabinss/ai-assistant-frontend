@@ -65,6 +65,8 @@ export const AgentTable = () => {
     frequency: null,
     dayTime: null,
     scheduleTime: null, // Add time field for scheduling
+    fromTime: null,
+    toTime: null,
     timezone: "EST", // Add timezone field with EST as default
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
@@ -159,6 +161,8 @@ export const AgentTable = () => {
       dayTime,
       frequency,
       scheduleTime: null,
+      fromTime: null,
+      toTime: null,
       timezone: "EST", // Set default timezone
       isAgent,
     })
@@ -186,6 +190,8 @@ export const AgentTable = () => {
       active: agent.active,
       tools_used: toolsUsed,
       scheduleTime: agent.schedule_time || agent.scheduleTime || null,
+      fromTime: agent.from_time || agent.fromTime || null,
+      toTime: agent.to_time || agent.toTime || null,
       timezone: agent.time_zone || agent.timezone || "EST", // Default to EST if not set
     })
     setIsEditing(true)
@@ -247,6 +253,8 @@ export const AgentTable = () => {
       tools_used: toolsUsedString,
       time_zone: data.timezone || "EST",
       schedule_time: data.scheduleTime || null,
+      from_time: data.fromTime || null,
+      to_time: data.toTime || null,
     })
 
     try {
@@ -257,6 +265,8 @@ export const AgentTable = () => {
           tools_used: toolsUsedString,
           time_zone: data.timezone || "EST",
           schedule_time: data.scheduleTime || null,
+          from_time: data.fromTime || null,
+          to_time: data.toTime || null,
         }
         await http.put("/organization/agent", updateData, {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -278,6 +288,8 @@ export const AgentTable = () => {
           tools_used: toolsUsedString,
           time_zone: data.timezone || "EST",
           schedule_time: data.scheduleTime || null,
+          from_time: data.fromTime || null,
+          to_time: data.toTime || null,
         }
         const response = await http.post("/organization/agent", createData, {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -447,10 +459,15 @@ export const AgentTable = () => {
                       setFormData((prev) => ({
                         ...prev,
                         frequency: nextFrequency,
-                        ...(nextFrequency === "Hourly" ? { dayTime: null } : {}),
-                        ...(nextFrequency === "Realtime"
-                          ? { dayTime: null, scheduleTime: null }
+                        ...(nextFrequency === "Hourly" || nextFrequency === "Every 15 min"
+                          ? { dayTime: null }
                           : {}),
+                        ...(nextFrequency === "Realtime"
+                          ? { dayTime: null, scheduleTime: null, fromTime: null, toTime: null }
+                          : {}),
+                        ...(nextFrequency === "Every 15 min"
+                          ? { scheduleTime: null }
+                          : { fromTime: null, toTime: null }),
                       }))
                     }}
                     className="w-full rounded border p-2"
@@ -461,12 +478,15 @@ export const AgentTable = () => {
                     <option value="Weekly">Weekly</option>
                     <option value="Daily">Daily</option>
                     <option value="Hourly">Hourly</option>
+                    <option value="Every 15 min">Every 15 min</option>
                     <option value="Realtime">RealTime</option>
                   </select>
                 </div>
                 {formData.frequency && (
                   <div className="space-y-3">
-                    {formData.frequency !== "Hourly" && formData.frequency !== "Realtime" && (
+                    {formData.frequency !== "Hourly" &&
+                      formData.frequency !== "Realtime" &&
+                      formData.frequency !== "Every 15 min" && (
                       <div>
                         <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
                           {formData.frequency === "Daily"
@@ -500,7 +520,49 @@ export const AgentTable = () => {
                       </div>
                     )}
 
-                    {formData.frequency !== "Realtime" && (
+                    {formData.frequency === "Every 15 min" && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label htmlFor="fromTime" className="mb-1 block text-sm font-semibold">
+                            From (24h)
+                          </label>
+                          <input
+                            type="time"
+                            id="fromTime"
+                            step={60}
+                            value={formData.fromTime || ""}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                fromTime: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded border p-2"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="toTime" className="mb-1 block text-sm font-semibold">
+                            To (24h)
+                          </label>
+                          <input
+                            type="time"
+                            id="toTime"
+                            step={60}
+                            value={formData.toTime || ""}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                toTime: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded border p-2"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {formData.frequency !== "Realtime" &&
+                      formData.frequency !== "Every 15 min" && (
                       <div>
                         <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
                           Time
