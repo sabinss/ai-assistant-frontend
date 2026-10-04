@@ -11,6 +11,7 @@ export type ActivityCompany = {
   company_name: string | null
   company_id: string | null
   latest_updated_at?: string | null
+  has_inbound_message?: boolean
 }
 
 export type ActivityMessage = {
@@ -42,6 +43,7 @@ export type Conversation = {
   industry: string
   preview: string
   timestamp: string
+  hasInboundMessage: boolean
   status: ConversationStatus | null
   channel: ChannelTab
 }

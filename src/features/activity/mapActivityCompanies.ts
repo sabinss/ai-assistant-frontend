@@ -73,6 +73,7 @@ export function mapActivityCompaniesToConversations(
       industry: "",
       preview: "",
       timestamp: formatFullDateTime(company.latest_updated_at),
+      hasInboundMessage: Boolean(company.has_inbound_message),
       status: null,
       channel: "texts",
     }

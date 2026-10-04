@@ -1,5 +1,6 @@
 "use client"
 
+import { FaReply } from "react-icons/fa"
 import type { Conversation, ConversationStatus } from "../types"
 
 const STATUS_STYLES: Record<
@@ -73,6 +74,13 @@ export default function ConversationListItem({
             </span>
           )}
         </div>
+        {conversation.hasInboundMessage && (
+          <FaReply
+            className="mt-1 shrink-0 text-[#1B3A8C]"
+            size={14}
+            title="Needs reply"
+          />
+        )}
       </div>
     </button>
   )
