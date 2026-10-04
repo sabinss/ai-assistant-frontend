@@ -176,6 +176,16 @@ export const AVAILABLE_TOOLS: Tool[] = [
     name: "place_call_telnyx ⁠",
     description: "Place a call using Telnyx with from/to phone numbers in E.164 format and a message body.",
   },
+  {
+    name: "get_nexhealth_open_slots",
+    description:
+      "Get the open appointment time slots in NexHealth for an appointment type, a start date, and an optional list of providers.",
+  },
+  {
+    name: "book_nexhealth_appointment",
+    description:
+      "Book an appointment in NexHealth for a patient with a provider, an appointment type, and a start time.",
+  },
 ]
 
 interface ToolsMultiSelectProps {
