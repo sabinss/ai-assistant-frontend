@@ -18,7 +18,14 @@ function getInitials(name: string, phone: string): string {
 export function mapActivityCompaniesToConversations(
   companies: ActivityCompany[]
 ): Conversation[] {
-  return companies.map((company, index) => {
+  const sorted = [...companies].sort((a, b) => {
+    const aHasName = Boolean(a.company_name?.trim())
+    const bHasName = Boolean(b.company_name?.trim())
+    if (aHasName === bHasName) return 0
+    return aHasName ? -1 : 1
+  })
+
+  return sorted.map((company, index) => {
     const phone = company.to || ""
     const name = company.company_name?.trim() || "Unknown company"
     return {

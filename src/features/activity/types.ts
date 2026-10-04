@@ -12,6 +12,25 @@ export type ActivityCompany = {
   company_id: string | null
 }
 
+export type ActivityMessage = {
+  id: string
+  body: string
+  company_id: string | null
+  company_name: string | null
+  contact_id: string | null
+  conversation_id: string | null
+  created_at: string
+  direction: "inbound" | "outbound" | string
+  from: string | null
+  to: string | null
+  status: string | null
+  subject: string | null
+  thread_id: string | null
+  type: string | null
+  agentsent?: boolean
+  updated_at?: string
+}
+
 export type Conversation = {
   id: string
   name: string

@@ -5,13 +5,19 @@ import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
 import ConversationList from "./components/ConversationList"
 import ThreadPanel from "./components/ThreadPanel"
-import { ASSISTANT_ALERT, CHANNEL_TABS, MOCK_THREAD_MESSAGES } from "./data/mockData"
+import { CHANNEL_TABS } from "./data/mockData"
 import {
   fetchActivityCompanies,
   fetchActivityCompanyById,
 } from "./api/activityApi"
 import { mapActivityCompaniesToConversations } from "./mapActivityCompanies"
-import type { ChannelTab, Conversation, ConversationFilter } from "./types"
+import { mapActivityMessagesToThread } from "./mapActivityMessages"
+import type {
+  ChannelTab,
+  Conversation,
+  ConversationFilter,
+  ThreadMessage,
+} from "./types"
 import useAuth from "@/store/user"
 
 export default function ActivityView() {
@@ -22,7 +28,9 @@ export default function ActivityView() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState("")
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [loading, setLoading] = useState(true)
+  const [messagesLoading, setMessagesLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadCompanies = useCallback(async () => {
@@ -41,15 +49,6 @@ export default function ActivityView() {
       const mapped = mapActivityCompaniesToConversations(companies)
       setConversations(mapped)
       setSelectedId((prev) => prev ?? mapped[0]?.id ?? null)
-
-      const firstCompanyId = companies.find((c) => c.company_id)?.company_id
-      if (firstCompanyId) {
-        const companyDetail = await fetchActivityCompanyById(
-          firstCompanyId,
-          access_token
-        )
-        console.log("activity company detail response", companyDetail)
-      }
     } catch (err) {
       console.log("Error loading activity companies", err)
       setConversations([])
@@ -70,6 +69,41 @@ export default function ActivityView() {
         : conversations.filter((c) => c.channel === activeTab),
     [activeTab, conversations]
   )
+
+  const selectedConversation =
+    channelConversations.find((c) => c.id === selectedId) ??
+    conversations.find((c) => c.id === selectedId) ??
+    null
+
+  const loadMessages = useCallback(
+    async (conversation: Conversation | null) => {
+      if (!access_token || !conversation?.companyId) {
+        setMessages([])
+        return
+      }
+
+      try {
+        setMessagesLoading(true)
+        const activityMessages = await fetchActivityCompanyById(
+          conversation.companyId,
+          access_token
+        )
+        setMessages(
+          mapActivityMessagesToThread(activityMessages, conversation.name)
+        )
+      } catch (err) {
+        console.log("Error loading activity messages", err)
+        setMessages([])
+      } finally {
+        setMessagesLoading(false)
+      }
+    },
+    [access_token]
+  )
+
+  useEffect(() => {
+    loadMessages(selectedConversation)
+  }, [loadMessages, selectedConversation])
 
   const filterCounts = useMemo(
     () => ({
@@ -96,18 +130,6 @@ export default function ActivityView() {
       return matchesFilter && matchesSearch
     })
   }, [channelConversations, activeFilter, search])
-
-  const selectedConversation =
-    filteredConversations.find((c) => c.id === selectedId) ??
-    channelConversations.find((c) => c.id === selectedId) ??
-    null
-
-  const messages = selectedConversation
-    ? MOCK_THREAD_MESSAGES[selectedConversation.id] ?? []
-    : []
-
-  const showAlert =
-    selectedConversation?.status === "needs_reply" ? ASSISTANT_ALERT : null
 
   const handleTabChange = (tab: ChannelTab) => {
     setActiveTab(tab)
@@ -155,7 +177,7 @@ export default function ActivityView() {
             <ThreadPanel
               conversation={selectedConversation}
               messages={messages}
-              alert={showAlert}
+              messagesLoading={messagesLoading}
               draft={draft}
               onDraftChange={setDraft}
               onSend={() => setDraft("")}

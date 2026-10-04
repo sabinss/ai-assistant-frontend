@@ -5,9 +5,10 @@ import type { ThreadMessage } from "../types"
 
 type MessageThreadProps = {
   messages: ThreadMessage[]
+  loading?: boolean
 }
 
-export default function MessageThread({ messages }: MessageThreadProps) {
+export default function MessageThread({ messages, loading }: MessageThreadProps) {
   const groups: { date: string; items: ThreadMessage[] }[] = []
 
   for (const message of messages) {
@@ -17,6 +18,22 @@ export default function MessageThread({ messages }: MessageThreadProps) {
     } else {
       groups.push({ date: message.dateGroup, items: [message] })
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-8 text-[13px] text-[#8A93A6]">
+        Loading messages...
+      </div>
+    )
+  }
+
+  if (messages.length === 0) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-8 text-[13px] text-[#8A93A6]">
+        No messages in this conversation yet
+      </div>
+    )
   }
 
   return (

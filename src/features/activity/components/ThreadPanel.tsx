@@ -9,6 +9,7 @@ import type { Conversation, ThreadMessage } from "../types"
 type ThreadPanelProps = {
   conversation: Conversation | null
   messages: ThreadMessage[]
+  messagesLoading?: boolean
   alert?: { title: string; body: string } | null
   draft: string
   onDraftChange: (value: string) => void
@@ -20,6 +21,7 @@ type ThreadPanelProps = {
 export default function ThreadPanel({
   conversation,
   messages,
+  messagesLoading = false,
   alert,
   draft,
   onDraftChange,
@@ -41,7 +43,7 @@ export default function ThreadPanel({
       {alert && (
         <AssistantAlert title={alert.title} body={alert.body} onTakeOver={onTakeOver} />
       )}
-      <MessageThread messages={messages} />
+      <MessageThread messages={messages} loading={messagesLoading} />
       <MessageComposer
         customerName={conversation.name}
         value={draft}

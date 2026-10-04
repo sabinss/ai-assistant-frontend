@@ -1,5 +1,6 @@
 import http from "@/config/http"
-import type { ActivityCompany } from "../types"
+import type { ActivityCompany, ActivityMessage } from "../types"
+import { normalizeActivityMessages } from "../mapActivityMessages"
 
 export async function fetchActivityCompanies(
   accessToken: string
@@ -17,12 +18,13 @@ export async function fetchActivityCompanies(
 export async function fetchActivityCompanyById(
   companyId: string,
   accessToken: string
-): Promise<unknown> {
+): Promise<ActivityMessage[]> {
   const { data } = await http.get(
     `/activity/company/${encodeURIComponent(companyId)}`,
     {
       headers: { Authorization: `Bearer ${accessToken}` },
     }
   )
-  return data
+  console.log("activity company detail response", data)
+  return normalizeActivityMessages(data)
 }
