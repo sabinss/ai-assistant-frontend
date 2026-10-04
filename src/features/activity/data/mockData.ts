@@ -1,7 +1,7 @@
 import type { ChannelTabConfig, ThreadMessage } from "../types"
 
 export const CHANNEL_TABS: ChannelTabConfig[] = [
-  { id: "texts", label: "Texts", badge: "2 need reply" },
+  { id: "texts", label: "Texts", badge: "" },
   // { id: "calls", label: "Calls" },
   // { id: "emails", label: "Emails", badge: "1 needs reply" },
 ]
