@@ -55,6 +55,11 @@ export default function ConversationListItem({
             {conversation.name}
             {conversation.phone ? ` (${conversation.phone})` : ""}
           </p>
+          {conversation.timestamp && (
+            <p className="mt-0.5 text-[12px] text-[#6B7280]">
+              {conversation.timestamp}
+            </p>
+          )}
           {conversation.preview && (
             <p className="mt-0.5 truncate text-[12px] text-[#6B7280]">
               {conversation.preview}

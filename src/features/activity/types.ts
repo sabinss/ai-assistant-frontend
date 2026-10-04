@@ -10,6 +10,7 @@ export type ActivityCompany = {
   to: string
   company_name: string | null
   company_id: string | null
+  latest_updated_at?: string | null
 }
 
 export type ActivityMessage = {

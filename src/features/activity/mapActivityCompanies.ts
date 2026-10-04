@@ -36,6 +36,20 @@ export function matchesConversationSearch(
   )
 }
 
+function formatFullDateTime(isoDate: string | null | undefined): string {
+  if (!isoDate) return ""
+  const date = new Date(isoDate)
+  if (Number.isNaN(date.getTime())) return isoDate
+  return date.toLocaleString([], {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    second: "2-digit",
+  })
+}
+
 export function mapActivityCompaniesToConversations(
   companies: ActivityCompany[]
 ): Conversation[] {
@@ -58,7 +72,7 @@ export function mapActivityCompaniesToConversations(
       companyId: company.company_id,
       industry: "",
       preview: "",
-      timestamp: "",
+      timestamp: formatFullDateTime(company.latest_updated_at),
       status: null,
       channel: "texts",
     }
