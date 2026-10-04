@@ -1,5 +1,20 @@
 import type { ActivityMessage, ThreadMessage } from "./types"
 
+/** Current business phone number used to decide left/right chat alignment. */
+export const MY_PHONE_NUMBER = "+16235625702"
+
+export function normalizePhone(phone: string | null | undefined): string {
+  return (phone || "").replace(/\D/g, "")
+}
+
+/** Outgoing = message was sent from the business phone. */
+export function isOutgoing(
+  message: Pick<ActivityMessage, "from">,
+  myPhoneNumber: string = MY_PHONE_NUMBER
+): boolean {
+  return normalizePhone(message.from) === normalizePhone(myPhoneNumber)
+}
+
 function formatMessageTime(isoDate: string): string {
   const date = new Date(isoDate)
   if (Number.isNaN(date.getTime())) return ""
@@ -28,21 +43,10 @@ function formatDateGroup(isoDate: string): string {
   })
 }
 
-function normalizePhone(value: string | null | undefined): string {
-  return (value || "").replace(/\D/g, "")
-}
-
-function isSamePhone(a: string | null | undefined, b: string | null | undefined): boolean {
-  const left = normalizePhone(a)
-  const right = normalizePhone(b)
-  if (!left || !right) return false
-  return left === right || left.endsWith(right) || right.endsWith(left)
-}
-
 export function mapActivityMessagesToThread(
   messages: ActivityMessage[],
   fallbackCustomerName = "Customer",
-  customerPhone = ""
+  myPhoneNumber: string = MY_PHONE_NUMBER
 ): ThreadMessage[] {
   return [...messages]
     .sort(
@@ -50,37 +54,19 @@ export function mapActivityMessagesToThread(
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     )
     .map((message) => {
-      const from = message.from || ""
-      const to = message.to || ""
-
-      let isFromCustomer = false
-      if (customerPhone) {
-        if (isSamePhone(from, customerPhone)) {
-          isFromCustomer = true
-        } else if (isSamePhone(to, customerPhone)) {
-          isFromCustomer = false
-        } else {
-          isFromCustomer = !(
-            message.direction === "outbound" || Boolean(message.agentsent)
-          )
-        }
-      } else {
-        isFromCustomer = !(
-          message.direction === "outbound" || Boolean(message.agentsent)
-        )
-      }
+      const outgoing = isOutgoing(message, myPhoneNumber)
 
       return {
         id: message.id,
-        sender: isFromCustomer ? "customer" : "assistant",
-        senderLabel: isFromCustomer
-          ? message.company_name?.trim() || fallbackCustomerName
-          : "Assistant",
+        sender: outgoing ? "assistant" : "customer",
+        senderLabel: outgoing
+          ? "Business"
+          : message.company_name?.trim() || fallbackCustomerName,
         time: formatMessageTime(message.created_at),
         text: message.body || "",
         dateGroup: formatDateGroup(message.created_at),
-        from,
-        to,
+        from: message.from || "",
+        to: message.to || "",
       }
     })
 }

@@ -39,7 +39,7 @@ export default function MessageThread({ messages, loading }: MessageThreadProps)
   return (
     <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
       {groups.map((group) => (
-        <div key={group.date} className="space-y-3">
+        <div key={group.date} className="flex flex-col gap-3">
           <div className="flex justify-center">
             <span className="rounded-full bg-[#ECEEF2] px-2.5 py-0.5 text-[11px] font-medium text-[#6B7280]">
               {group.date}
