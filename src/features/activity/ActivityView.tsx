@@ -10,7 +10,10 @@ import {
   fetchActivityCompanies,
   fetchActivityCompanyById,
 } from "./api/activityApi"
-import { mapActivityCompaniesToConversations } from "./mapActivityCompanies"
+import {
+  mapActivityCompaniesToConversations,
+  matchesConversationSearch,
+} from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
   ChannelTab,
@@ -116,19 +119,13 @@ export default function ActivityView() {
   )
 
   const filteredConversations = useMemo(() => {
-    const query = search.trim().toLowerCase()
     return channelConversations.filter((conversation) => {
       const matchesFilter =
         activeFilter === "all" ||
         (activeFilter === "needs_reply" && conversation.status === "needs_reply") ||
         (activeFilter === "paused" && conversation.status === "paused")
 
-      const matchesSearch =
-        !query ||
-        conversation.name.toLowerCase().includes(query) ||
-        conversation.phone.toLowerCase().includes(query)
-
-      return matchesFilter && matchesSearch
+      return matchesFilter && matchesConversationSearch(conversation, search)
     })
   }, [channelConversations, activeFilter, search])
 

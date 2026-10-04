@@ -51,14 +51,10 @@ export default function ConversationListItem({
           {conversation.initials}
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <p className="truncate text-[13px] font-semibold text-[#1A2333]">
-              {conversation.name}
-            </p>
-            <span className="shrink-0 text-[11px] text-[#8A93A6]">
-              {conversation.phone}
-            </span>
-          </div>
+          <p className="truncate text-[13px] font-semibold text-[#1A2333]">
+            {conversation.name}
+            {conversation.phone ? ` (${conversation.phone})` : ""}
+          </p>
           {conversation.preview && (
             <p className="mt-0.5 truncate text-[12px] text-[#6B7280]">
               {conversation.preview}

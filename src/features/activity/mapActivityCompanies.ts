@@ -15,6 +15,27 @@ function getInitials(name: string, phone: string): string {
   return (digits.slice(-2) || "?").toUpperCase()
 }
 
+export function matchesConversationSearch(
+  conversation: Conversation,
+  query: string
+): boolean {
+  const term = query.trim().toLowerCase()
+  if (!term) return true
+
+  const digits = term.replace(/\D/g, "")
+  const name = conversation.name.toLowerCase()
+  const phone = conversation.phone.toLowerCase()
+  const phoneDigits = conversation.phone.replace(/\D/g, "")
+  const companyId = (conversation.companyId || "").toLowerCase()
+
+  return (
+    name.includes(term) ||
+    phone.includes(term) ||
+    companyId.includes(term) ||
+    (digits.length > 0 && phoneDigits.includes(digits))
+  )
+}
+
 export function mapActivityCompaniesToConversations(
   companies: ActivityCompany[]
 ): Conversation[] {

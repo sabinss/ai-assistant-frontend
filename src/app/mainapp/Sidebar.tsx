@@ -31,14 +31,14 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       icon: LayoutDashboard,
     },
     {
-      name: "Activity",
-      path: "/mainapp/activity",
-      icon: Activity,
-    },
-    {
       name: "Intel Brief",
       path: "/mainapp/action-center",
       icon: ListTodo,
+    },
+    {
+      name: "Activity",
+      path: "/mainapp/activity",
+      icon: Activity,
     },
     // {
     //   name: "Notifications",

@@ -1,20 +1,5 @@
 import type { ActivityMessage, ThreadMessage } from "./types"
 
-/** Current business phone number used to decide left/right chat alignment. */
-export const MY_PHONE_NUMBER = "+16235625702"
-
-export function normalizePhone(phone: string | null | undefined): string {
-  return (phone || "").replace(/\D/g, "")
-}
-
-/** Outgoing = message was sent from the business phone. */
-export function isOutgoing(
-  message: Pick<ActivityMessage, "from">,
-  myPhoneNumber: string = MY_PHONE_NUMBER
-): boolean {
-  return normalizePhone(message.from) === normalizePhone(myPhoneNumber)
-}
-
 function formatMessageTime(isoDate: string): string {
   const date = new Date(isoDate)
   if (Number.isNaN(date.getTime())) return ""
@@ -43,25 +28,23 @@ function formatDateGroup(isoDate: string): string {
   })
 }
 
+export function isOutgoing(message: Pick<ActivityMessage, "direction">): boolean {
+  return String(message.direction || "").toLowerCase() === "outbound"
+}
+
 export function mapActivityMessagesToThread(
   messages: ActivityMessage[],
-  fallbackCustomerName = "Customer",
-  myPhoneNumber: string = MY_PHONE_NUMBER
+  fallbackCustomerName = "Customer"
 ): ThreadMessage[] {
   return [...messages]
-    .sort(
-      (a, b) =>
-        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    )
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
     .map((message) => {
-      const outgoing = isOutgoing(message, myPhoneNumber)
+      const outgoing = isOutgoing(message)
 
       return {
         id: message.id,
         sender: outgoing ? "assistant" : "customer",
-        senderLabel: outgoing
-          ? "Business"
-          : message.company_name?.trim() || fallbackCustomerName,
+        senderLabel: outgoing ? "Business" : message.company_name?.trim() || fallbackCustomerName,
         time: formatMessageTime(message.created_at),
         text: message.body || "",
         dateGroup: formatDateGroup(message.created_at),
