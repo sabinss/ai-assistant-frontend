@@ -5,7 +5,7 @@ import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
 import ConversationList from "./components/ConversationList"
 import ThreadPanel from "./components/ThreadPanel"
-import { CHANNEL_TABS } from "./data/mockData"
+import { ASSISTANT_ALERT, CHANNEL_TABS } from "./data/mockData"
 import {
   fetchActivityCompanies,
   fetchActivityCompanyById,
@@ -27,6 +27,7 @@ export default function ActivityView() {
   const [search, setSearch] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState("")
+  const [showComposer, setShowComposer] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -136,6 +137,7 @@ export default function ActivityView() {
     setActiveFilter("all")
     setSearch("")
     setDraft("")
+    setShowComposer(false)
   }
 
   return (
@@ -172,15 +174,19 @@ export default function ActivityView() {
               onSelect={(id) => {
                 setSelectedId(id)
                 setDraft("")
+                setShowComposer(false)
               }}
             />
             <ThreadPanel
               conversation={selectedConversation}
               messages={messages}
               messagesLoading={messagesLoading}
+              alert={selectedConversation ? ASSISTANT_ALERT : null}
+              showComposer={showComposer}
               draft={draft}
               onDraftChange={setDraft}
               onSend={() => setDraft("")}
+              onTakeOver={() => setShowComposer(true)}
             />
           </>
         )}
