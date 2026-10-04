@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import ConversationSearch from "./ConversationSearch"
 import ConversationFilters from "./ConversationFilters"
 import ConversationListItem from "./ConversationListItem"
@@ -11,9 +12,12 @@ type ConversationListProps = {
   search: string
   activeFilter: ConversationFilter
   filterCounts: { all: number; needs_reply: number; paused: number }
+  hasNextPage?: boolean
+  loadingMore?: boolean
   onSearchChange: (value: string) => void
   onFilterChange: (filter: ConversationFilter) => void
   onSelect: (id: string) => void
+  onLoadMore?: () => void
 }
 
 export default function ConversationList({
@@ -22,10 +26,32 @@ export default function ConversationList({
   search,
   activeFilter,
   filterCounts,
+  hasNextPage = false,
+  loadingMore = false,
   onSearchChange,
   onFilterChange,
   onSelect,
+  onLoadMore,
 }: ConversationListProps) {
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasNextPage || !onLoadMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore()
+        }
+      },
+      { rootMargin: "100px" }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, onLoadMore])
+
   const filters = [
     { id: "all" as const, label: "All", count: filterCounts.all },
     { id: "needs_reply" as const, label: "Needs reply", count: filterCounts.needs_reply },
@@ -48,14 +74,27 @@ export default function ConversationList({
             No conversations found
           </p>
         ) : (
-          conversations.map((conversation) => (
-            <ConversationListItem
-              key={conversation.id}
-              conversation={conversation}
-              isSelected={selectedId === conversation.id}
-              onSelect={onSelect}
-            />
-          ))
+          <>
+            {conversations.map((conversation) => (
+              <ConversationListItem
+                key={conversation.id}
+                conversation={conversation}
+                isSelected={selectedId === conversation.id}
+                onSelect={onSelect}
+              />
+            ))}
+            {hasNextPage ? (
+              <div ref={sentinelRef} className="flex items-center justify-center py-3">
+                {loadingMore && (
+                  <span className="text-[12px] text-[#8A93A6]">Loading more...</span>
+                )}
+              </div>
+            ) : (
+              <p className="px-4 py-3 text-center text-[11px] text-[#8A93A6]">
+                No more conversations
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

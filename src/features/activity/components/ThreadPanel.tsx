@@ -10,6 +10,9 @@ type ThreadPanelProps = {
   conversation: Conversation | null
   messages: ThreadMessage[]
   messagesLoading?: boolean
+  messagesHasNextPage?: boolean
+  messagesLoadingMore?: boolean
+  onLoadMoreMessages?: () => void
   alert?: { title: string; body: string } | null
   showComposer?: boolean
   draft: string
@@ -23,6 +26,9 @@ export default function ThreadPanel({
   conversation,
   messages,
   messagesLoading = false,
+  messagesHasNextPage = false,
+  messagesLoadingMore = false,
+  onLoadMoreMessages,
   alert,
   showComposer = false,
   draft,
@@ -45,7 +51,13 @@ export default function ThreadPanel({
       {alert && !showComposer && (
         <AssistantAlert title={alert.title} body={alert.body} onTakeOver={onTakeOver} />
       )}
-      <MessageThread messages={messages} loading={messagesLoading} />
+      <MessageThread
+        messages={messages}
+        loading={messagesLoading}
+        hasNextPage={messagesHasNextPage}
+        loadingMore={messagesLoadingMore}
+        onLoadMore={onLoadMoreMessages}
+      />
       {showComposer && (
         <MessageComposer
           customerName={conversation.name}

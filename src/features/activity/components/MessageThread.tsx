@@ -1,14 +1,43 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import MessageBubble from "./MessageBubble"
 import type { ThreadMessage } from "../types"
 
 type MessageThreadProps = {
   messages: ThreadMessage[]
   loading?: boolean
+  hasNextPage?: boolean
+  loadingMore?: boolean
+  onLoadMore?: () => void
 }
 
-export default function MessageThread({ messages, loading }: MessageThreadProps) {
+export default function MessageThread({
+  messages,
+  loading,
+  hasNextPage = false,
+  loadingMore = false,
+  onLoadMore,
+}: MessageThreadProps) {
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasNextPage || !onLoadMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          onLoadMore()
+        }
+      },
+      { rootMargin: "100px" }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, onLoadMore])
+
   const groups: { date: string; items: ThreadMessage[] }[] = []
 
   for (const message of messages) {
@@ -50,6 +79,17 @@ export default function MessageThread({ messages, loading }: MessageThreadProps)
           ))}
         </div>
       ))}
+      {hasNextPage ? (
+        <div ref={sentinelRef} className="flex items-center justify-center py-2">
+          {loadingMore && (
+            <span className="text-[11px] text-[#8A93A6]">Loading more...</span>
+          )}
+        </div>
+      ) : (
+        <p className="py-2 text-center text-[11px] text-[#8A93A6]">
+          Start of conversation
+        </p>
+      )}
     </div>
   )
 }

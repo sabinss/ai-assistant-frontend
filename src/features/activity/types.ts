@@ -13,6 +13,17 @@ export type ActivityCompany = {
   latest_updated_at?: string | null
 }
 
+export type Pagination = {
+  currentPage: number
+  totalPages: number
+  totalRecords: number
+  limit: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+  nextPage: number | null
+  prevPage: number | null
+}
+
 export type ActivityMessage = {
   id: string
   body: string

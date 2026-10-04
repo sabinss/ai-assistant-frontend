@@ -16,10 +16,12 @@ import {
 } from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
+  ActivityCompany,
+  ActivityMessage,
   ChannelTab,
   Conversation,
   ConversationFilter,
-  ThreadMessage,
+  Pagination,
 } from "./types"
 import useAuth from "@/store/user"
 
@@ -31,40 +33,80 @@ export default function ActivityView() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState("")
   const [showComposer, setShowComposer] = useState(false)
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [messages, setMessages] = useState<ThreadMessage[]>([])
+
+  const [companies, setCompanies] = useState<ActivityCompany[]>([])
+  const [companiesPagination, setCompaniesPagination] = useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
-  const [messagesLoading, setMessagesLoading] = useState(false)
+  const [loadingMoreConversations, setLoadingMoreConversations] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const loadCompanies = useCallback(async () => {
-    if (!_hasHydrated) return
-    if (!access_token) {
-      setConversations([])
-      setLoadError("Sign-in is required to load activity.")
-      setLoading(false)
-      return
-    }
+  const [activityMessages, setActivityMessages] = useState<ActivityMessage[]>([])
+  const [messagesPagination, setMessagesPagination] = useState<Pagination | null>(null)
+  const [messagesLoading, setMessagesLoading] = useState(false)
+  const [loadingMoreMessages, setLoadingMoreMessages] = useState(false)
 
-    try {
-      setLoading(true)
-      setLoadError(null)
-      const companies = await fetchActivityCompanies(access_token)
-      const mapped = mapActivityCompaniesToConversations(companies)
-      setConversations(mapped)
-      setSelectedId((prev) => prev ?? mapped[0]?.id ?? null)
-    } catch (err) {
-      console.log("Error loading activity companies", err)
-      setConversations([])
-      setLoadError("Failed to load activity companies.")
-    } finally {
-      setLoading(false)
-    }
-  }, [access_token, _hasHydrated])
+  const conversations = useMemo(
+    () => mapActivityCompaniesToConversations(companies),
+    [companies]
+  )
+
+  const loadCompanies = useCallback(
+    async (page = 1) => {
+      if (!_hasHydrated) return
+      if (!access_token) {
+        setCompanies([])
+        setCompaniesPagination(null)
+        setLoadError("Sign-in is required to load activity.")
+        setLoading(false)
+        return
+      }
+
+      const isFirstPage = page === 1
+
+      try {
+        if (isFirstPage) {
+          setLoading(true)
+          setLoadError(null)
+        } else {
+          setLoadingMoreConversations(true)
+        }
+
+        const { data, pagination } = await fetchActivityCompanies(access_token, page)
+        setCompanies((prev) => (isFirstPage ? data : [...prev, ...data]))
+        setCompaniesPagination(pagination)
+
+        if (isFirstPage) {
+          const mapped = mapActivityCompaniesToConversations(data)
+          setSelectedId((prev) => prev ?? mapped[0]?.id ?? null)
+        }
+      } catch (err) {
+        console.log("Error loading activity companies", err)
+        if (isFirstPage) {
+          setCompanies([])
+          setCompaniesPagination(null)
+          setLoadError("Failed to load activity companies.")
+        }
+      } finally {
+        if (isFirstPage) {
+          setLoading(false)
+        } else {
+          setLoadingMoreConversations(false)
+        }
+      }
+    },
+    [access_token, _hasHydrated]
+  )
 
   useEffect(() => {
-    loadCompanies()
+    loadCompanies(1)
   }, [loadCompanies])
+
+  const handleLoadMoreConversations = useCallback(() => {
+    if (loading || loadingMoreConversations) return
+    if (!companiesPagination?.hasNextPage) return
+    const nextPage = companiesPagination.nextPage ?? companiesPagination.currentPage + 1
+    loadCompanies(nextPage)
+  }, [loadCompanies, companiesPagination, loading, loadingMoreConversations])
 
   const channelConversations = useMemo(
     () =>
@@ -79,35 +121,66 @@ export default function ActivityView() {
     conversations.find((c) => c.id === selectedId) ??
     null
 
+  const messages = useMemo(
+    () =>
+      mapActivityMessagesToThread(
+        activityMessages,
+        selectedConversation?.name
+      ),
+    [activityMessages, selectedConversation]
+  )
+
   const loadMessages = useCallback(
-    async (conversation: Conversation | null) => {
+    async (conversation: Conversation | null, page = 1) => {
       if (!access_token || !conversation?.companyId) {
-        setMessages([])
+        setActivityMessages([])
+        setMessagesPagination(null)
         return
       }
 
+      const isFirstPage = page === 1
+
       try {
-        setMessagesLoading(true)
-        const activityMessages = await fetchActivityCompanyById(
+        if (isFirstPage) {
+          setMessagesLoading(true)
+        } else {
+          setLoadingMoreMessages(true)
+        }
+
+        const { data, pagination } = await fetchActivityCompanyById(
           conversation.companyId,
-          access_token
+          access_token,
+          page
         )
-        setMessages(
-          mapActivityMessagesToThread(activityMessages, conversation.name)
-        )
+        setActivityMessages((prev) => (isFirstPage ? data : [...prev, ...data]))
+        setMessagesPagination(pagination)
       } catch (err) {
         console.log("Error loading activity messages", err)
-        setMessages([])
+        if (isFirstPage) {
+          setActivityMessages([])
+          setMessagesPagination(null)
+        }
       } finally {
-        setMessagesLoading(false)
+        if (isFirstPage) {
+          setMessagesLoading(false)
+        } else {
+          setLoadingMoreMessages(false)
+        }
       }
     },
     [access_token]
   )
 
   useEffect(() => {
-    loadMessages(selectedConversation)
+    loadMessages(selectedConversation, 1)
   }, [loadMessages, selectedConversation])
+
+  const handleLoadMoreMessages = useCallback(() => {
+    if (messagesLoading || loadingMoreMessages) return
+    if (!messagesPagination?.hasNextPage) return
+    const nextPage = messagesPagination.nextPage ?? messagesPagination.currentPage + 1
+    loadMessages(selectedConversation, nextPage)
+  }, [loadMessages, messagesPagination, messagesLoading, loadingMoreMessages, selectedConversation])
 
   const filterCounts = useMemo(
     () => ({
@@ -152,7 +225,7 @@ export default function ActivityView() {
             <p className="text-[14px] text-[#C0392B]">{loadError}</p>
             <button
               type="button"
-              onClick={loadCompanies}
+              onClick={() => loadCompanies(1)}
               className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
             >
               Retry
@@ -166,6 +239,8 @@ export default function ActivityView() {
               search={search}
               activeFilter={activeFilter}
               filterCounts={filterCounts}
+              hasNextPage={Boolean(companiesPagination?.hasNextPage)}
+              loadingMore={loadingMoreConversations}
               onSearchChange={setSearch}
               onFilterChange={setActiveFilter}
               onSelect={(id) => {
@@ -173,11 +248,15 @@ export default function ActivityView() {
                 setDraft("")
                 setShowComposer(false)
               }}
+              onLoadMore={handleLoadMoreConversations}
             />
             <ThreadPanel
               conversation={selectedConversation}
               messages={messages}
               messagesLoading={messagesLoading}
+              messagesHasNextPage={Boolean(messagesPagination?.hasNextPage)}
+              messagesLoadingMore={loadingMoreMessages}
+              onLoadMoreMessages={handleLoadMoreMessages}
               alert={selectedConversation ? ASSISTANT_ALERT : null}
               showComposer={showComposer}
               draft={draft}
