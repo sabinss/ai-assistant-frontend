@@ -52,6 +52,8 @@ export type ThreadMessage = {
   time: string
   text: string
   dateGroup: string
+  from: string
+  to: string
 }
 
 export type ChannelTabConfig = {

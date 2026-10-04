@@ -89,7 +89,11 @@ export default function ActivityView() {
           access_token
         )
         setMessages(
-          mapActivityMessagesToThread(activityMessages, conversation.name)
+          mapActivityMessagesToThread(
+            activityMessages,
+            conversation.name,
+            conversation.phone
+          )
         )
       } catch (err) {
         console.log("Error loading activity messages", err)

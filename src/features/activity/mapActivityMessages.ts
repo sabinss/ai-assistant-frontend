@@ -28,9 +28,21 @@ function formatDateGroup(isoDate: string): string {
   })
 }
 
+function normalizePhone(value: string | null | undefined): string {
+  return (value || "").replace(/\D/g, "")
+}
+
+function isSamePhone(a: string | null | undefined, b: string | null | undefined): boolean {
+  const left = normalizePhone(a)
+  const right = normalizePhone(b)
+  if (!left || !right) return false
+  return left === right || left.endsWith(right) || right.endsWith(left)
+}
+
 export function mapActivityMessagesToThread(
   messages: ActivityMessage[],
-  fallbackCustomerName = "Customer"
+  fallbackCustomerName = "Customer",
+  customerPhone = ""
 ): ThreadMessage[] {
   return [...messages]
     .sort(
@@ -38,18 +50,37 @@ export function mapActivityMessagesToThread(
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
     )
     .map((message) => {
-      const isOutbound =
-        message.direction === "outbound" || Boolean(message.agentsent)
+      const from = message.from || ""
+      const to = message.to || ""
+
+      let isFromCustomer = false
+      if (customerPhone) {
+        if (isSamePhone(from, customerPhone)) {
+          isFromCustomer = true
+        } else if (isSamePhone(to, customerPhone)) {
+          isFromCustomer = false
+        } else {
+          isFromCustomer = !(
+            message.direction === "outbound" || Boolean(message.agentsent)
+          )
+        }
+      } else {
+        isFromCustomer = !(
+          message.direction === "outbound" || Boolean(message.agentsent)
+        )
+      }
 
       return {
         id: message.id,
-        sender: isOutbound ? "assistant" : "customer",
-        senderLabel: isOutbound
-          ? "Assistant"
-          : message.company_name?.trim() || fallbackCustomerName,
+        sender: isFromCustomer ? "customer" : "assistant",
+        senderLabel: isFromCustomer
+          ? message.company_name?.trim() || fallbackCustomerName
+          : "Assistant",
         time: formatMessageTime(message.created_at),
         text: message.body || "",
         dateGroup: formatDateGroup(message.created_at),
+        from,
+        to,
       }
     })
 }
