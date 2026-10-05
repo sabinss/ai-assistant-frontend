@@ -12,6 +12,20 @@ export type ActivityCompany = {
   company_id: string | null
   latest_updated_at?: string | null
   has_inbound_message?: boolean
+  need_reply?: boolean | number | null
+  handed_off?: boolean | number | null
+  deal_id?: string | null
+  dealname?: string | null
+  dealstage?: string | null
+}
+
+export type ActivityArchivePayload = {
+  deal_id: string
+  dealname: string
+  dealstage: string
+  company_id: string
+  tenant_id: string
+  archive: boolean
 }
 
 export type ActivityMessage = {
@@ -40,10 +54,15 @@ export type Conversation = {
   avatarColor: string
   phone: string
   companyId: string | null
+  dealId: string
+  dealName: string
+  dealStage: string
   industry: string
   preview: string
   timestamp: string
   hasInboundMessage: boolean
+  needReply: number
+  handedOff: number
   status: ConversationStatus | null
   channel: ChannelTab
 }

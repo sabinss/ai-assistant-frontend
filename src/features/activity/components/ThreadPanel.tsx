@@ -12,10 +12,12 @@ type ThreadPanelProps = {
   messagesLoading?: boolean
   alert?: { title: string; body: string } | null
   showComposer?: boolean
+  isArchiving?: boolean
   draft: string
   onDraftChange: (value: string) => void
   onSend?: () => void
   onTakeOver?: () => void
+  onRevoke?: () => void
   onViewCustomer?: () => void
 }
 
@@ -25,10 +27,12 @@ export default function ThreadPanel({
   messagesLoading = false,
   alert,
   showComposer = false,
+  isArchiving = false,
   draft,
   onDraftChange,
   onSend,
   onTakeOver,
+  onRevoke,
   onViewCustomer,
 }: ThreadPanelProps) {
   if (!conversation) {
@@ -42,8 +46,15 @@ export default function ThreadPanel({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
       <ThreadHeader conversation={conversation} onViewCustomer={onViewCustomer} />
-      {alert && !showComposer && (
-        <AssistantAlert title={alert.title} body={alert.body} onTakeOver={onTakeOver} />
+      {alert && (
+        <AssistantAlert
+          title={alert.title}
+          body={alert.body}
+          isTakenOver={showComposer}
+          isLoading={isArchiving}
+          onTakeOver={onTakeOver}
+          onRevoke={onRevoke}
+        />
       )}
       <MessageThread messages={messages} loading={messagesLoading} />
       {showComposer && (

@@ -1,5 +1,9 @@
 import http from "@/config/http"
-import type { ActivityCompany, ActivityMessage } from "../types"
+import type {
+  ActivityArchivePayload,
+  ActivityCompany,
+  ActivityMessage,
+} from "../types"
 import { normalizeActivityMessages } from "../mapActivityMessages"
 
 export async function fetchActivityCompanies(
@@ -27,4 +31,14 @@ export async function fetchActivityCompanyById(
   )
   console.log("activity company detail response", data)
   return normalizeActivityMessages(data)
+}
+
+export async function archiveActivityCompany(
+  payload: ActivityArchivePayload,
+  accessToken: string
+): Promise<unknown> {
+  const { data } = await http.post("/activity/company/archive", payload, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  return data
 }

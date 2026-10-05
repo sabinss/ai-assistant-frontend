@@ -50,6 +50,11 @@ function formatFullDateTime(isoDate: string | null | undefined): string {
   })
 }
 
+function toCount(value: boolean | number | null | undefined): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value
+  return value ? 1 : 0
+}
+
 export function mapActivityCompaniesToConversations(
   companies: ActivityCompany[]
 ): Conversation[] {
@@ -63,6 +68,8 @@ export function mapActivityCompaniesToConversations(
   return sorted.map((company, index) => {
     const phone = company.to || ""
     const name = company.company_name?.trim() || "Unknown company"
+    const needReply = toCount(company.need_reply)
+    const handedOff = toCount(company.handed_off)
     return {
       id: company.company_id || phone || `company-${index}`,
       name,
@@ -70,10 +77,15 @@ export function mapActivityCompaniesToConversations(
       avatarColor: AVATAR_COLORS[index % AVATAR_COLORS.length],
       phone,
       companyId: company.company_id,
+      dealId: company.deal_id?.trim() || "",
+      dealName: company.dealname?.trim() || "",
+      dealStage: company.dealstage?.trim() || "",
       industry: "",
       preview: "",
       timestamp: formatFullDateTime(company.latest_updated_at),
       hasInboundMessage: Boolean(company.has_inbound_message),
+      needReply,
+      handedOff,
       status: null,
       channel: "texts",
     }

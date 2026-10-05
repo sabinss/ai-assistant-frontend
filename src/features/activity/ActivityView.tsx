@@ -1,12 +1,14 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { toast } from "react-toastify"
 import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
 import ConversationList from "./components/ConversationList"
 import ThreadPanel from "./components/ThreadPanel"
 import { ASSISTANT_ALERT, CHANNEL_TABS } from "./data/mockData"
 import {
+  archiveActivityCompany,
   fetchActivityCompanies,
   fetchActivityCompanyById,
 } from "./api/activityApi"
@@ -24,13 +26,14 @@ import type {
 import useAuth from "@/store/user"
 
 export default function ActivityView() {
-  const { access_token, _hasHydrated } = useAuth()
+  const { access_token, user_data, _hasHydrated } = useAuth()
   const [activeTab, setActiveTab] = useState<ChannelTab>("texts")
   const [activeFilter, setActiveFilter] = useState<ConversationFilter>("all")
   const [search, setSearch] = useState("")
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [draft, setDraft] = useState("")
   const [showComposer, setShowComposer] = useState(false)
+  const [isArchiving, setIsArchiving] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -112,8 +115,14 @@ export default function ActivityView() {
   const filterCounts = useMemo(
     () => ({
       all: channelConversations.length,
-      needs_reply: channelConversations.filter((c) => c.status === "needs_reply").length,
-      paused: channelConversations.filter((c) => c.status === "paused").length,
+      needs_reply: channelConversations.reduce(
+        (sum, c) => sum + (c.needReply || 0),
+        0
+      ),
+      paused: channelConversations.reduce(
+        (sum, c) => sum + (c.handedOff || 0),
+        0
+      ),
     }),
     [channelConversations]
   )
@@ -122,12 +131,53 @@ export default function ActivityView() {
     return channelConversations.filter((conversation) => {
       const matchesFilter =
         activeFilter === "all" ||
-        (activeFilter === "needs_reply" && conversation.status === "needs_reply") ||
-        (activeFilter === "paused" && conversation.status === "paused")
+        (activeFilter === "needs_reply" && conversation.needReply > 0) ||
+        (activeFilter === "paused" && conversation.handedOff > 0)
 
       return matchesFilter && matchesConversationSearch(conversation, search)
     })
   }, [channelConversations, activeFilter, search])
+
+  const handleArchiveToggle = useCallback(
+    async (archive: boolean) => {
+      if (!access_token || !selectedConversation?.companyId) {
+        toast.error("Company details are missing")
+        return
+      }
+
+      const tenantId = user_data?.organization
+      if (!tenantId) {
+        toast.error("Organization not found")
+        return
+      }
+
+      try {
+        setIsArchiving(true)
+        await archiveActivityCompany(
+          {
+            deal_id: selectedConversation.dealId,
+            dealname: selectedConversation.dealName,
+            dealstage: selectedConversation.dealStage,
+            company_id: selectedConversation.companyId,
+            tenant_id: tenantId,
+            archive,
+          },
+          access_token
+        )
+        setShowComposer(archive)
+        if (!archive) setDraft("")
+        toast.success(archive ? "Conversation paused" : "Takeover revoked")
+      } catch (err) {
+        console.log("Error updating archive status", err)
+        toast.error(
+          archive ? "Failed to pause conversation" : "Failed to revoke takeover"
+        )
+      } finally {
+        setIsArchiving(false)
+      }
+    },
+    [access_token, selectedConversation, user_data?.organization]
+  )
 
   const handleTabChange = (tab: ChannelTab) => {
     setActiveTab(tab)
@@ -180,10 +230,12 @@ export default function ActivityView() {
               messagesLoading={messagesLoading}
               alert={selectedConversation ? ASSISTANT_ALERT : null}
               showComposer={showComposer}
+              isArchiving={isArchiving}
               draft={draft}
               onDraftChange={setDraft}
               onSend={() => setDraft("")}
-              onTakeOver={() => setShowComposer(true)}
+              onTakeOver={() => handleArchiveToggle(true)}
+              onRevoke={() => handleArchiveToggle(false)}
             />
           </>
         )}

@@ -5,10 +5,20 @@ import { AlertCircle } from "lucide-react"
 type AssistantAlertProps = {
   title: string
   body: string
+  isTakenOver?: boolean
+  isLoading?: boolean
   onTakeOver?: () => void
+  onRevoke?: () => void
 }
 
-export default function AssistantAlert({ title, body, onTakeOver }: AssistantAlertProps) {
+export default function AssistantAlert({
+  title,
+  body,
+  isTakenOver = false,
+  isLoading = false,
+  onTakeOver,
+  onRevoke,
+}: AssistantAlertProps) {
   return (
     <div className="mx-4 mt-3 flex gap-3 rounded-lg border border-[#F0C9AE] bg-[#FDF3EC] p-3.5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E85D3B] text-white">
@@ -19,10 +29,17 @@ export default function AssistantAlert({ title, body, onTakeOver }: AssistantAle
         <p className="mt-1 text-[12.5px] leading-relaxed text-[#8A4A28]">{body}</p>
         <button
           type="button"
-          onClick={onTakeOver}
-          className="mt-2.5 rounded-md border border-[#1B3A8C] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1B3A8C] hover:bg-[#EEF2FB]"
+          disabled={isLoading}
+          onClick={isTakenOver ? onRevoke : onTakeOver}
+          className="mt-2.5 rounded-md border border-[#1B3A8C] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1B3A8C] hover:bg-[#EEF2FB] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          Pause and take over
+          {isLoading
+            ? isTakenOver
+              ? "Revoking..."
+              : "Pausing..."
+            : isTakenOver
+              ? "Revoke"
+              : "Pause and take over"}
         </button>
       </div>
     </div>
