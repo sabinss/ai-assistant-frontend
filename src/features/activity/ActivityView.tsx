@@ -142,14 +142,16 @@ export default function ActivityView() {
 
   const handleArchiveToggle = useCallback(
     async (archive: boolean) => {
+      if (isArchiving) return
+
       if (!access_token || !selectedConversation?.companyId) {
-        toast.error("Company details are missing")
+        toast.error("Company details are missing", { icon: false })
         return
       }
 
       const tenantId = user_data?.organization
       if (!tenantId) {
-        toast.error("Organization not found")
+        toast.error("Organization not found", { icon: false })
         return
       }
 
@@ -157,28 +159,46 @@ export default function ActivityView() {
         setIsArchiving(true)
         await archiveActivityCompany(
           {
-            deal_id: selectedConversation.dealId,
-            dealname: selectedConversation.dealName,
-            dealstage: selectedConversation.dealStage,
+            deal_id: selectedConversation.dealId || "",
+            dealname: selectedConversation.dealName || "",
+            dealstage: selectedConversation.dealStage || "",
             company_id: selectedConversation.companyId,
             tenant_id: tenantId,
             archive,
           },
           access_token
         )
+
+        // Keep company list + conversation view; only toggle composer/revoke state
         setShowComposer(archive)
         if (!archive) setDraft("")
-        toast.success(archive ? "Conversation paused" : "Takeover revoked")
-      } catch (err) {
+        toast.success(archive ? "Conversation paused" : "Takeover revoked", {
+          icon: false,
+        })
+      } catch (err: any) {
         console.log("Error updating archive status", err)
-        toast.error(
-          archive ? "Failed to pause conversation" : "Failed to revoke takeover"
-        )
+        const status = err?.response?.status
+        // Stay on Activity page; do not navigate away
+        if (status !== 401 && status !== 403) {
+          toast.error(
+            archive
+              ? "Failed to pause conversation"
+              : "Failed to revoke takeover",
+            { icon: false }
+          )
+        } else {
+          toast.error("Session expired. Please sign in again.", { icon: false })
+        }
       } finally {
         setIsArchiving(false)
       }
     },
-    [access_token, selectedConversation, user_data?.organization]
+    [
+      access_token,
+      isArchiving,
+      selectedConversation,
+      user_data?.organization,
+    ]
   )
 
   const handleTabChange = (tab: ChannelTab) => {

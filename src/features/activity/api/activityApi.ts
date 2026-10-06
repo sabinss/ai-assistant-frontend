@@ -38,7 +38,11 @@ export async function archiveActivityCompany(
   accessToken: string
 ): Promise<unknown> {
   const { data } = await http.post("/activity/company/archive", payload, {
-    headers: { Authorization: `Bearer ${accessToken}` },
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
   })
   return data
 }

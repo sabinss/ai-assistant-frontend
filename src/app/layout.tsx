@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { Poppins } from "next/font/google"
 import "./globals.css"
 import { ToastContainer } from "react-toastify"
+import "react-toastify/dist/ReactToastify.css"
 import Hydration from "./Hydration"
 const poppins = Poppins({ subsets: ["latin"], weight: "400" })
 import Script from "next/script" // ✅ import Script
@@ -25,7 +26,15 @@ export default function RootLayout({
         />
       </head>
       <body className={poppins.className}>
-        <ToastContainer />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
         {/* ✅ Load tracker script after page becomes interactive */}
         <Script src="/tracker.js" strategy="afterInteractive" />
         {children}
