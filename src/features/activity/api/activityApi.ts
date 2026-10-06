@@ -52,7 +52,7 @@ export async function sendActivityMessage(
   payload: ActivitySendMessagePayload,
   accessToken: string
 ): Promise<unknown> {
-  const { data } = await http.post("/activity/send", payload, {
+  const { data } = await http.post("/activity/call/sms", payload, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: "application/json",
