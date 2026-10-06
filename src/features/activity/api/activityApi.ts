@@ -33,7 +33,8 @@ export async function fetchActivityCompanies(
 
   if (Array.isArray(data)) return { data: data as ActivityCompany[], pagination }
   if (Array.isArray(data?.data)) return { data: data.data as ActivityCompany[], pagination }
-  if (Array.isArray(data?.companies)) return { data: data.companies as ActivityCompany[], pagination }
+  if (Array.isArray(data?.companies))
+    return { data: data.companies as ActivityCompany[], pagination }
   return { data: [], pagination }
 }
 
@@ -43,13 +44,10 @@ export async function fetchActivityCompanyById(
   page = 1,
   limit = 10
 ): Promise<ActivityMessagesResult> {
-  const { data } = await http.get(
-    `/activity/company/${encodeURIComponent(companyId)}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-      params: { page, limit },
-    }
-  )
+  const { data } = await http.get(`/activity/company/${encodeURIComponent(companyId)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    params: { page, limit },
+  })
   console.log("activity company detail response", data)
 
   return {
