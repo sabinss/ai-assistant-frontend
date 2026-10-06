@@ -13,6 +13,7 @@ type ThreadPanelProps = {
   alert?: { title: string; body: string } | null
   showComposer?: boolean
   isArchiving?: boolean
+  isSending?: boolean
   draft: string
   onDraftChange: (value: string) => void
   onSend?: () => void
@@ -28,6 +29,7 @@ export default function ThreadPanel({
   alert,
   showComposer = false,
   isArchiving = false,
+  isSending = false,
   draft,
   onDraftChange,
   onSend,
@@ -63,6 +65,7 @@ export default function ThreadPanel({
           value={draft}
           onChange={onDraftChange}
           onSend={onSend}
+          isSending={isSending}
         />
       )}
     </div>

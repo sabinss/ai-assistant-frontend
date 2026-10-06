@@ -28,6 +28,11 @@ export type ActivityArchivePayload = {
   archive: boolean
 }
 
+export type ActivitySendMessagePayload = {
+  message: string
+  to: string
+}
+
 export type ActivityMessage = {
   id: string
   body: string

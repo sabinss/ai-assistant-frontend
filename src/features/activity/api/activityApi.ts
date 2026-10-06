@@ -3,6 +3,7 @@ import type {
   ActivityArchivePayload,
   ActivityCompany,
   ActivityMessage,
+  ActivitySendMessagePayload,
 } from "../types"
 import { normalizeActivityMessages } from "../mapActivityMessages"
 
@@ -38,6 +39,20 @@ export async function archiveActivityCompany(
   accessToken: string
 ): Promise<unknown> {
   const { data } = await http.post("/activity/company/archive", payload, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  })
+  return data
+}
+
+export async function sendActivityMessage(
+  payload: ActivitySendMessagePayload,
+  accessToken: string
+): Promise<unknown> {
+  const { data } = await http.post("/activity/send", payload, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: "application/json",

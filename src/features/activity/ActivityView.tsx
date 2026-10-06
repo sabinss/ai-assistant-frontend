@@ -11,6 +11,7 @@ import {
   archiveActivityCompany,
   fetchActivityCompanies,
   fetchActivityCompanyById,
+  sendActivityMessage,
 } from "./api/activityApi"
 import {
   mapActivityCompaniesToConversations,
@@ -34,6 +35,7 @@ export default function ActivityView() {
   const [draft, setDraft] = useState("")
   const [showComposer, setShowComposer] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
+  const [isSending, setIsSending] = useState(false)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [messages, setMessages] = useState<ThreadMessage[]>([])
   const [loading, setLoading] = useState(true)
@@ -201,6 +203,41 @@ export default function ActivityView() {
     ]
   )
 
+  const handleSendMessage = useCallback(async () => {
+    const message = draft.trim()
+    if (!message || isSending) return
+
+    if (!access_token || !selectedConversation?.phone) {
+      toast.error("Company phone number is missing", { icon: false })
+      return
+    }
+
+    try {
+      setIsSending(true)
+      await sendActivityMessage(
+        {
+          message,
+          to: selectedConversation.phone,
+        },
+        access_token
+      )
+      setDraft("")
+      toast.success("Message sent", { icon: false })
+      await loadMessages(selectedConversation)
+    } catch (err) {
+      console.log("Error sending activity message", err)
+      toast.error("Failed to send message", { icon: false })
+    } finally {
+      setIsSending(false)
+    }
+  }, [
+    access_token,
+    draft,
+    isSending,
+    loadMessages,
+    selectedConversation,
+  ])
+
   const handleTabChange = (tab: ChannelTab) => {
     setActiveTab(tab)
     setActiveFilter("all")
@@ -253,9 +290,10 @@ export default function ActivityView() {
               alert={selectedConversation ? ASSISTANT_ALERT : null}
               showComposer={showComposer}
               isArchiving={isArchiving}
+              isSending={isSending}
               draft={draft}
               onDraftChange={setDraft}
-              onSend={() => setDraft("")}
+              onSend={handleSendMessage}
               onTakeOver={() => handleArchiveToggle(true)}
               onRevoke={() => handleArchiveToggle(false)}
             />
