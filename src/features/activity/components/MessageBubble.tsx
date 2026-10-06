@@ -17,7 +17,9 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
       }`}
     >
       <div className="mb-1 flex items-center gap-1 text-[11px] text-[#8A93A6]">
-        {outgoing && <Sparkles size={11} className="text-[#1B3A8C]" />}
+        {outgoing && (
+          <Sparkles className="h-3 w-3 shrink-0 text-[#1B3A8C]" aria-hidden />
+        )}
         <span>
           {message.senderLabel} · {message.time}
         </span>

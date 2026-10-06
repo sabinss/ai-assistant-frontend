@@ -28,16 +28,20 @@ export default function MessageComposer({
         <div className="mt-2 flex justify-end">
           <button
             type="button"
-            onClick={onSend}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              onSend?.()
+            }}
             className="inline-flex items-center gap-1.5 rounded-md bg-[#1B3A8C] px-3.5 py-1.5 text-[13px] font-medium text-white hover:bg-[#163075]"
           >
-            <Send size={14} />
+            <Send className="h-3.5 w-3.5 shrink-0" aria-hidden />
             Send
           </button>
         </div>
       </div>
       <p className="mt-2 flex items-start gap-1.5 text-[11.5px] leading-snug text-[#8A93A6]">
-        <Info size={13} className="mt-0.5 shrink-0" />
+        <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         Sending a message pauses auto-replies for this customer, so you and the Assistant
         don&apos;t reply over each other.
       </p>

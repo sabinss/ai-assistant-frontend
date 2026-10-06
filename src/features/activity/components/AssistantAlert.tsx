@@ -22,7 +22,7 @@ export default function AssistantAlert({
   return (
     <div className="mx-4 mt-3 flex gap-3 rounded-lg border border-[#F0C9AE] bg-[#FDF3EC] p-3.5">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E85D3B] text-white">
-        <AlertCircle size={15} strokeWidth={2.5} />
+        <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden />
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-[13px] font-semibold text-[#8A3A12]">{title}</p>
@@ -30,7 +30,15 @@ export default function AssistantAlert({
         <button
           type="button"
           disabled={isLoading}
-          onClick={isTakenOver ? onRevoke : onTakeOver}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            if (isTakenOver) {
+              onRevoke?.()
+            } else {
+              onTakeOver?.()
+            }
+          }}
           className="mt-2.5 rounded-md border border-[#1B3A8C] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1B3A8C] hover:bg-[#EEF2FB] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isLoading
