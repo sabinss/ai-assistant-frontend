@@ -10,5 +10,5 @@ export const MOCK_THREAD_MESSAGES: Record<string, ThreadMessage[]> = {}
 
 export const ASSISTANT_ALERT = {
   title: "The Assistant needs you here",
-  body: "Dana asked for a walkthrough of the reporting module. The Assistant can't arrange that, so it passed the conversation to you.",
+  body: "",
 }
