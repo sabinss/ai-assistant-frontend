@@ -1,23 +1,46 @@
 import http from "@/config/http"
 import type {
   ActivityArchivePayload,
+  ActivityCompaniesParams,
   ActivityCompany,
   ActivityMessage,
   ActivitySendMessagePayload,
+  PaginatedActivityCompanies,
 } from "../types"
 import { normalizeActivityMessages } from "../mapActivityMessages"
 
 export async function fetchActivityCompanies(
-  accessToken: string
-): Promise<ActivityCompany[]> {
+  { page, limit }: ActivityCompaniesParams,
+  accessToken: string,
+  signal?: AbortSignal
+): Promise<PaginatedActivityCompanies> {
   const { data } = await http.get("/activity/company", {
+    params: { page, limit },
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal,
   })
 
-  if (Array.isArray(data)) return data as ActivityCompany[]
-  if (Array.isArray(data?.data)) return data.data as ActivityCompany[]
-  if (Array.isArray(data?.companies)) return data.companies as ActivityCompany[]
-  return []
+  const rows: ActivityCompany[] = Array.isArray(data?.data) ? data.data : []
+  const p = data?.pagination
+  const totalRecords = Number(p?.totalRecords) || rows.length
+  const pageSize = Number(p?.limit) || limit
+  const currentPage = Number(p?.currentPage) || page
+  const totalPages =
+    Number(p?.totalPages) || Math.max(1, Math.ceil(totalRecords / pageSize))
+
+  return {
+    data: rows,
+    pagination: {
+      currentPage,
+      totalPages,
+      totalRecords,
+      limit: pageSize,
+      hasNextPage: p?.hasNextPage ?? currentPage < totalPages,
+      hasPrevPage: p?.hasPrevPage ?? currentPage > 1,
+      nextPage: p?.nextPage ?? null,
+      prevPage: p?.prevPage ?? null,
+    },
+  }
 }
 
 export async function fetchActivityCompanyById(
