@@ -5,7 +5,7 @@ export const TIER_SECTION_ORDER: ActionTier[] = ["today", "week", "month", "watc
 
 function normalizeApiTier(raw: unknown): ActionTier | null {
   if (typeof raw !== "string") return null
-  const s = raw.trim().toLowerCase().replace(/-/g, "_")
+  const s = raw.trim().toLowerCase().replace(/[\s-]+/g, "_")
   if (s === "today") return "today"
   if (s === "this_week" || s === "week") return "week"
   if (s === "this_month" || s === "month") return "month"
@@ -13,10 +13,27 @@ function normalizeApiTier(raw: unknown): ActionTier | null {
   return null
 }
 
+/** When API/DB omits `tier`, infer from due date so the row still appears under TIER_SECTION_ORDER. */
+function inferTierFromDueDate(due: unknown): ActionTier {
+  if (typeof due !== "string" || !due.trim()) return "watch"
+  const d = new Date(`${due.trim()}T12:00:00`)
+  if (Number.isNaN(d.getTime())) return "watch"
+  const diffDays = Math.ceil((d.getTime() - Date.now()) / 86400000)
+  if (diffDays <= 0) return "today"
+  if (diffDays <= 7) return "week"
+  if (diffDays <= 31) return "month"
+  return "watch"
+}
+
 function num(ctx: Record<string, unknown> | null, key: string): number | null {
   if (!ctx) return null
   const v = ctx[key]
-  return typeof v === "number" && Number.isFinite(v) ? v : null
+  if (typeof v === "number" && Number.isFinite(v)) return v
+  if (typeof v === "string" && v.trim()) {
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+  return null
 }
 
 function str(ctx: Record<string, unknown> | null, key: string): string | null {
@@ -25,9 +42,25 @@ function str(ctx: Record<string, unknown> | null, key: string): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null
 }
 
+function parseContextObject(ctx: unknown): Record<string, unknown> | null {
+  if (ctx == null) return null
+  if (typeof ctx === "object" && !Array.isArray(ctx)) return ctx as Record<string, unknown>
+  if (typeof ctx === "string" && ctx.trim()) {
+    try {
+      const parsed = JSON.parse(ctx) as unknown
+      if (parsed != null && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>
+      }
+    } catch {
+      return null
+    }
+  }
+  return null
+}
+
 function mapContext(ctx: unknown): ActionScores {
-  if (ctx == null || typeof ctx !== "object") return {}
-  const o = ctx as Record<string, unknown>
+  const o = parseContextObject(ctx)
+  if (!o) return {}
   return {
     risk: num(o, "risk_score"),
     value: num(o, "value_score"),
@@ -55,13 +88,25 @@ function renewalFromDueDate(due: unknown): { renewal: string | null; renewalUrge
   return { renewal, renewalUrgent }
 }
 
+function coerceActionDetailRaw(raw: unknown): unknown {
+  if (typeof raw !== "string" || !raw.trim()) return raw
+  const trimmed = raw.trim()
+  if (!(trimmed.startsWith("[") || trimmed.startsWith("{"))) return raw
+  try {
+    return JSON.parse(trimmed) as unknown
+  } catch {
+    return raw
+  }
+}
+
 function parseActionDetailFromRow(row: Record<string, unknown>): {
   parts: ActionDetailPart[] | null
   legacyDetail: string | null
   legacyHtml: boolean
 } {
-  const raw =
+  const raw = coerceActionDetailRaw(
     row.action_details ?? row.actionDetails ?? row.action_detail ?? row.actionDetail
+  )
 
   if (Array.isArray(raw)) {
     const parts: ActionDetailPart[] = []
@@ -93,13 +138,16 @@ function parseActionDetailFromRow(row: Record<string, unknown>): {
 }
 
 export function mapActionDetailRow(row: Record<string, unknown>): ActionItem | null {
-  const tier = normalizeApiTier(row.tier)
-  if (!tier) return null
-
-  const id = row.id != null ? String(row.id) : ""
+  const idRaw = row.id ?? row.action_id ?? row.actionId
+  const id = idRaw != null && String(idRaw).trim() !== "" ? String(idRaw) : ""
   if (!id) return null
 
-  const apiTier = typeof row.tier === "string" ? row.tier : tier
+  const tier = normalizeApiTier(row.tier) ?? inferTierFromDueDate(row.due_date)
+  const apiTier =
+    typeof row.tier === "string" && row.tier.trim()
+      ? row.tier.trim()
+      : tier
+
   const scores = mapContext(row.context)
   const { stage, stageLabel } = inferStageFromRisk(scores.risk ?? null)
   const { renewal, renewalUrgent } = renewalFromDueDate(row.due_date)
@@ -113,11 +161,13 @@ export function mapActionDetailRow(row: Record<string, unknown>): ActionItem | n
 
   const { parts, legacyDetail, legacyHtml } = parseActionDetailFromRow(row)
 
+  const companyRaw = row.company_name ?? row.companyName ?? row.contact_name ?? row.contactName
+
   return {
     id,
     tier,
     apiTier,
-    company: typeof row.company_name === "string" ? row.company_name : "",
+    company: typeof companyRaw === "string" ? companyRaw : "",
     stage,
     stageLabel,
     renewal,
@@ -138,19 +188,25 @@ export function mapActionDetailRow(row: Record<string, unknown>): ActionItem | n
 }
 
 function pickActionDetailList(payload: object): unknown[] | null {
-  const p = payload as {
-    actionDetails?: unknown
-    action_details?: unknown
-    actionDetail?: unknown
-    action_detail?: unknown
+  const root = payload as Record<string, unknown>
+  // Backend (`organizationActionCenter`) returns `{ actionStats, actionDetail }`.
+  // Also accept nested `{ data: { actionDetail } }` and snake/plural variants.
+  const candidates: unknown[] = [
+    root.actionDetail,
+    root.actionDetails,
+    root.action_detail,
+    root.action_details,
+  ]
+  const nested = root.data
+  if (nested != null && typeof nested === "object") {
+    const n = nested as Record<string, unknown>
+    candidates.push(n.actionDetail, n.actionDetails, n.action_detail, n.action_details)
   }
-  const list =
-    p.actionDetails ??
-    p.action_details ??
-    p.actionDetail ??
-    p.action_detail
-  if (!Array.isArray(list) || list.length === 0) return null
-  return list
+
+  for (const list of candidates) {
+    if (Array.isArray(list) && list.length > 0) return list
+  }
+  return null
 }
 
 /**
