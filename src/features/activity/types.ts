@@ -13,10 +13,32 @@ export type ActivityCompany = {
   latest_updated_at?: string | null
   has_inbound_message?: boolean
   need_reply?: boolean | number | null
+  Need_Reply?: boolean | number | null
   handed_off?: boolean | number | null
   deal_id?: string | null
   dealname?: string | null
   dealstage?: string | null
+}
+
+export type ActivityPagination = {
+  currentPage: number
+  totalPages: number
+  totalRecords: number
+  limit: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+  nextPage: number | null
+  prevPage: number | null
+}
+
+export type PaginatedActivityCompanies = {
+  data: ActivityCompany[]
+  pagination: ActivityPagination
+}
+
+export type ActivityCompaniesParams = {
+  page: number
+  limit: number
 }
 
 export type ActivityArchivePayload = {

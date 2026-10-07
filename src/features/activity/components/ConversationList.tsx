@@ -3,7 +3,12 @@
 import ConversationSearch from "./ConversationSearch"
 import ConversationFilters from "./ConversationFilters"
 import ConversationListItem from "./ConversationListItem"
-import type { Conversation, ConversationFilter } from "../types"
+import ConversationPagination from "./ConversationPagination"
+import type {
+  ActivityPagination,
+  Conversation,
+  ConversationFilter,
+} from "../types"
 
 type ConversationListProps = {
   conversations: Conversation[]
@@ -14,6 +19,12 @@ type ConversationListProps = {
   onSearchChange: (value: string) => void
   onFilterChange: (filter: ConversationFilter) => void
   onSelect: (id: string) => void
+  pagination: ActivityPagination | null
+  limit: number
+  isFetching: boolean
+  onPrevPage: () => void
+  onNextPage: () => void
+  onLimitChange: (limit: number) => void
 }
 
 export default function ConversationList({
@@ -25,6 +36,12 @@ export default function ConversationList({
   onSearchChange,
   onFilterChange,
   onSelect,
+  pagination,
+  limit,
+  isFetching,
+  onPrevPage,
+  onNextPage,
+  onLimitChange,
 }: ConversationListProps) {
   const filters = [
     { id: "all" as const, label: "All", count: filterCounts.all },
@@ -43,7 +60,11 @@ export default function ConversationList({
           onChange={onFilterChange}
         />
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        className={`min-h-0 flex-1 overflow-y-auto transition-opacity ${
+          isFetching ? "opacity-60" : ""
+        }`}
+      >
         {conversations.length === 0 ? (
           <p className="px-4 py-8 text-center text-[13px] text-[#8A93A6]">
             No conversations found
@@ -59,6 +80,16 @@ export default function ConversationList({
           ))
         )}
       </div>
+      {pagination && (
+        <ConversationPagination
+          pagination={pagination}
+          limit={limit}
+          disabled={isFetching}
+          onPrev={onPrevPage}
+          onNext={onNextPage}
+          onLimitChange={onLimitChange}
+        />
+      )}
     </div>
   )
 }

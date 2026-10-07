@@ -68,7 +68,7 @@ export function mapActivityCompaniesToConversations(
   return sorted.map((company, index) => {
     const phone = company.to || ""
     const name = company.company_name?.trim() || "Unknown company"
-    const needReply = toCount(company.need_reply)
+    const needReply = toCount(company.need_reply ?? company.Need_Reply)
     const handedOff = toCount(company.handed_off)
     return {
       id: company.company_id || phone || `company-${index}`,

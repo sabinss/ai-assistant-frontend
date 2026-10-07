@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { toast } from "react-toastify"
 import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
@@ -19,6 +19,7 @@ import {
 } from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
+  ActivityPagination,
   ChannelTab,
   Conversation,
   ConversationFilter,
@@ -42,6 +43,13 @@ export default function ActivityView() {
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [pagination, setPagination] = useState<ActivityPagination | null>(null)
+  const [isFetching, setIsFetching] = useState(false)
+  const requestIdRef = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
+
   const loadCompanies = useCallback(async () => {
     if (!_hasHydrated) return
     if (!access_token) {
@@ -51,25 +59,61 @@ export default function ActivityView() {
       return
     }
 
+    abortRef.current?.abort()
+    const controller = new AbortController()
+    abortRef.current = controller
+    const requestId = ++requestIdRef.current
+    const isStale = () => requestId !== requestIdRef.current
+
     try {
-      setLoading(true)
+      setIsFetching(true)
       setLoadError(null)
-      const companies = await fetchActivityCompanies(access_token)
-      const mapped = mapActivityCompaniesToConversations(companies)
+      const result = await fetchActivityCompanies(
+        { page, limit },
+        access_token,
+        controller.signal
+      )
+      if (isStale()) return
+
+      const { totalPages } = result.pagination
+      const lastPage = Math.max(totalPages, 1)
+      if (page > lastPage) {
+        // Page no longer exists (e.g. after archive); clamp and refetch.
+        setPage(lastPage)
+        return
+      }
+
+      const mapped = mapActivityCompaniesToConversations(result.data)
+      setPagination(result.pagination)
       setConversations(mapped)
-      setSelectedId((prev) => prev ?? mapped[0]?.id ?? null)
-    } catch (err) {
+      setSelectedId((prev) =>
+        prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
+      )
+      setLoading(false)
+      setIsFetching(false)
+    } catch (err: any) {
+      if (isStale() || err?.code === "ERR_CANCELED") return
       console.log("Error loading activity companies", err)
       setConversations([])
-      setLoadError("Failed to load activity companies.")
-    } finally {
+      setPagination(null)
+      setLoadError(
+        err?.response?.data?.message || "Failed to load activity companies."
+      )
       setLoading(false)
+      setIsFetching(false)
     }
-  }, [access_token, _hasHydrated])
+  }, [access_token, _hasHydrated, page, limit])
 
   useEffect(() => {
     loadCompanies()
   }, [loadCompanies])
+
+  useEffect(() => () => abortRef.current?.abort(), [])
+
+  const handleLimitChange = (next: number) => {
+    setLimit(next)
+    setPage(1)
+  }
 
   const channelConversations = useMemo(
     () =>
@@ -174,6 +218,7 @@ export default function ActivityView() {
         // Keep company list + conversation view; only toggle composer/revoke state
         setShowComposer(archive)
         if (!archive) setDraft("")
+        void loadCompanies()
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
           icon: false,
         })
@@ -198,6 +243,7 @@ export default function ActivityView() {
     [
       access_token,
       isArchiving,
+      loadCompanies,
       selectedConversation,
       user_data?.organization,
     ]
@@ -282,6 +328,12 @@ export default function ActivityView() {
                 setDraft("")
                 setShowComposer(false)
               }}
+              pagination={pagination}
+              limit={limit}
+              isFetching={isFetching}
+              onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
+              onNextPage={() => setPage((p) => p + 1)}
+              onLimitChange={handleLimitChange}
             />
             <ThreadPanel
               conversation={selectedConversation}
