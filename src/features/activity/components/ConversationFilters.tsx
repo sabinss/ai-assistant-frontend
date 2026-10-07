@@ -1,5 +1,5 @@
 "use client"
-
+//test
 import type { ConversationFilter } from "../types"
 
 type FilterOption = {
@@ -28,11 +28,10 @@ export default function ConversationFilters({
             key={filter.id}
             type="button"
             onClick={() => onChange(filter.id)}
-            className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
-              isActive
-                ? "bg-[#1B3A8C] text-white"
-                : "border border-[#1B3A8C]/35 bg-white text-[#1B3A8C] hover:bg-[#EEF2FB]"
-            }`}
+            className={`rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${isActive
+              ? "bg-[#1B3A8C] text-white"
+              : "border border-[#1B3A8C]/35 bg-white text-[#1B3A8C] hover:bg-[#EEF2FB]"
+              }`}
           >
             {filter.label} · {filter.count}
           </button>
