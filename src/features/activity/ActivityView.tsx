@@ -11,6 +11,7 @@ import {
   archiveActivityCompany,
   fetchActivityCompanies,
   fetchActivityCompanyById,
+  fetchActivityCounts,
   sendActivityMessage,
 } from "./api/activityApi"
 import {
@@ -19,6 +20,7 @@ import {
 } from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
+  ActivityFilterCounts,
   ActivityPagination,
   ChannelTab,
   Conversation,
@@ -26,6 +28,13 @@ import type {
   ThreadMessage,
 } from "./types"
 import useAuth from "@/store/user"
+
+const EMPTY_FILTER_COUNTS: ActivityFilterCounts = {
+  all: 0,
+  received: 0,
+  needs_reply: 0,
+  paused: 0,
+}
 
 export default function ActivityView() {
   const { access_token, user_data, _hasHydrated } = useAuth()
@@ -42,18 +51,34 @@ export default function ActivityView() {
   const [loading, setLoading] = useState(true)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [filterCounts, setFilterCounts] =
+    useState<ActivityFilterCounts>(EMPTY_FILTER_COUNTS)
 
   const [page, setPage] = useState(1)
-  const [limit, setLimit] = useState(10)
+  const limit = 20
   const [pagination, setPagination] = useState<ActivityPagination | null>(null)
   const [isFetching, setIsFetching] = useState(false)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
 
+  const loadFilterCounts = useCallback(async () => {
+    if (!_hasHydrated || !access_token) {
+      setFilterCounts(EMPTY_FILTER_COUNTS)
+      return
+    }
+    try {
+      const counts = await fetchActivityCounts(access_token)
+      setFilterCounts(counts)
+    } catch (err) {
+      console.log("Error loading activity counts", err)
+    }
+  }, [access_token, _hasHydrated])
+
   const loadCompanies = useCallback(async () => {
     if (!_hasHydrated) return
     if (!access_token) {
       setConversations([])
+      setFilterCounts(EMPTY_FILTER_COUNTS)
       setLoadError("Sign-in is required to load activity.")
       setLoading(false)
       return
@@ -85,10 +110,18 @@ export default function ActivityView() {
 
       const mapped = mapActivityCompaniesToConversations(result.data)
       setPagination(result.pagination)
-      setConversations(mapped)
-      setSelectedId((prev) =>
-        prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
-      )
+      if (page > 1) {
+        // Infinite scroll: append the next page, skipping duplicates.
+        setConversations((prev) => {
+          const seen = new Set(prev.map((c) => c.id))
+          return [...prev, ...mapped.filter((c) => !seen.has(c.id))]
+        })
+      } else {
+        setConversations(mapped)
+        setSelectedId((prev) =>
+          prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
+        )
+      }
       setLoading(false)
       setIsFetching(false)
     } catch (err: any) {
@@ -108,12 +141,22 @@ export default function ActivityView() {
     loadCompanies()
   }, [loadCompanies])
 
+  useEffect(() => {
+    void loadFilterCounts()
+  }, [loadFilterCounts])
+
   useEffect(() => () => abortRef.current?.abort(), [])
 
-  const handleLimitChange = (next: number) => {
-    setLimit(next)
-    setPage(1)
-  }
+  // Reload the list from the first page (used after mutations).
+  const refreshCompanies = useCallback(() => {
+    if (page === 1) void loadCompanies()
+    else setPage(1)
+  }, [page, loadCompanies])
+
+  const handleLoadMore = useCallback(() => {
+    if (isFetching || !pagination?.hasNextPage) return
+    setPage(pagination.currentPage + 1)
+  }, [isFetching, pagination])
 
   const channelConversations = useMemo(
     () =>
@@ -158,22 +201,6 @@ export default function ActivityView() {
     loadMessages(selectedConversation)
   }, [loadMessages, selectedConversation])
 
-  const filterCounts = useMemo(
-    () => ({
-      all: channelConversations.length,
-      received: channelConversations.filter((c) => c.hasInboundMessage).length,
-      needs_reply: channelConversations.reduce(
-        (sum, c) => sum + (c.needReply || 0),
-        0
-      ),
-      paused: channelConversations.reduce(
-        (sum, c) => sum + (c.handedOff || 0),
-        0
-      ),
-    }),
-    [channelConversations]
-  )
-
   const filteredConversations = useMemo(() => {
     return channelConversations.filter((conversation) => {
       const matchesFilter =
@@ -201,6 +228,26 @@ export default function ActivityView() {
         return
       }
 
+      const wasPaused = selectedConversation.handedOff > 0
+
+      // Optimistic chip update so Paused reflects immediately
+      if (archive !== wasPaused) {
+        setFilterCounts((prev) => ({
+          ...prev,
+          paused: Math.max(0, prev.paused + (archive ? 1 : -1)),
+        }))
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.id === selectedConversation.id
+              ? { ...c, handedOff: archive ? 1 : 0 }
+              : c
+          )
+        )
+      }
+
+      setShowComposer(archive)
+      if (!archive) setDraft("")
+
       try {
         setIsArchiving(true)
         await archiveActivityCompany(
@@ -215,14 +262,28 @@ export default function ActivityView() {
           access_token
         )
 
-        // Keep company list + conversation view; only toggle composer/revoke state
-        setShowComposer(archive)
-        if (!archive) setDraft("")
-        void loadCompanies()
+        refreshCompanies()
+        void loadFilterCounts()
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
           icon: false,
         })
       } catch (err: any) {
+        // Roll back optimistic chip / list state
+        if (archive !== wasPaused) {
+          setFilterCounts((prev) => ({
+            ...prev,
+            paused: Math.max(0, prev.paused + (archive ? -1 : 1)),
+          }))
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === selectedConversation.id
+                ? { ...c, handedOff: wasPaused ? 1 : 0 }
+                : c
+            )
+          )
+          setShowComposer(wasPaused)
+        }
+
         console.log("Error updating archive status", err)
         const status = err?.response?.status
         // Stay on Activity page; do not navigate away
@@ -243,7 +304,8 @@ export default function ActivityView() {
     [
       access_token,
       isArchiving,
-      loadCompanies,
+      refreshCompanies,
+      loadFilterCounts,
       selectedConversation,
       user_data?.organization,
     ]
@@ -307,7 +369,10 @@ export default function ActivityView() {
             <p className="text-[14px] text-[#C0392B]">{loadError}</p>
             <button
               type="button"
-              onClick={loadCompanies}
+              onClick={() => {
+                void loadCompanies()
+                void loadFilterCounts()
+              }}
               className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
             >
               Retry
@@ -326,14 +391,12 @@ export default function ActivityView() {
               onSelect={(id) => {
                 setSelectedId(id)
                 setDraft("")
-                setShowComposer(false)
+                const next = conversations.find((c) => c.id === id)
+                setShowComposer((next?.handedOff ?? 0) > 0)
               }}
-              pagination={pagination}
-              limit={limit}
+              hasMore={Boolean(pagination?.hasNextPage)}
               isFetching={isFetching}
-              onPrevPage={() => setPage((p) => Math.max(1, p - 1))}
-              onNextPage={() => setPage((p) => p + 1)}
-              onLimitChange={handleLimitChange}
+              onLoadMore={handleLoadMore}
             />
             <ThreadPanel
               conversation={selectedConversation}

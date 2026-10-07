@@ -1,14 +1,10 @@
 "use client"
 
+import { useEffect, useRef } from "react"
 import ConversationSearch from "./ConversationSearch"
 import ConversationFilters from "./ConversationFilters"
 import ConversationListItem from "./ConversationListItem"
-import ConversationPagination from "./ConversationPagination"
-import type {
-  ActivityPagination,
-  Conversation,
-  ConversationFilter,
-} from "../types"
+import type { Conversation, ConversationFilter } from "../types"
 
 type ConversationListProps = {
   conversations: Conversation[]
@@ -19,12 +15,9 @@ type ConversationListProps = {
   onSearchChange: (value: string) => void
   onFilterChange: (filter: ConversationFilter) => void
   onSelect: (id: string) => void
-  pagination: ActivityPagination | null
-  limit: number
+  hasMore: boolean
   isFetching: boolean
-  onPrevPage: () => void
-  onNextPage: () => void
-  onLimitChange: (limit: number) => void
+  onLoadMore: () => void
 }
 
 export default function ConversationList({
@@ -36,13 +29,28 @@ export default function ConversationList({
   onSearchChange,
   onFilterChange,
   onSelect,
-  pagination,
-  limit,
+  hasMore,
   isFetching,
-  onPrevPage,
-  onNextPage,
-  onLimitChange,
+  onLoadMore,
 }: ConversationListProps) {
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  // Fetch the next page when the bottom sentinel scrolls into view.
+  // Re-runs after each fetch so a still-visible sentinel keeps loading.
+  useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel || !hasMore || isFetching) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) onLoadMore()
+      },
+      { root: scrollRef.current, rootMargin: "120px" }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasMore, isFetching, onLoadMore, conversations.length])
+
   const filters = [
     { id: "all" as const, label: "All", count: filterCounts.all },
     { id: "received" as const, label: "Received", count: filterCounts.received },
@@ -60,10 +68,7 @@ export default function ConversationList({
           onChange={onFilterChange}
         />
       </div>
-      <div
-        className={`min-h-0 flex-1 overflow-y-auto transition-opacity ${isFetching ? "opacity-60" : ""
-          }`}
-      >
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
         {conversations.length === 0 ? (
           <p className="px-4 py-8 text-center text-[13px] text-[#8A93A6]">
             No conversations found
@@ -78,17 +83,13 @@ export default function ConversationList({
             />
           ))
         )}
+        {hasMore && <div ref={sentinelRef} className="h-1" />}
+        {isFetching && conversations.length > 0 && (
+          <p className="py-3 text-center text-[12px] text-[#8A93A6]">
+            Loading more...
+          </p>
+        )}
       </div>
-      {pagination && (
-        <ConversationPagination
-          pagination={pagination}
-          limit={limit}
-          disabled={isFetching}
-          onPrev={onPrevPage}
-          onNext={onNextPage}
-          onLimitChange={onLimitChange}
-        />
-      )}
     </div>
   )
 }
