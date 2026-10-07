@@ -2,6 +2,7 @@ import http from "@/config/http"
 import type {
   ActivityArchivePayload,
   ActivityCompany,
+  ActivityFilterCounts,
   ActivityMessage,
   ActivitySendMessagePayload,
   Pagination,
@@ -56,6 +57,35 @@ function normalizePagination(data: unknown): Pagination | null {
     hasPrevPage,
     nextPage: nextPage == null ? null : Number(nextPage),
     prevPage: prevPage == null ? null : Number(prevPage),
+  }
+}
+
+function toNonNegInt(value: unknown): number {
+  const n = typeof value === "number" ? value : parseInt(String(value ?? ""), 10)
+  if (!Number.isFinite(n) || n < 0) return 0
+  return Math.floor(n)
+}
+
+/**
+ * GET `/activity/count` — totals for All / Received / Needs reply / Paused chips.
+ */
+export async function fetchActivityCounts(
+  accessToken: string
+): Promise<ActivityFilterCounts> {
+  const { data } = await http.get("/activity/count", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  const row =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : {}
+
+  return {
+    all: toNonNegInt(row.total_cnt),
+    received: toNonNegInt(row.total_has_inbound_msg_cnt),
+    needs_reply: toNonNegInt(row.total_need_reply_cnt),
+    paused: toNonNegInt(row.total_handed_off_cnt),
   }
 }
 

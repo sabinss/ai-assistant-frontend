@@ -44,6 +44,14 @@ export type ActivitySendMessagePayload = {
   to: string
 }
 
+/** Response from `GET /activity/count` — drives conversation filter chip totals. */
+export type ActivityFilterCounts = {
+  all: number
+  received: number
+  needs_reply: number
+  paused: number
+}
+
 export type ActivityMessage = {
   id: string
   body: string
