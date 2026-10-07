@@ -36,6 +36,22 @@ const EMPTY_FILTER_COUNTS: ActivityFilterCounts = {
   paused: 0,
 }
 
+const PAGE_SIZE = 10
+
+function mergeConversations(
+  existing: Conversation[],
+  incoming: Conversation[]
+): Conversation[] {
+  const seen = new Set(existing.map((c) => c.id))
+  const merged = [...existing]
+  for (const item of incoming) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    merged.push(item)
+  }
+  return merged
+}
+
 export default function ActivityView() {
   const { access_token, user_data, _hasHydrated } = useAuth()
   const [activeTab, setActiveTab] = useState<ChannelTab>("texts")
@@ -54,12 +70,84 @@ export default function ActivityView() {
   const [filterCounts, setFilterCounts] =
     useState<ActivityFilterCounts>(EMPTY_FILTER_COUNTS)
 
-  const [page, setPage] = useState(1)
-  const limit = 20
   const [pagination, setPagination] = useState<ActivityPagination | null>(null)
-  const [isFetching, setIsFetching] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
+  const loadingMoreLockRef = useRef(false)
+
+  const loadCompanies = useCallback(
+    async (page = 1) => {
+      if (!_hasHydrated) return
+      if (!access_token) {
+        setConversations([])
+        setPagination(null)
+        setLoadError("Sign-in is required to load activity.")
+        setLoading(false)
+        return
+      }
+
+      const isFirstPage = page === 1
+
+      if (isFirstPage) {
+        abortRef.current?.abort()
+        const controller = new AbortController()
+        abortRef.current = controller
+        const requestId = ++requestIdRef.current
+        const isStale = () => requestId !== requestIdRef.current
+
+        try {
+          setLoading(true)
+          setLoadError(null)
+          loadingMoreLockRef.current = false
+          const result = await fetchActivityCompanies(
+            { page: 1, limit: PAGE_SIZE },
+            access_token,
+            controller.signal
+          )
+          if (isStale()) return
+
+          const mapped = mapActivityCompaniesToConversations(result.data)
+          setPagination(result.pagination)
+          setConversations(mapped)
+          setSelectedId((prev) =>
+            prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
+          )
+        } catch (err: any) {
+          if (isStale() || err?.code === "ERR_CANCELED") return
+          console.log("Error loading activity companies", err)
+          setConversations([])
+          setPagination(null)
+          setLoadError(
+            err?.response?.data?.message || "Failed to load activity companies."
+          )
+        } finally {
+          if (!isStale()) setLoading(false)
+        }
+        return
+      }
+
+      if (loadingMoreLockRef.current) return
+      loadingMoreLockRef.current = true
+      setLoadingMore(true)
+
+      try {
+        const result = await fetchActivityCompanies(
+          { page, limit: PAGE_SIZE },
+          access_token
+        )
+        const mapped = mapActivityCompaniesToConversations(result.data)
+        setPagination(result.pagination)
+        setConversations((prev) => mergeConversations(prev, mapped))
+      } catch (err) {
+        console.log("Error loading more activity companies", err)
+      } finally {
+        loadingMoreLockRef.current = false
+        setLoadingMore(false)
+      }
+    },
+    [access_token, _hasHydrated]
+  )
 
   const loadFilterCounts = useCallback(async () => {
     if (!_hasHydrated || !access_token) {
@@ -70,75 +158,12 @@ export default function ActivityView() {
       const counts = await fetchActivityCounts(access_token)
       setFilterCounts(counts)
     } catch (err) {
-      console.log("Error loading activity counts", err)
+      console.log("Error loading activity filter counts", err)
     }
   }, [access_token, _hasHydrated])
 
-  const loadCompanies = useCallback(async () => {
-    if (!_hasHydrated) return
-    if (!access_token) {
-      setConversations([])
-      setFilterCounts(EMPTY_FILTER_COUNTS)
-      setLoadError("Sign-in is required to load activity.")
-      setLoading(false)
-      return
-    }
-
-    abortRef.current?.abort()
-    const controller = new AbortController()
-    abortRef.current = controller
-    const requestId = ++requestIdRef.current
-    const isStale = () => requestId !== requestIdRef.current
-
-    try {
-      setIsFetching(true)
-      setLoadError(null)
-      const result = await fetchActivityCompanies(
-        { page, limit },
-        access_token,
-        controller.signal
-      )
-      if (isStale()) return
-
-      const { totalPages } = result.pagination
-      const lastPage = Math.max(totalPages, 1)
-      if (page > lastPage) {
-        // Page no longer exists (e.g. after archive); clamp and refetch.
-        setPage(lastPage)
-        return
-      }
-
-      const mapped = mapActivityCompaniesToConversations(result.data)
-      setPagination(result.pagination)
-      if (page > 1) {
-        // Infinite scroll: append the next page, skipping duplicates.
-        setConversations((prev) => {
-          const seen = new Set(prev.map((c) => c.id))
-          return [...prev, ...mapped.filter((c) => !seen.has(c.id))]
-        })
-      } else {
-        setConversations(mapped)
-        setSelectedId((prev) =>
-          prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
-        )
-      }
-      setLoading(false)
-      setIsFetching(false)
-    } catch (err: any) {
-      if (isStale() || err?.code === "ERR_CANCELED") return
-      console.log("Error loading activity companies", err)
-      setConversations([])
-      setPagination(null)
-      setLoadError(
-        err?.response?.data?.message || "Failed to load activity companies."
-      )
-      setLoading(false)
-      setIsFetching(false)
-    }
-  }, [access_token, _hasHydrated, page, limit])
-
   useEffect(() => {
-    loadCompanies()
+    void loadCompanies(1)
   }, [loadCompanies])
 
   useEffect(() => {
@@ -147,16 +172,12 @@ export default function ActivityView() {
 
   useEffect(() => () => abortRef.current?.abort(), [])
 
-  // Reload the list from the first page (used after mutations).
-  const refreshCompanies = useCallback(() => {
-    if (page === 1) void loadCompanies()
-    else setPage(1)
-  }, [page, loadCompanies])
-
   const handleLoadMore = useCallback(() => {
-    if (isFetching || !pagination?.hasNextPage) return
-    setPage(pagination.currentPage + 1)
-  }, [isFetching, pagination])
+    if (loading || loadingMore || loadingMoreLockRef.current) return
+    if (!pagination?.hasNextPage) return
+    const nextPage = pagination.nextPage ?? pagination.currentPage + 1
+    void loadCompanies(nextPage)
+  }, [loadCompanies, loading, loadingMore, pagination])
 
   const channelConversations = useMemo(
     () =>
@@ -228,9 +249,9 @@ export default function ActivityView() {
         return
       }
 
+      const companyId = selectedConversation.companyId
       const wasPaused = selectedConversation.handedOff > 0
 
-      // Optimistic chip update so Paused reflects immediately
       if (archive !== wasPaused) {
         setFilterCounts((prev) => ({
           ...prev,
@@ -238,13 +259,16 @@ export default function ActivityView() {
         }))
         setConversations((prev) =>
           prev.map((c) =>
-            c.id === selectedConversation.id
-              ? { ...c, handedOff: archive ? 1 : 0 }
+            c.companyId === companyId
+              ? {
+                  ...c,
+                  handedOff: archive ? 1 : 0,
+                  status: archive ? "paused" : null,
+                }
               : c
           )
         )
       }
-
       setShowComposer(archive)
       if (!archive) setDraft("")
 
@@ -255,20 +279,18 @@ export default function ActivityView() {
             deal_id: selectedConversation.dealId || "",
             dealname: selectedConversation.dealName || "",
             dealstage: selectedConversation.dealStage || "",
-            company_id: selectedConversation.companyId,
+            company_id: companyId,
             tenant_id: tenantId,
             archive,
           },
           access_token
         )
 
-        refreshCompanies()
         void loadFilterCounts()
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
           icon: false,
         })
       } catch (err: any) {
-        // Roll back optimistic chip / list state
         if (archive !== wasPaused) {
           setFilterCounts((prev) => ({
             ...prev,
@@ -276,8 +298,12 @@ export default function ActivityView() {
           }))
           setConversations((prev) =>
             prev.map((c) =>
-              c.id === selectedConversation.id
-                ? { ...c, handedOff: wasPaused ? 1 : 0 }
+              c.companyId === companyId
+                ? {
+                    ...c,
+                    handedOff: wasPaused ? 1 : 0,
+                    status: wasPaused ? "paused" : null,
+                  }
                 : c
             )
           )
@@ -286,7 +312,6 @@ export default function ActivityView() {
 
         console.log("Error updating archive status", err)
         const status = err?.response?.status
-        // Stay on Activity page; do not navigate away
         if (status !== 401 && status !== 403) {
           toast.error(
             archive
@@ -304,7 +329,6 @@ export default function ActivityView() {
     [
       access_token,
       isArchiving,
-      refreshCompanies,
       loadFilterCounts,
       selectedConversation,
       user_data?.organization,
@@ -338,13 +362,7 @@ export default function ActivityView() {
     } finally {
       setIsSending(false)
     }
-  }, [
-    access_token,
-    draft,
-    isSending,
-    loadMessages,
-    selectedConversation,
-  ])
+  }, [access_token, draft, isSending, loadMessages, selectedConversation])
 
   const handleTabChange = (tab: ChannelTab) => {
     setActiveTab(tab)
@@ -370,7 +388,7 @@ export default function ActivityView() {
             <button
               type="button"
               onClick={() => {
-                void loadCompanies()
+                void loadCompanies(1)
                 void loadFilterCounts()
               }}
               className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
@@ -386,6 +404,8 @@ export default function ActivityView() {
               search={search}
               activeFilter={activeFilter}
               filterCounts={filterCounts}
+              hasNextPage={Boolean(pagination?.hasNextPage)}
+              loadingMore={loadingMore}
               onSearchChange={setSearch}
               onFilterChange={setActiveFilter}
               onSelect={(id) => {
@@ -394,8 +414,6 @@ export default function ActivityView() {
                 const next = conversations.find((c) => c.id === id)
                 setShowComposer((next?.handedOff ?? 0) > 0)
               }}
-              hasMore={Boolean(pagination?.hasNextPage)}
-              isFetching={isFetching}
               onLoadMore={handleLoadMore}
             />
             <ThreadPanel

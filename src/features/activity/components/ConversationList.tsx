@@ -12,11 +12,11 @@ type ConversationListProps = {
   search: string
   activeFilter: ConversationFilter
   filterCounts: { all: number; received: number; needs_reply: number; paused: number }
+  hasNextPage: boolean
+  loadingMore: boolean
   onSearchChange: (value: string) => void
   onFilterChange: (filter: ConversationFilter) => void
   onSelect: (id: string) => void
-  hasMore: boolean
-  isFetching: boolean
   onLoadMore: () => void
 }
 
@@ -26,30 +26,15 @@ export default function ConversationList({
   search,
   activeFilter,
   filterCounts,
+  hasNextPage,
+  loadingMore,
   onSearchChange,
   onFilterChange,
   onSelect,
-  hasMore,
-  isFetching,
   onLoadMore,
 }: ConversationListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
-
-  // Fetch the next page when the bottom sentinel scrolls into view.
-  // Re-runs after each fetch so a still-visible sentinel keeps loading.
-  useEffect(() => {
-    const sentinel = sentinelRef.current
-    if (!sentinel || !hasMore || isFetching) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) onLoadMore()
-      },
-      { root: scrollRef.current, rootMargin: "120px" }
-    )
-    observer.observe(sentinel)
-    return () => observer.disconnect()
-  }, [hasMore, isFetching, onLoadMore, conversations.length])
 
   const filters = [
     { id: "all" as const, label: "All", count: filterCounts.all },
@@ -57,6 +42,24 @@ export default function ConversationList({
     { id: "needs_reply" as const, label: "Needs reply", count: filterCounts.needs_reply },
     { id: "paused" as const, label: "Paused", count: filterCounts.paused },
   ]
+
+  useEffect(() => {
+    const root = scrollRef.current
+    const sentinel = sentinelRef.current
+    if (!root || !sentinel || !hasNextPage) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting) && !loadingMore) {
+          onLoadMore()
+        }
+      },
+      { root, rootMargin: "80px", threshold: 0 }
+    )
+
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [hasNextPage, loadingMore, onLoadMore, conversations.length])
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col border-r border-[#E2E6EF] bg-white md:w-[340px] md:shrink-0">
@@ -74,20 +77,22 @@ export default function ConversationList({
             No conversations found
           </p>
         ) : (
-          conversations.map((conversation) => (
-            <ConversationListItem
-              key={conversation.id}
-              conversation={conversation}
-              isSelected={selectedId === conversation.id}
-              onSelect={onSelect}
-            />
-          ))
-        )}
-        {hasMore && <div ref={sentinelRef} className="h-1" />}
-        {isFetching && conversations.length > 0 && (
-          <p className="py-3 text-center text-[12px] text-[#8A93A6]">
-            Loading more...
-          </p>
+          <>
+            {conversations.map((conversation) => (
+              <ConversationListItem
+                key={conversation.id}
+                conversation={conversation}
+                isSelected={selectedId === conversation.id}
+                onSelect={onSelect}
+              />
+            ))}
+            <div ref={sentinelRef} className="h-1 w-full shrink-0" aria-hidden />
+            {loadingMore && (
+              <p className="px-4 py-3 text-center text-[12px] text-[#8A93A6]">
+                Loading more…
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>
