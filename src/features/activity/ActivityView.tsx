@@ -19,9 +19,11 @@ import {
 } from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
+  ActivityCompany,
   ChannelTab,
   Conversation,
   ConversationFilter,
+  Pagination,
   ThreadMessage,
 } from "./types"
 import useAuth from "@/store/user"
@@ -36,40 +38,89 @@ export default function ActivityView() {
   const [showComposer, setShowComposer] = useState(false)
   const [isArchiving, setIsArchiving] = useState(false)
   const [isSending, setIsSending] = useState(false)
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [messages, setMessages] = useState<ThreadMessage[]>([])
+
+  const [companies, setCompanies] = useState<ActivityCompany[]>([])
+  const [companiesPagination, setCompaniesPagination] =
+    useState<Pagination | null>(null)
   const [loading, setLoading] = useState(true)
-  const [messagesLoading, setMessagesLoading] = useState(false)
+  const [loadingMoreConversations, setLoadingMoreConversations] =
+    useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const loadCompanies = useCallback(async () => {
-    if (!_hasHydrated) return
-    if (!access_token) {
-      setConversations([])
-      setLoadError("Sign-in is required to load activity.")
-      setLoading(false)
-      return
-    }
+  const [messages, setMessages] = useState<ThreadMessage[]>([])
+  const [messagesLoading, setMessagesLoading] = useState(false)
 
-    try {
-      setLoading(true)
-      setLoadError(null)
-      const companies = await fetchActivityCompanies(access_token)
-      const mapped = mapActivityCompaniesToConversations(companies)
-      setConversations(mapped)
-      setSelectedId((prev) => prev ?? mapped[0]?.id ?? null)
-    } catch (err) {
-      console.log("Error loading activity companies", err)
-      setConversations([])
-      setLoadError("Failed to load activity companies.")
-    } finally {
-      setLoading(false)
-    }
-  }, [access_token, _hasHydrated])
+  const conversations = useMemo(
+    () => mapActivityCompaniesToConversations(companies),
+    [companies]
+  )
+
+  const loadCompanies = useCallback(
+    async (page = 1) => {
+      if (!_hasHydrated) return
+      if (!access_token) {
+        setCompanies([])
+        setCompaniesPagination(null)
+        setLoadError("Sign-in is required to load activity.")
+        setLoading(false)
+        return
+      }
+
+      const isFirstPage = page === 1
+
+      try {
+        if (isFirstPage) {
+          setLoading(true)
+          setLoadError(null)
+        } else {
+          setLoadingMoreConversations(true)
+        }
+
+        const { data, pagination } = await fetchActivityCompanies(
+          access_token,
+          page
+        )
+        setCompanies((prev) => (isFirstPage ? data : [...prev, ...data]))
+        setCompaniesPagination(pagination)
+
+        if (isFirstPage) {
+          const mapped = mapActivityCompaniesToConversations(data)
+          setSelectedId((prev) => prev ?? mapped[0]?.id ?? null)
+        }
+      } catch (err) {
+        console.log("Error loading activity companies", err)
+        if (isFirstPage) {
+          setCompanies([])
+          setCompaniesPagination(null)
+          setLoadError("Failed to load activity companies.")
+        }
+      } finally {
+        if (isFirstPage) {
+          setLoading(false)
+        } else {
+          setLoadingMoreConversations(false)
+        }
+      }
+    },
+    [access_token, _hasHydrated]
+  )
 
   useEffect(() => {
-    loadCompanies()
+    loadCompanies(1)
   }, [loadCompanies])
+
+  const handleLoadMoreConversations = useCallback(() => {
+    if (loading || loadingMoreConversations) return
+    if (!companiesPagination?.hasNextPage) return
+    const nextPage =
+      companiesPagination.nextPage ?? companiesPagination.currentPage + 1
+    loadCompanies(nextPage)
+  }, [
+    loadCompanies,
+    companiesPagination,
+    loading,
+    loadingMoreConversations,
+  ])
 
   const channelConversations = useMemo(
     () =>
@@ -171,7 +222,6 @@ export default function ActivityView() {
           access_token
         )
 
-        // Keep company list + conversation view; only toggle composer/revoke state
         setShowComposer(archive)
         if (!archive) setDraft("")
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
@@ -180,7 +230,6 @@ export default function ActivityView() {
       } catch (err: any) {
         console.log("Error updating archive status", err)
         const status = err?.response?.status
-        // Stay on Activity page; do not navigate away
         if (status !== 401 && status !== 403) {
           toast.error(
             archive
@@ -195,12 +244,7 @@ export default function ActivityView() {
         setIsArchiving(false)
       }
     },
-    [
-      access_token,
-      isArchiving,
-      selectedConversation,
-      user_data?.organization,
-    ]
+    [access_token, isArchiving, selectedConversation, user_data?.organization]
   )
 
   const handleSendMessage = useCallback(async () => {
@@ -230,13 +274,7 @@ export default function ActivityView() {
     } finally {
       setIsSending(false)
     }
-  }, [
-    access_token,
-    draft,
-    isSending,
-    loadMessages,
-    selectedConversation,
-  ])
+  }, [access_token, draft, isSending, loadMessages, selectedConversation])
 
   const handleTabChange = (tab: ChannelTab) => {
     setActiveTab(tab)
@@ -249,7 +287,11 @@ export default function ActivityView() {
   return (
     <div className="flex h-[min(100dvh,calc(100vh-80px))] min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden">
       <ActivityHeader />
-      <ChannelTabs tabs={CHANNEL_TABS} activeTab={activeTab} onChange={handleTabChange} />
+      <ChannelTabs
+        tabs={CHANNEL_TABS}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+      />
 
       <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-[#E2E6EF] bg-white">
         {loading ? (
@@ -261,7 +303,7 @@ export default function ActivityView() {
             <p className="text-[14px] text-[#C0392B]">{loadError}</p>
             <button
               type="button"
-              onClick={loadCompanies}
+              onClick={() => loadCompanies(1)}
               className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
             >
               Retry
@@ -275,6 +317,8 @@ export default function ActivityView() {
               search={search}
               activeFilter={activeFilter}
               filterCounts={filterCounts}
+              hasNextPage={Boolean(companiesPagination?.hasNextPage)}
+              loadingMore={loadingMoreConversations}
               onSearchChange={setSearch}
               onFilterChange={setActiveFilter}
               onSelect={(id) => {
@@ -282,6 +326,7 @@ export default function ActivityView() {
                 setDraft("")
                 setShowComposer(false)
               }}
+              onLoadMore={handleLoadMoreConversations}
             />
             <ThreadPanel
               conversation={selectedConversation}
