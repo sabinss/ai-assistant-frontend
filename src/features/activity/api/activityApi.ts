@@ -11,7 +11,7 @@ import { normalizeActivityMessages } from "../mapActivityMessages"
 
 export type ActivityCompaniesResult = {
   data: ActivityCompany[]
-  pagination: Pagination | null
+  pagination: Pagination
 }
 
 function normalizePagination(data: unknown): Pagination | null {
@@ -78,16 +78,26 @@ export async function fetchActivityCounts(accessToken: string): Promise<Activity
 }
 
 export async function fetchActivityCompanies(
+  { page = 1, limit = 10 }: { page?: number; limit?: number },
   accessToken: string,
-  page = 1,
-  limit = 10
+  signal?: AbortSignal
 ): Promise<ActivityCompaniesResult> {
   const { data } = await http.get("/activity/company", {
     headers: { Authorization: `Bearer ${accessToken}` },
     params: { page, limit },
+    signal,
   })
 
-  const pagination = normalizePagination(data)
+  const pagination = normalizePagination(data) ?? {
+    currentPage: page,
+    totalPages: 1,
+    totalRecords: Array.isArray(data) ? data.length : 0,
+    limit,
+    hasNextPage: false,
+    hasPrevPage: page > 1,
+    nextPage: null,
+    prevPage: page > 1 ? page - 1 : null,
+  }
 
   if (Array.isArray(data)) return { data: data as ActivityCompany[], pagination }
   if (Array.isArray(data?.data)) return { data: data.data as ActivityCompany[], pagination }

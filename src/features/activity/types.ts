@@ -30,6 +30,8 @@ export type Pagination = {
   prevPage: number | null
 }
 
+export type ActivityPagination = Pagination
+
 export type ActivityArchivePayload = {
   deal_id: string
   dealname: string
