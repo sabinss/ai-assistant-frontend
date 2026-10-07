@@ -15,10 +15,7 @@ function getInitials(name: string, phone: string): string {
   return (digits.slice(-2) || "?").toUpperCase()
 }
 
-export function matchesConversationSearch(
-  conversation: Conversation,
-  query: string
-): boolean {
+export function matchesConversationSearch(conversation: Conversation, query: string): boolean {
   const term = query.trim().toLowerCase()
   if (!term) return true
 
@@ -55,9 +52,7 @@ function toCount(value: boolean | number | null | undefined): number {
   return value ? 1 : 0
 }
 
-export function mapActivityCompaniesToConversations(
-  companies: ActivityCompany[]
-): Conversation[] {
+export function mapActivityCompaniesToConversations(companies: ActivityCompany[]): Conversation[] {
   const sorted = [...companies].sort((a, b) => {
     const aHasName = Boolean(a.company_name?.trim())
     const bHasName = Boolean(b.company_name?.trim())

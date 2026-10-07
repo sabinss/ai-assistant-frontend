@@ -388,19 +388,35 @@ export default function ActionCenterView() {
             {PROMOTED_BANNER.message}
           </div> */}
 
-          {tierSectionsToShow.map((tier) => (
-            <TierSection
-              key={tier}
-              tier={tier}
-              sectionLabel={actionsByTier[tier][0]?.apiTier}
-              actions={actionsByTier[tier]}
-              onGetDraft={handleGetDraft}
-              onMarkDone={handleMarkDoneClick}
-              onViewAccount={handleViewAccount}
-              onDraftBestAction={handleDraftBestAction}
-              onSnooze={handleSnooze}
-            />
-          ))}
+          {tierSectionsToShow.length === 0 ? (
+            <div
+              style={{
+                background: "#fff",
+                border: "1px solid #E2E6EF",
+                borderRadius: 10,
+                padding: "28px 22px",
+                textAlign: "center",
+                color: "#8B91A3",
+                fontSize: 13,
+              }}
+            >
+              No actions to show for your account yet.
+            </div>
+          ) : (
+            tierSectionsToShow.map((tier) => (
+              <TierSection
+                key={tier}
+                tier={tier}
+                sectionLabel={actionsByTier[tier][0]?.apiTier}
+                actions={actionsByTier[tier]}
+                onGetDraft={handleGetDraft}
+                onMarkDone={handleMarkDoneClick}
+                onViewAccount={handleViewAccount}
+                onDraftBestAction={handleDraftBestAction}
+                onSnooze={handleSnooze}
+              />
+            ))
+          )}
         </div>
 
         <ChatPanel

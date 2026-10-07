@@ -61,9 +61,8 @@ export default function ConversationList({
         />
       </div>
       <div
-        className={`min-h-0 flex-1 overflow-y-auto transition-opacity ${
-          isFetching ? "opacity-60" : ""
-        }`}
+        className={`min-h-0 flex-1 overflow-y-auto transition-opacity ${isFetching ? "opacity-60" : ""
+          }`}
       >
         {conversations.length === 0 ? (
           <p className="px-4 py-8 text-center text-[13px] text-[#8A93A6]">
