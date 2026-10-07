@@ -1,50 +1,6 @@
 import http from "@/config/http"
 import type {
   ActivityArchivePayload,
-<<<<<<< HEAD
-  ActivityCompaniesParams,
-  ActivityCompany,
-  ActivityMessage,
-  ActivitySendMessagePayload,
-  PaginatedActivityCompanies,
-} from "../types"
-import { normalizeActivityMessages } from "../mapActivityMessages"
-
-export async function fetchActivityCompanies(
-  { page, limit }: ActivityCompaniesParams,
-  accessToken: string,
-  signal?: AbortSignal
-): Promise<PaginatedActivityCompanies> {
-  const { data } = await http.get("/activity/company", {
-    params: { page, limit },
-    headers: { Authorization: `Bearer ${accessToken}` },
-    signal,
-  })
-
-  const rows: ActivityCompany[] = Array.isArray(data?.data) ? data.data : []
-  const p = data?.pagination
-  const totalRecords = Number(p?.totalRecords) || rows.length
-  const pageSize = Number(p?.limit) || limit
-  const currentPage = Number(p?.currentPage) || page
-  const totalPages =
-    Number(p?.totalPages) || Math.max(1, Math.ceil(totalRecords / pageSize))
-
-  return {
-    data: rows,
-    pagination: {
-      currentPage,
-      totalPages,
-      totalRecords,
-      limit: pageSize,
-      hasNextPage: p?.hasNextPage ?? currentPage < totalPages,
-      hasPrevPage: p?.hasPrevPage ?? currentPage > 1,
-      nextPage: p?.nextPage ?? null,
-      prevPage: p?.prevPage ?? null,
-    },
-  }
-}
-
-=======
   ActivityCompany,
   ActivityFilterCounts,
   ActivityMessage,
@@ -76,21 +32,11 @@ function normalizePagination(data: unknown): Pagination | null {
   const hasNextPage = Boolean(
     raw.hasNextPage ??
       raw.has_next_page ??
-      (Number.isFinite(currentPage) &&
-        Number.isFinite(totalPages) &&
-        currentPage < totalPages)
+      (Number.isFinite(currentPage) && Number.isFinite(totalPages) && currentPage < totalPages)
   )
-  const hasPrevPage = Boolean(
-    raw.hasPrevPage ?? raw.has_prev_page ?? currentPage > 1
-  )
-  const nextPage =
-    raw.nextPage ??
-    raw.next_page ??
-    (hasNextPage ? currentPage + 1 : null)
-  const prevPage =
-    raw.prevPage ??
-    raw.prev_page ??
-    (hasPrevPage ? currentPage - 1 : null)
+  const hasPrevPage = Boolean(raw.hasPrevPage ?? raw.has_prev_page ?? currentPage > 1)
+  const nextPage = raw.nextPage ?? raw.next_page ?? (hasNextPage ? currentPage + 1 : null)
+  const prevPage = raw.prevPage ?? raw.prev_page ?? (hasPrevPage ? currentPage - 1 : null)
 
   return {
     currentPage,
@@ -113,9 +59,7 @@ function toNonNegInt(value: unknown): number {
 /**
  * GET `/activity/count` — totals for All / Received / Needs reply / Paused chips.
  */
-export async function fetchActivityCounts(
-  accessToken: string
-): Promise<ActivityFilterCounts> {
+export async function fetchActivityCounts(accessToken: string): Promise<ActivityFilterCounts> {
   const { data } = await http.get("/activity/count", {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
@@ -153,17 +97,13 @@ export async function fetchActivityCompanies(
   return { data: [], pagination }
 }
 
->>>>>>> a0e7837d8a7cee7a1f8585fd0facea9024dc4a53
 export async function fetchActivityCompanyById(
   companyId: string,
   accessToken: string
 ): Promise<ActivityMessage[]> {
-  const { data } = await http.get(
-    `/activity/company/${encodeURIComponent(companyId)}`,
-    {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }
-  )
+  const { data } = await http.get(`/activity/company/${encodeURIComponent(companyId)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
   console.log("activity company detail response", data)
   return normalizeActivityMessages(data)
 }

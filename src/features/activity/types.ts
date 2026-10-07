@@ -13,14 +13,13 @@ export type ActivityCompany = {
   latest_updated_at?: string | null
   has_inbound_message?: boolean
   need_reply?: boolean | number | null
-  Need_Reply?: boolean | number | null
   handed_off?: boolean | number | null
   deal_id?: string | null
   dealname?: string | null
   dealstage?: string | null
 }
 
-export type ActivityPagination = {
+export type Pagination = {
   currentPage: number
   totalPages: number
   totalRecords: number
@@ -29,16 +28,6 @@ export type ActivityPagination = {
   hasPrevPage: boolean
   nextPage: number | null
   prevPage: number | null
-}
-
-export type PaginatedActivityCompanies = {
-  data: ActivityCompany[]
-  pagination: ActivityPagination
-}
-
-export type ActivityCompaniesParams = {
-  page: number
-  limit: number
 }
 
 export type ActivityArchivePayload = {
@@ -53,6 +42,14 @@ export type ActivityArchivePayload = {
 export type ActivitySendMessagePayload = {
   message: string
   to: string
+}
+
+/** Response from `GET /activity/count` — drives conversation filter chip totals. */
+export type ActivityFilterCounts = {
+  all: number
+  received: number
+  needs_reply: number
+  paused: number
 }
 
 export type ActivityMessage = {
