@@ -30,6 +30,7 @@ import { ToolsMultiSelect } from "@/components/ui/tools-multi-select"
 const tableHeader = [
   { name: "Name", sortable: false },
   { name: "Objective", sortable: false },
+  { name: "Active", sortable: false },
   { name: "Actions", sortable: false },
 ]
 
@@ -64,6 +65,9 @@ export const AgentTable = () => {
     frequency: null,
     dayTime: null,
     scheduleTime: null, // Add time field for scheduling
+    fromTime: null,
+    toTime: null,
+    businessDays: false,
     timezone: "EST", // Add timezone field with EST as default
     isAgent: null,
     tasks: [], // Array to store instructions dynamically
@@ -82,16 +86,6 @@ export const AgentTable = () => {
   }
   const getDayTimeOptions = () => {
     switch (formData.frequency) {
-      case "Daily":
-        return [
-          { value: "1", label: "Monday" },
-          { value: "2", label: "Tuesday" },
-          { value: "3", label: "Wednesday" },
-          { value: "4", label: "Thursday" },
-          { value: "5", label: "Friday" },
-          { value: "6", label: "Saturday" },
-          { value: "7", label: "Sunday" },
-        ]
       case "Weekly":
         return [
           { value: "1", label: "Monday" },
@@ -158,6 +152,9 @@ export const AgentTable = () => {
       dayTime,
       frequency,
       scheduleTime: null,
+      fromTime: null,
+      toTime: null,
+      businessDays: false,
       timezone: "EST", // Set default timezone
       isAgent,
     })
@@ -185,6 +182,9 @@ export const AgentTable = () => {
       active: agent.active,
       tools_used: toolsUsed,
       scheduleTime: agent.schedule_time || agent.scheduleTime || null,
+      fromTime: agent.from_time || agent.fromTime || null,
+      toTime: agent.to_time || agent.toTime || null,
+      businessDays: Boolean(agent.businessDays),
       timezone: agent.time_zone || agent.timezone || "EST", // Default to EST if not set
     })
     setIsEditing(true)
@@ -246,6 +246,9 @@ export const AgentTable = () => {
       tools_used: toolsUsedString,
       time_zone: data.timezone || "EST",
       schedule_time: data.scheduleTime || null,
+      from_time: data.fromTime || null,
+      to_time: data.toTime || null,
+      businessDays: Boolean(data.businessDays),
     })
 
     try {
@@ -256,6 +259,9 @@ export const AgentTable = () => {
           tools_used: toolsUsedString,
           time_zone: data.timezone || "EST",
           schedule_time: data.scheduleTime || null,
+          from_time: data.fromTime || null,
+          to_time: data.toTime || null,
+          businessDays: Boolean(data.businessDays),
         }
         await http.put("/organization/agent", updateData, {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -277,6 +283,9 @@ export const AgentTable = () => {
           tools_used: toolsUsedString,
           time_zone: data.timezone || "EST",
           schedule_time: data.scheduleTime || null,
+          from_time: data.fromTime || null,
+          to_time: data.toTime || null,
+          businessDays: Boolean(data.businessDays),
         }
         const response = await http.post("/organization/agent", createData, {
           headers: { Authorization: `Bearer ${access_token}` },
@@ -442,9 +451,34 @@ export const AgentTable = () => {
                     id="frequency"
                     value={formData.frequency}
                     onChange={(e) => {
+                      const nextFrequency = e.target.value
+                      const supportsBusinessDays =
+                        nextFrequency === "Daily" ||
+                        nextFrequency === "Hourly" ||
+                        nextFrequency === "Every 15 min"
                       setFormData((prev) => ({
                         ...prev,
-                        frequency: e.target.value,
+                        frequency: nextFrequency,
+                        ...(nextFrequency === "Hourly" ||
+                        nextFrequency === "Every 15 min" ||
+                        nextFrequency === "Daily"
+                          ? { dayTime: null }
+                          : {}),
+                        ...(nextFrequency === "Realtime"
+                          ? {
+                              dayTime: null,
+                              scheduleTime: null,
+                              fromTime: null,
+                              toTime: null,
+                            }
+                          : {}),
+                        ...(nextFrequency === "Every 15 min" ||
+                        nextFrequency === "Hourly"
+                          ? { scheduleTime: null }
+                          : { fromTime: null, toTime: null }),
+                        businessDays: supportsBusinessDays
+                          ? Boolean(prev.businessDays)
+                          : false,
                       }))
                     }}
                     className="w-full rounded border p-2"
@@ -455,59 +489,135 @@ export const AgentTable = () => {
                     <option value="Weekly">Weekly</option>
                     <option value="Daily">Daily</option>
                     <option value="Hourly">Hourly</option>
+                    <option value="Every 15 min">Every 15 min</option>
+                    <option value="Realtime">RealTime</option>
                   </select>
                 </div>
                 {formData.frequency && (
                   <div className="space-y-3">
-                    <div>
-                      <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
-                        {formData.frequency === "Daily"
-                          ? "Day of Week"
-                          : formData.frequency === "Weekly"
+                    {formData.frequency !== "Hourly" &&
+                      formData.frequency !== "Realtime" &&
+                      formData.frequency !== "Every 15 min" &&
+                      formData.frequency !== "Daily" && (
+                      <div>
+                        <label htmlFor="dayTime" className="mb-1 block text-sm font-semibold">
+                          {formData.frequency === "Weekly"
                             ? "Day of Week"
                             : formData.frequency === "Monthly"
                               ? "Day of Month"
                               : formData.frequency === "Quarterly"
                                 ? "Quarter"
                                 : "Day/Time"}
-                      </label>
-                      <select
-                        id="dayTime"
-                        value={formData.dayTime}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            dayTime: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded border p-2"
-                      >
-                        <option value="">Select Option</option>
-                        {getDayTimeOptions().map((opt) => (
-                          <option key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                        </label>
+                        <select
+                          id="dayTime"
+                          value={formData.dayTime}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              dayTime: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded border p-2"
+                        >
+                          <option value="">Select Option</option>
+                          {getDayTimeOptions().map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
-                    <div>
-                      <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
-                        Time
-                      </label>
-                      <input
-                        type="time"
-                        id="scheduleTime"
-                        value={formData.scheduleTime || ""}
-                        onChange={(e) =>
-                          setFormData((prev) => ({
-                            ...prev,
-                            scheduleTime: e.target.value,
-                          }))
-                        }
-                        className="w-full rounded border p-2"
-                      />
-                    </div>
+                    {(formData.frequency === "Daily" ||
+                      formData.frequency === "Hourly" ||
+                      formData.frequency === "Every 15 min") && (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id="businessDays"
+                          checked={Boolean(formData.businessDays)}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              businessDays: e.target.checked,
+                            }))
+                          }
+                          className="h-4 w-4"
+                        />
+                        <label
+                          htmlFor="businessDays"
+                          className="ml-2 text-sm font-medium"
+                        >
+                          Business days
+                        </label>
+                      </div>
+                    )}
+
+                    {(formData.frequency === "Every 15 min" ||
+                      formData.frequency === "Hourly") && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label htmlFor="fromTime" className="mb-1 block text-sm font-semibold">
+                            From (24h)
+                          </label>
+                          <input
+                            type="time"
+                            id="fromTime"
+                            step={60}
+                            value={formData.fromTime || ""}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                fromTime: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded border p-2"
+                          />
+                        </div>
+                        <div>
+                          <label htmlFor="toTime" className="mb-1 block text-sm font-semibold">
+                            To (24h)
+                          </label>
+                          <input
+                            type="time"
+                            id="toTime"
+                            step={60}
+                            value={formData.toTime || ""}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                toTime: e.target.value,
+                              }))
+                            }
+                            className="w-full rounded border p-2"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {formData.frequency !== "Realtime" &&
+                      formData.frequency !== "Every 15 min" &&
+                      formData.frequency !== "Hourly" && (
+                      <div>
+                        <label htmlFor="scheduleTime" className="mb-1 block text-sm font-semibold">
+                          Time
+                        </label>
+                        <input
+                          type="time"
+                          id="scheduleTime"
+                          value={formData.scheduleTime || ""}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              scheduleTime: e.target.value,
+                            }))
+                          }
+                          className="w-full rounded border p-2"
+                        />
+                      </div>
+                    )}
 
                     <div>
                       <label htmlFor="timezone" className="mb-1 block text-sm font-semibold">
@@ -774,6 +884,17 @@ export const AgentTable = () => {
                   >
                     <TableCell className="py-3">{agent.name}</TableCell>
                     <TableCell className="py-3">{agent.objective}</TableCell>
+                    <TableCell className="py-3">
+                      {agent.active ? (
+                        <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                          Inactive
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell className="py-3">
                       <div className="flex  justify-start gap-2">
                         {agent.isAgent && (

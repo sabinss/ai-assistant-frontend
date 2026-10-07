@@ -13,6 +13,8 @@ import {
   Settings,
   Cog,
   Bell,
+  ListTodo,
+  Activity,
 } from "lucide-react"
 import useAuth from "@/store/user"
 import useNavBarStore from "@/store/store"
@@ -29,10 +31,20 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       icon: LayoutDashboard,
     },
     {
-      name: "Notifications",
-      path: "/mainapp/notification",
-      icon: Bell,
+      name: "Intel Brief",
+      path: "/mainapp/action-center",
+      icon: ListTodo,
     },
+    {
+      name: "Activity",
+      path: "/mainapp/activity",
+      icon: Activity,
+    },
+    // {
+    //   name: "Notifications",
+    //   path: "/mainapp/notification",
+    //   icon: Bell,
+    // },
 
     // {
     //   name: "Dashboard",
@@ -82,11 +94,11 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
       path: "/mainapp/organization",
       icon: TrendingUp,
     },
-    {
-      name: "Help",
-      path: "/mainapp/help",
-      icon: Info,
-    },
+    // {
+    //   name: "Help",
+    //   path: "/mainapp/help",
+    //   icon: Info,
+    // },
   ]
 
   const quickLinks = [
@@ -146,8 +158,9 @@ function Navbar() {
   const navLinks = getNavLinks([
     ...rolePermission,
     // "customers",
-    ...(role != "individual" ? ["notification", "dashboard"] : []),
-    ,
+    ...(role != "individual"
+      ? ["notification", "dashboard", "activity", "action-center"]
+      : []),
   ])
 
   if (isCollapsed && divRef.current) {

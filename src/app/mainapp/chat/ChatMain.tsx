@@ -18,11 +18,22 @@ export interface MessageObject {
   isStreaming?: boolean
 }
 
-interface ChatMainProps {
+export interface ChatMainProps {
   initialQuery?: string | null
+  /** When set with `initialQuery`, wait for org agents, select this agent by name (case-insensitive), then send. */
+  bootstrapAgentName?: string | null
+  /** Fired when `bootstrapAgentName` is set but no matching agent exists after the org agent list has loaded. */
+  onBootstrapAgentMissing?: () => void
+  /** Expand to fill a flex parent (e.g. Action Centre chat page) instead of fixed viewport height */
+  fillContainer?: boolean
 }
 
-const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
+const ChatMain: React.FC<ChatMainProps> = ({
+  initialQuery,
+  bootstrapAgentName = null,
+  onBootstrapAgentMissing,
+  fillContainer,
+}) => {
   const [messages, setMessages] = useState<MessageObject[]>([])
   const { user_data, access_token, chatSession, setChatSession } = useAuth()
   const { greeting, botName, setBotName, setGreeting } = useNavBarStore()
@@ -30,6 +41,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   const [isLoading, setIsLoading] = useState(false)
   const { setOrgAgents } = useOrgCustomer()
   const [agentList, setAgentList] = useState<any>([])
+  const [agentListReady, setAgentListReady] = useState(false)
 
   const { publicChat, publicChatHeaders, setPublicChatHeaders } =
     usePublicChat()
@@ -73,11 +85,14 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   }, [user_data, access_token, chatSession, publicChat, publicChatHeaders, newSessionKey])
 
   useEffect(() => {
-    if (publicChat) return
+    if (publicChat) {
+      setAgentListReady(true)
+      return
+    }
     async function getOrgAgentList() {
       await fetchOrgAgentInstructions()
     }
-    getOrgAgentList()
+    void getOrgAgentList()
   }, [publicChat])
 
   useEffect(() => {
@@ -135,6 +150,7 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
   }
 
   const fetchOrgAgentInstructions = async () => {
+    setAgentListReady(false)
     try {
       // const response = await http.get("/organization/agent/instruction", {
       //   headers: { Authorization: `Bearer ${access_token}` },
@@ -153,7 +169,9 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
       }
 
       setAgentList(agentsRecords)
-    } catch (err: any) { }
+    } catch (err: any) { } finally {
+      setAgentListReady(true)
+    }
   }
 
   const getUserMessages = async () => {
@@ -263,7 +281,9 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
       className={`mx-1 flex flex-col px-1 ${
         publicChat
           ? "min-h-0 flex-1 overflow-hidden"
-          : "h-[75vh] md:h-[77vh]"
+          : fillContainer
+            ? "min-h-0 flex-1 overflow-hidden"
+            : "h-[75vh] md:h-[77vh]"
       } `}
     >
       {error && <div className="mb-2 bg-red-500 p-2 text-white">{error}</div>}
@@ -278,7 +298,10 @@ const ChatMain: React.FC<ChatMainProps> = ({ initialQuery }) => {
         <ChatInput
           appendMessage={appendMessage}
           agentList={agentList}
+          agentListReady={agentListReady}
           initialQuery={initialQuery}
+          bootstrapAgentName={bootstrapAgentName}
+          onBootstrapAgentMissing={onBootstrapAgentMissing}
           historyLoading={publicChat && isLoading}
         />
       </div>

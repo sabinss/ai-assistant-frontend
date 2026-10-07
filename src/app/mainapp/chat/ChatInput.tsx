@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from "react"
-import { buttonVariants } from "@/components/ui/button"
-import { cn, generateSessionIdLength5 } from "@/lib/utils"
-import { IoMdSend } from "react-icons/io"
+import { generateSessionIdLength5 } from "@/lib/utils"
 import { MdStop } from "react-icons/md"
 import http from "@/config/http"
 import useFormStore from "@/store/formdata"
@@ -17,15 +15,30 @@ import { runPublicConversationAdd, type PublicChatPayload } from "./publicConver
 interface ChildProps {
   appendMessage: (newMessage: any) => void
   agentList: any[]
+  /** True after org agent instruction fetch finished (success or error). */
+  agentListReady?: boolean
   initialQuery?: string | null
+  /** With `initialQuery`: select this agent (name match, case-insensitive) before auto-send. */
+  bootstrapAgentName?: string | null
+  onBootstrapAgentMissing?: () => void
   /** Public / Help only: wait for history load so replies are not cleared by a late fetch */
   historyLoading?: boolean
+}
+
+function normalizeAgentDisplayName(name: unknown): string {
+  return String(name ?? "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
 }
 
 const ChatInput: React.FC<ChildProps> = ({
   appendMessage,
   agentList,
+  agentListReady = false,
   initialQuery,
+  bootstrapAgentName = null,
+  onBootstrapAgentMissing,
   historyLoading = false,
 }) => {
   const { botName } = useNavBarStore()
@@ -55,6 +68,10 @@ const ChatInput: React.FC<ChildProps> = ({
   const [showPopup, setShowPopup] = useState(false) // State to manage popup visibility
   const [hasAutoSent, setHasAutoSent] = useState(false) // Flag to prevent multiple auto-sends
   const abortControllerRef = useRef<AbortController | null>(null) // For cancelling fetch requests
+  const accountBootstrapSelectAppliedRef = useRef(false)
+  const accountBootstrapPendingMessageRef = useRef<string | null>(null)
+  /** Exact `agent.name` from API when bootstrap matched — used on send so the request always hits that agent. */
+  const accountBootstrapResolvedAgentNameRef = useRef<string | null>(null)
 
   // Helper function to check if opened from email link
   const isFromEmailLink = () => {
@@ -166,7 +183,10 @@ const ChatInput: React.FC<ChildProps> = ({
     }
   }
 
-  const sendMessageToBackend = async (query: string) => {
+  const sendMessageToBackend = async (
+    query: string,
+    opts?: { forceAgentName?: string }
+  ) => {
     // Add user message to Chat list
     updateMessageLoading(true)
     appendMessage({
@@ -191,9 +211,10 @@ const ChatInput: React.FC<ChildProps> = ({
           setPublicChatResponse,
         })
       } else {
-        // Prioritize agent selection
-        // For individual users, if no agent is selected, use "search agent"
-        if (selectedAgents.length > 0) {
+        const forced = opts?.forceAgentName?.trim()
+        if (forced) {
+          await handleCustomAgentStreaming(query, forced)
+        } else if (selectedAgents.length > 0) {
           // Always use non-streaming for agent for now
           await handleCustomAgentStreaming(query)
         } else if (role === "individual") {
@@ -634,6 +655,9 @@ const ChatInput: React.FC<ChildProps> = ({
   // Handle initial query from URL parameters
   useEffect(() => {
     if (initialQuery && initialQuery.trim() !== "" && !hasAutoSent) {
+      if (bootstrapAgentName?.trim()) {
+        return
+      }
       // Check if this is from an email link by looking for emailId parameter
       const isFromEmail = isFromEmailLink()
 
@@ -670,7 +694,74 @@ const ChatInput: React.FC<ChildProps> = ({
 
       return () => clearTimeout(timer)
     }
-  }, [initialQuery])
+  }, [initialQuery, bootstrapAgentName, hasAutoSent])
+
+  // Action centre "View account": pick agent by name, new session, then send company as first message.
+  useEffect(() => {
+    if (!initialQuery?.trim() || !bootstrapAgentName?.trim() || hasAutoSent) return
+    if (!agentListReady) return
+    if (accountBootstrapSelectAppliedRef.current) return
+
+    const want = normalizeAgentDisplayName(bootstrapAgentName)
+    const found = agentList.find(
+      (a: any) => normalizeAgentDisplayName(a?.name) === want
+    )
+    if (!found) {
+      onBootstrapAgentMissing?.()
+      setHasAutoSent(true)
+      accountBootstrapResolvedAgentNameRef.current = null
+      return
+    }
+
+    accountBootstrapSelectAppliedRef.current = true
+    accountBootstrapPendingMessageRef.current = initialQuery.trim()
+    accountBootstrapResolvedAgentNameRef.current =
+      typeof found.name === "string" && found.name.trim() !== ""
+        ? found.name.trim()
+        : bootstrapAgentName.trim()
+    setSelectedAgents([found])
+  }, [
+    initialQuery,
+    bootstrapAgentName,
+    agentListReady,
+    agentList,
+    hasAutoSent,
+    onBootstrapAgentMissing,
+  ])
+
+  useEffect(() => {
+    const pending = accountBootstrapPendingMessageRef.current
+    if (!pending || !bootstrapAgentName?.trim() || hasAutoSent) return
+
+    const want = normalizeAgentDisplayName(bootstrapAgentName)
+    const first = selectedAgents[0]
+    const name =
+      typeof first === "object" && first?.name != null ? first.name : first
+    if (normalizeAgentDisplayName(name) !== want) return
+
+    const t = window.setTimeout(async () => {
+      if (accountBootstrapPendingMessageRef.current !== pending) return
+      accountBootstrapPendingMessageRef.current = null
+      const agentNameForSend = accountBootstrapResolvedAgentNameRef.current
+      accountBootstrapResolvedAgentNameRef.current = null
+      setMessage("")
+      await sendMessageToBackend(pending, {
+        forceAgentName: agentNameForSend ?? undefined,
+      })
+      setHasAutoSent(true)
+      accountBootstrapSelectAppliedRef.current = false
+    }, 900)
+
+    return () => window.clearTimeout(t)
+  }, [selectedAgents, bootstrapAgentName, hasAutoSent])
+
+  useEffect(() => {
+    if (!initialQuery?.trim() && !bootstrapAgentName?.trim()) {
+      accountBootstrapSelectAppliedRef.current = false
+      accountBootstrapPendingMessageRef.current = null
+      accountBootstrapResolvedAgentNameRef.current = null
+    }
+  }, [initialQuery, bootstrapAgentName])
 
   useEffect(() => {
     if (selectedAgents.length > 0) {
@@ -724,11 +815,69 @@ const ChatInput: React.FC<ChildProps> = ({
     )
   }
   return (
-    <div className="sticky bottom-0 border-t border-gray-300 bg-white p-3">
-      <div className="w-8/10 flex flex-col rounded-md border border-[#D7D7D7] bg-background p-2">
-        <div className="flex flex-row justify-between">
-          <div className="flex-grow">
-            {" "}
+    <div className="sticky bottom-0 shrink-0 border-t border-[#E2E6EF] bg-white font-sans">
+      {!publicChat && (
+        <div className="flex flex-wrap gap-1.5 border-b border-[#E2E6EF] px-3 py-2.5">
+          {visibleAgents.map((agent: any, index: number) => {
+            const isSelected = selectedAgents.some(
+              (a: any) => (typeof a === "object" ? a?.name : a) === agent.name
+            )
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (isSelected) {
+                    handleAgentRemove(agent.name)
+                  } else {
+                    switchToAgent(agent)
+                  }
+                }}
+                key={index}
+                className={`rounded-full border px-2.5 py-1 text-[11px] transition-all duration-150 ${isSelected
+                  ? "border-[#1B3A8C] bg-[#E8EDF8] font-medium text-[#1B3A8C]"
+                  : "border-[#CDD3E0] bg-white font-normal text-[#4A5168] hover:border-[#B8C0D4]"
+                  }`}
+              >
+                {agent.name}
+              </button>
+            )
+          })}
+          {remainingAgents.length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowDropdown((prev) => !prev)}
+                className="rounded-full border border-[#CDD3E0] bg-white px-2.5 py-1 text-[11px] font-normal text-[#4A5168] hover:border-[#B8C0D4]"
+              >
+                +{remainingAgents.length}
+              </button>
+              {showDropdown && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute bottom-full z-10 mb-2 max-h-60 w-40 overflow-y-auto rounded-md border border-[#E2E6EF] bg-white p-2 shadow-lg"
+                >
+                  {remainingAgents.map((agent, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handleDropdownSelect(agent)}
+                      className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-[#E8EDF8] ${selectedAgents.some((a: any) => (typeof a === "object" ? a?.name : a) === agent?.name)
+                        ? "font-semibold text-[#1B3A8C]"
+                        : "text-[#4A5168]"
+                        }`}
+                    >
+                      {agent.name}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="px-3 pb-3 pt-2.5">
+        <div className="flex w-full items-end gap-2 rounded-lg border border-[#CDD3E0] bg-white px-2.5 py-2">
+          <div className="min-w-0 flex-1">
             <textarea
               rows={3}
               ref={textareaRef}
@@ -740,158 +889,90 @@ const ChatInput: React.FC<ChildProps> = ({
               placeholder={
                 historyLoading ? "Loading chat…" : isMessageLoading ? "....." : "Type your message here..."
               }
-              className="flex max-h-36 min-h-9 w-full resize-none overflow-y-auto border-none px-2 py-2 text-sm outline-none placeholder:text-muted-foreground active:border-none disabled:cursor-not-allowed"
+              className="max-h-36 min-h-[4.5rem] w-full resize-none overflow-y-auto border-none bg-transparent py-1.5 text-[13px] leading-normal text-[#1A1F2E] outline-none placeholder:text-[#8B91A3] active:border-none disabled:cursor-not-allowed"
             />
           </div>
-          <div>
+          <div className="flex shrink-0 items-center gap-1.5 pb-0.5">
             {!publicChat && (
               <button
                 type="button"
                 onClick={togglePopup}
-                className="mx-2 rounded-md bg-gray-200 p-2 hover:bg-gray-300"
+                className="rounded-md bg-[#F4F6FA] p-1.5 text-[#4A5168] hover:bg-[#E8EDF8]"
               >
-                <FaRegLightbulb size={18} />
+                <FaRegLightbulb size={16} />
               </button>
             )}
+            <span className="text-[10.5px] text-[#8B91A3]">{message?.length}/4000</span>
+            {isMessageLoading ? (
+              <button
+                type="button"
+                onClick={handleStopStreaming}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-transparent hover:bg-[#F4F6FA]"
+                title="Stop streaming"
+              >
+                <MdStop size={20} className="text-red-600" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={sendMessage}
+                disabled={historyLoading}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#1B3A8C] text-white hover:opacity-90 disabled:opacity-40"
+                title="Send"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                  <path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
 
-            {/* Send/Stop message button */}
-            <div className="m-2 flex w-20 items-center justify-center">
-              <span className="text-sm text-[#838383]">{message?.length}/4000</span>
-              {isMessageLoading ? (
-                <button
-                  type="button"
-                  onClick={handleStopStreaming}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
-                    "h-9 w-9",
-                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white"
-                  )}
-                  title="Stop streaming"
-                >
-                  <MdStop size={22} className="text-red-600" />
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={sendMessage}
-                  disabled={historyLoading}
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon" }),
-                    "h-9 w-9",
-                    "shrink-0 dark:bg-muted dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-white disabled:opacity-40"
-                  )}
-                >
-                  <IoMdSend size={20} className=" text-[#174894]" />
-                </button>
-              )}
+      {/* Prompts Modal */}
+      {showPopup && (
+        <div
+          className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50"
+          onClick={handleBackgroundClick} // Close when clicking outside
+        >
+          <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
+            <h2 className="mb-4 text-center text-2xl font-semibold">Select Prompt</h2>
+
+            {/* Columns for Categories */}
+            <div className="grid grid-cols-3 gap-6">
+              {chatPrompts?.map((categoryData: any, index) => (
+                <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
+                  <h3 className="text-xl font-semibold">{categoryData.category}</h3>
+                  <ul className="mt-2 space-y-2">
+                    {categoryData.prompts.map((prompt: any, promptIndex: number) => (
+                      <React.Fragment key={promptIndex}>
+                        <li
+                          className="cursor-pointer text-gray-700 hover:text-blue-500"
+                          onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
+                        >
+                          {prompt.text}
+                        </li>
+                        {promptIndex !== categoryData.prompts.length - 1 && (
+                          <hr className="border-gray-300" />
+                        )}
+                      </React.Fragment>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={() => setShowPopup(false)}
+                className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Custom agent list */}
-        {!publicChat && (
-          <div className="mt-2 flex flex-wrap gap-2">
-            {visibleAgents.map((agent: any, index: number) => {
-              const isSelected = selectedAgents.some(
-                (a: any) => (typeof a === "object" ? a?.name : a) === agent.name
-              )
-              return (
-                <div
-                  onClick={() => {
-                    if (isSelected) {
-                      handleAgentRemove(agent.name)
-                    } else {
-                      switchToAgent(agent)
-                    }
-                  }}
-                  key={index}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-200 ${isSelected
-                    ? "bg-blue-500 text-white shadow-md hover:bg-blue-600"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200 hover:shadow-sm"
-                    }`}
-                >
-                  {agent.name}
-                </div>
-              )
-            })}
-            {/* Show ellipsis if more agents */}
-            {remainingAgents.length > 0 && (
-              <div className="relative">
-                <div
-                  onClick={() => setShowDropdown((prev) => !prev)}
-                  className="flex cursor-pointer items-center gap-2 rounded-full border bg-gray-200 px-3 py-1 text-sm font-medium text-gray-700 hover:bg-gray-300"
-                >
-                  +{remainingAgents.length}
-                </div>
-                {showDropdown && (
-                  <div
-                    ref={dropdownRef}
-                    className="absolute bottom-full z-10 mb-2 max-h-60 w-40 overflow-y-auto rounded-md border bg-white p-2 shadow-lg"
-                  >
-                    {remainingAgents.map((agent, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handleDropdownSelect(agent)}
-                        className={`cursor-pointer rounded px-3 py-1 text-sm hover:bg-blue-100 ${selectedAgents.some((a: any) => (typeof a === "object" ? a?.name : a) === agent?.name)
-                          ? "font-semibold text-blue-600"
-                          : "text-gray-700"
-                          }`}
-                      >
-                        {agent.name}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Prompts Modal */}
-        {showPopup && (
-          <div
-            className="fixed inset-0 flex items-center justify-end bg-black bg-opacity-50"
-            onClick={handleBackgroundClick} // Close when clicking outside
-          >
-            <div className="mr-20 max-h-[90vh] w-[75%] max-w-[1200px] overflow-y-auto rounded-lg bg-white p-8 shadow-lg">
-              <h2 className="mb-4 text-center text-2xl font-semibold">Select Prompt</h2>
-
-              {/* Columns for Categories */}
-              <div className="grid grid-cols-3 gap-6">
-                {chatPrompts?.map((categoryData: any, index) => (
-                  <div key={index} className="rounded-lg bg-gray-50 p-4 shadow">
-                    <h3 className="text-xl font-semibold">{categoryData.category}</h3>
-                    <ul className="mt-2 space-y-2">
-                      {categoryData.prompts.map((prompt: any, promptIndex: number) => (
-                        <React.Fragment key={promptIndex}>
-                          <li
-                            className="cursor-pointer text-gray-700 hover:text-blue-500"
-                            onClick={() => handlePromptClick(prompt.text)} // Handle prompt click
-                          >
-                            {prompt.text}
-                          </li>
-                          {promptIndex !== categoryData.prompts.length - 1 && (
-                            <hr className="border-gray-300" />
-                          )}
-                        </React.Fragment>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 flex justify-end">
-                <button
-                  onClick={() => setShowPopup(false)}
-                  className="rounded bg-red-500 px-4 py-2 text-white hover:bg-red-600"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }

@@ -35,6 +35,20 @@ export default function Page() {
     whatsAppPhoneNumberId: null,
   })
 
+  const [twilioConfig, setTwilioConfig] = useState({
+    accountSid: "",
+    authToken: "",
+  })
+  const [showTwilioFields, setShowTwilioFields] = useState(false)
+  const toggleShowTwilioFields = () => setShowTwilioFields((prev) => !prev)
+
+  const [telnyxApiKey, setTelnyxApiKey] = useState("")
+  const [telnyxPublicKey, setTelnyxPublicKey] = useState("")
+  const [telnyxVoiceAssistantId, setTelnyxVoiceAssistantId] = useState("")
+  const [telnyxTexmlAppId, setTelnyxTexmlAppId] = useState("")
+  const [showTelnyxField, setShowTelnyxField] = useState(false)
+  const toggleShowTelnyxField = () => setShowTelnyxField((prev) => !prev)
+
   const [orgSetting, setOrgSetting] = useState({
     database_name: "",
     redshit_work_space: "",
@@ -76,6 +90,7 @@ export default function Page() {
 
   useEffect(() => {
     async function getOrgDetails() {
+      if (!access_token) return
       try {
         setIsLoading(true)
         const res = await http.get("/organization/", {
@@ -93,7 +108,19 @@ export default function Page() {
           hubspot_bearer_token: orgData?.hubspot_bearer_token ?? "",
           tenant_isolation: orgData?.tenant_isolation || "Dedicated",
         })
-        setWhatsappConfig(orgData.whatsappConfig)
+        setWhatsappConfig(orgData?.whatsappConfig ?? {
+          whatsappPhoneNumber: null,
+          whatsappToken: null,
+          whatsAppPhoneNumberId: null,
+        })
+        setTwilioConfig({
+          accountSid: orgData?.twilioAccountSid || "",
+          authToken: orgData?.twilioAuthToken || "",
+        })
+        setTelnyxApiKey(orgData?.telnyx_api_key || "")
+        setTelnyxPublicKey(orgData?.telnyx_public_key || "")
+        setTelnyxVoiceAssistantId(orgData?.telnyx_voice_assistant_id || "")
+        setTelnyxTexmlAppId(orgData?.telnyx_texml_app_id || "")
         setSelectedModel(orgData?.model || "gpt 3.5 turbo")
         setSupportWorkflowFlag(orgData?.workflow_engine_enabled)
         // setMockData(MOCK_DATA)
@@ -136,31 +163,6 @@ export default function Page() {
   const handleSubmit = async () => {
     try {
       setIsLoading(true)
-      // let hasError = false
-      // // Reset errors
-      // setErrors({
-      //   apiKey: false,
-      //   prompt: false,
-      //   greeting: false,
-      // })
-
-      // Validate fields
-      // if (!apiKey) {
-      //   setErrors(prevErrors => ({ ...prevErrors, apiKey: true }));
-      //   hasError = true;
-      // }
-      // if (!prompt) {
-      //   setErrors((prevErrors) => ({ ...prevErrors, prompt: true }))
-      //   hasError = true
-      // }
-      // // if (!greeting) {
-      // //   setErrors(prevErrors => ({ ...prevErrors, greeting: true }));
-      // //   hasError = true;
-      // // }
-
-      // if (hasError) {
-      //   return
-      // }
 
       const data = {
         selectedModel,
@@ -176,6 +178,25 @@ export default function Page() {
       await http.put("/organization", data, {
         headers: { Authorization: `Bearer ${access_token}` },
       })
+
+      const orgId = organizationData?._id ?? user_data?.organization
+      if (orgId) {
+        await http.put(
+          `/organization/${orgId}/twilio-credentials`,
+          {
+            account_sid: twilioConfig.accountSid,
+            auth_token: twilioConfig.authToken,
+            telnyx_api_key: telnyxApiKey,
+            telnyx_public_key: telnyxPublicKey,
+            telnyx_voice_assistant_id: telnyxVoiceAssistantId,
+            telnyx_texml_app_id: telnyxTexmlAppId,
+          },
+          {
+            headers: { Authorization: `Bearer ${access_token}` },
+          }
+        )
+      }
+
       toast.success("Organization data updated successfully")
     } catch (e) {
       console.log("Error updating organization data", e)
@@ -410,6 +431,127 @@ export default function Page() {
             }
           />
         </div>
+
+        {/* Twilio Section */}
+        <div className="mt-6 rounded-lg border border-[#E2E6EF] p-4 md:w-1/2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-primary">Twilio</h3>
+            <button
+              type="button"
+              className="cursor-pointer text-gray-500"
+              onClick={toggleShowTwilioFields}
+              aria-label={
+                showTwilioFields
+                  ? "Hide Twilio credentials"
+                  : "Show Twilio credentials"
+              }
+            >
+              {showTwilioFields ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Connect your Twilio account for SMS messaging.
+          </p>
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Account SID
+          </label>
+          <input
+            type={showTwilioFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Twilio Account SID"
+            value={twilioConfig.accountSid}
+            onChange={(e) =>
+              setTwilioConfig((prev) => ({
+                ...prev,
+                accountSid: e.target.value,
+              }))
+            }
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Auth Token
+          </label>
+          <input
+            type={showTwilioFields ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Twilio Auth Token"
+            value={twilioConfig.authToken}
+            onChange={(e) =>
+              setTwilioConfig((prev) => ({
+                ...prev,
+                authToken: e.target.value,
+              }))
+            }
+          />
+        </div>
+
+        {/* Telnyx Section */}
+        <div className="mt-6 rounded-lg border border-[#E2E6EF] p-4 md:w-1/2">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold text-primary">Telnyx</h3>
+            <button
+              type="button"
+              className="cursor-pointer text-gray-500"
+              onClick={toggleShowTelnyxField}
+              aria-label={
+                showTelnyxField
+                  ? "Hide Telnyx API key"
+                  : "Show Telnyx API key"
+              }
+            >
+              {showTelnyxField ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">
+            Connect your Telnyx account for messaging.
+          </p>
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            API Key
+          </label>
+          <input
+            type={showTelnyxField ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx API Key"
+            value={telnyxApiKey}
+            onChange={(e) => setTelnyxApiKey(e.target.value)}
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Public Key
+          </label>
+          <input
+            type={showTelnyxField ? "text" : "password"}
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx Public Key"
+            value={telnyxPublicKey}
+            onChange={(e) => setTelnyxPublicKey(e.target.value)}
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            Voice Assistant ID
+          </label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx AI Assistant ID for voice calls"
+            value={telnyxVoiceAssistantId}
+            onChange={(e) => setTelnyxVoiceAssistantId(e.target.value)}
+          />
+
+          <label className="mt-4 block text-sm font-medium text-gray-700">
+            TeXML Application ID
+          </label>
+          <input
+            type="text"
+            className="mt-1 w-full rounded-md border border-[#CCCCCC] bg-[#F7F7F7] p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter your Telnyx TeXML Application ID for voice calls"
+            value={telnyxTexmlAppId}
+            onChange={(e) => setTelnyxTexmlAppId(e.target.value)}
+          />
+        </div>
+
         {/* <div className="prompt mt-4">
           <h3 className="text-sm">Enter your Greeting</h3>
           <Textarea

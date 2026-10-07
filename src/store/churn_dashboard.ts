@@ -152,6 +152,22 @@ const isCacheValid = (timestamp: number) => {
   return Date.now() - timestamp < CACHE_DURATION
 }
 
+/** Maps API stage-list items to strings and drops empty `stage` values. */
+function parseStageListItems(stages: unknown): string[] {
+  console.log("stages", stages)
+  if (!Array.isArray(stages)) return []
+  return stages
+    .map((item: unknown) => {
+      if (typeof item === "string") return item.trim()
+      if (item && typeof item === "object" && "stage" in item) {
+        const stage = (item as { stage: unknown }).stage
+        return typeof stage === "string" ? stage.trim() : ""
+      }
+      return ""
+    })
+    .filter((stage) => stage.length > 0)
+}
+
 export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
   customerScoreData: null,
   churnRiskDistribution: null,
@@ -583,21 +599,9 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
 
         // Extract stage values from the response data
         const stages = res.data.data || []
-        console.log("Raw stages data:", stages)
 
-        const stageList = Array.isArray(stages)
-          ? stages.map((item: any) => {
-              if (typeof item === "string") {
-                return item
-              } else if (typeof item === "object" && item !== null) {
-                return item.stage || item.name || item.value || item.label || JSON.stringify(item)
-              }
-              return String(item)
-            })
-          : []
-
-        console.log("Processed stage list:", stageList)
-
+        const stageList = parseStageListItems(stages)
+        console.log("filteresd stageList", stageList)
         set({ customerStageList: stageList })
         set({ customerStageListLoading: false })
       } catch (err: any) {
@@ -619,20 +623,8 @@ export const useChurnDashboardStore = create<ChurnDashboardState>((set) => ({
 
         // Extract stage values from the response data
         const stages = res.data.data || []
-        console.log("Raw dropdown stages data:", stages)
 
-        const stageList = Array.isArray(stages)
-          ? stages.map((item: any) => {
-              if (typeof item === "string") {
-                return item
-              } else if (typeof item === "object" && item !== null) {
-                return item.stage || item.name || item.value || item.label || JSON.stringify(item)
-              }
-              return String(item)
-            })
-          : []
-
-        console.log("Processed dropdown stage list:", stageList)
+        const stageList = parseStageListItems(stages)
 
         set({
           stageDropdownList: stageList,
