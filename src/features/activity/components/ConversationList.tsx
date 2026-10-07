@@ -10,7 +10,7 @@ type ConversationListProps = {
   selectedId: string | null
   search: string
   activeFilter: ConversationFilter
-  filterCounts: { all: number; replied: number; needs_reply: number; paused: number }
+  filterCounts: { all: number; received: number; needs_reply: number; paused: number }
   onSearchChange: (value: string) => void
   onFilterChange: (filter: ConversationFilter) => void
   onSelect: (id: string) => void
@@ -28,7 +28,7 @@ export default function ConversationList({
 }: ConversationListProps) {
   const filters = [
     { id: "all" as const, label: "All", count: filterCounts.all },
-    { id: "replied" as const, label: "Replied", count: filterCounts.replied },
+    { id: "received" as const, label: "Received", count: filterCounts.received },
     { id: "needs_reply" as const, label: "Needs reply", count: filterCounts.needs_reply },
     { id: "paused" as const, label: "Paused", count: filterCounts.paused },
   ]

@@ -1,6 +1,6 @@
 export type ChannelTab = "texts" | "calls" | "emails"
 
-export type ConversationFilter = "all" | "replied" | "needs_reply" | "paused"
+export type ConversationFilter = "all" | "received" | "needs_reply" | "paused"
 
 export type ConversationStatus = "needs_reply" | "paused" | "assistant_replying"
 

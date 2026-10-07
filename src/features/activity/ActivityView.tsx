@@ -117,7 +117,7 @@ export default function ActivityView() {
   const filterCounts = useMemo(
     () => ({
       all: channelConversations.length,
-      replied: channelConversations.filter((c) => c.hasInboundMessage).length,
+      received: channelConversations.filter((c) => c.hasInboundMessage).length,
       needs_reply: channelConversations.reduce(
         (sum, c) => sum + (c.needReply || 0),
         0
@@ -134,7 +134,7 @@ export default function ActivityView() {
     return channelConversations.filter((conversation) => {
       const matchesFilter =
         activeFilter === "all" ||
-        (activeFilter === "replied" && conversation.hasInboundMessage) ||
+        (activeFilter === "received" && conversation.hasInboundMessage) ||
         (activeFilter === "needs_reply" && conversation.needReply > 0) ||
         (activeFilter === "paused" && conversation.handedOff > 0)
 
