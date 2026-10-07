@@ -4,14 +4,18 @@ import { useEffect, useRef } from "react"
 import ConversationSearch from "./ConversationSearch"
 import ConversationFilters from "./ConversationFilters"
 import ConversationListItem from "./ConversationListItem"
-import type { Conversation, ConversationFilter } from "../types"
+import type {
+  ActivityFilterCounts,
+  Conversation,
+  ConversationFilter,
+} from "../types"
 
 type ConversationListProps = {
   conversations: Conversation[]
   selectedId: string | null
   search: string
   activeFilter: ConversationFilter
-  filterCounts: { all: number; received: number; needs_reply: number; paused: number }
+  filterCounts: ActivityFilterCounts
   hasNextPage?: boolean
   loadingMore?: boolean
   onSearchChange: (value: string) => void

@@ -11,6 +11,7 @@ import {
   archiveActivityCompany,
   fetchActivityCompanies,
   fetchActivityCompanyById,
+  fetchActivityCounts,
   sendActivityMessage,
 } from "./api/activityApi"
 import {
@@ -20,6 +21,7 @@ import {
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
   ActivityCompany,
+  ActivityFilterCounts,
   ChannelTab,
   Conversation,
   ConversationFilter,
@@ -27,6 +29,13 @@ import type {
   ThreadMessage,
 } from "./types"
 import useAuth from "@/store/user"
+
+const EMPTY_FILTER_COUNTS: ActivityFilterCounts = {
+  all: 0,
+  received: 0,
+  needs_reply: 0,
+  paused: 0,
+}
 
 export default function ActivityView() {
   const { access_token, user_data, _hasHydrated } = useAuth()
@@ -41,6 +50,8 @@ export default function ActivityView() {
 
   const [companies, setCompanies] = useState<ActivityCompany[]>([])
   const [companiesPagination, setCompaniesPagination] = useState<Pagination | null>(null)
+  const [filterCounts, setFilterCounts] =
+    useState<ActivityFilterCounts>(EMPTY_FILTER_COUNTS)
   const [loading, setLoading] = useState(true)
   const [loadingMoreConversations, setLoadingMoreConversations] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
@@ -53,12 +64,26 @@ export default function ActivityView() {
     [companies]
   )
 
+  const loadFilterCounts = useCallback(async () => {
+    if (!_hasHydrated || !access_token) {
+      setFilterCounts(EMPTY_FILTER_COUNTS)
+      return
+    }
+    try {
+      const counts = await fetchActivityCounts(access_token)
+      setFilterCounts(counts)
+    } catch (err) {
+      console.log("Error loading activity filter counts", err)
+    }
+  }, [access_token, _hasHydrated])
+
   const loadCompanies = useCallback(
     async (page = 1) => {
       if (!_hasHydrated) return
       if (!access_token) {
         setCompanies([])
         setCompaniesPagination(null)
+        setFilterCounts(EMPTY_FILTER_COUNTS)
         setLoadError("Sign-in is required to load activity.")
         setLoading(false)
         return
@@ -72,6 +97,10 @@ export default function ActivityView() {
           setLoadError(null)
         } else {
           setLoadingMoreConversations(true)
+        }
+
+        if (isFirstPage) {
+          void loadFilterCounts()
         }
 
         const { data, pagination } = await fetchActivityCompanies(
@@ -100,7 +129,7 @@ export default function ActivityView() {
         }
       }
     },
-    [access_token, _hasHydrated]
+    [access_token, _hasHydrated, loadFilterCounts]
   )
 
   useEffect(() => {
@@ -158,22 +187,6 @@ export default function ActivityView() {
     loadMessages(selectedConversation)
   }, [loadMessages, selectedConversation])
 
-  const filterCounts = useMemo(
-    () => ({
-      all: channelConversations.length,
-      received: channelConversations.filter((c) => c.hasInboundMessage).length,
-      needs_reply: channelConversations.reduce(
-        (sum, c) => sum + (c.needReply || 0),
-        0
-      ),
-      paused: channelConversations.reduce(
-        (sum, c) => sum + (c.handedOff || 0),
-        0
-      ),
-    }),
-    [channelConversations]
-  )
-
   const filteredConversations = useMemo(() => {
     return channelConversations.filter((conversation) => {
       const matchesFilter =
@@ -185,6 +198,27 @@ export default function ActivityView() {
       return matchesFilter && matchesConversationSearch(conversation, search)
     })
   }, [channelConversations, activeFilter, search])
+
+  const patchCompanyHandedOff = useCallback(
+    (companyId: string, handedOff: boolean) => {
+      setCompanies((prev) =>
+        prev.map((company) =>
+          company.company_id === companyId
+            ? { ...company, handed_off: handedOff ? 1 : 0 }
+            : company
+        )
+      )
+    },
+    []
+  )
+
+  const bumpPausedCount = useCallback((delta: number) => {
+    if (delta === 0) return
+    setFilterCounts((prev) => ({
+      ...prev,
+      paused: Math.max(0, prev.paused + delta),
+    }))
+  }, [])
 
   const handleArchiveToggle = useCallback(
     async (archive: boolean) => {
@@ -201,6 +235,17 @@ export default function ActivityView() {
         return
       }
 
+      const companyId = selectedConversation.companyId
+      const previousHandedOff = selectedConversation.handedOff > 0
+      const pausedDelta =
+        archive && !previousHandedOff ? 1 : !archive && previousHandedOff ? -1 : 0
+
+      // Optimistic update so Paused chip count reflects immediately
+      patchCompanyHandedOff(companyId, archive)
+      bumpPausedCount(pausedDelta)
+      setShowComposer(archive)
+      if (!archive) setDraft("")
+
       try {
         setIsArchiving(true)
         await archiveActivityCompany(
@@ -208,19 +253,23 @@ export default function ActivityView() {
             deal_id: selectedConversation.dealId || "",
             dealname: selectedConversation.dealName || "",
             dealstage: selectedConversation.dealStage || "",
-            company_id: selectedConversation.companyId,
+            company_id: companyId,
             tenant_id: tenantId,
             archive,
           },
           access_token
         )
 
-        setShowComposer(archive)
-        if (!archive) setDraft("")
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
           icon: false,
         })
+        void loadFilterCounts()
       } catch (err: any) {
+        // Roll back chip / composer if the API call fails
+        patchCompanyHandedOff(companyId, previousHandedOff)
+        bumpPausedCount(-pausedDelta)
+        setShowComposer(previousHandedOff)
+
         console.log("Error updating archive status", err)
         const status = err?.response?.status
         if (status !== 401 && status !== 403) {
@@ -237,7 +286,15 @@ export default function ActivityView() {
         setIsArchiving(false)
       }
     },
-    [access_token, isArchiving, selectedConversation, user_data?.organization]
+    [
+      access_token,
+      bumpPausedCount,
+      isArchiving,
+      loadFilterCounts,
+      patchCompanyHandedOff,
+      selectedConversation,
+      user_data?.organization,
+    ]
   )
 
   const handleSendMessage = useCallback(async () => {
@@ -313,7 +370,8 @@ export default function ActivityView() {
               onSelect={(id) => {
                 setSelectedId(id)
                 setDraft("")
-                setShowComposer(false)
+                const next = conversations.find((c) => c.id === id)
+                setShowComposer((next?.handedOff ?? 0) > 0)
               }}
               onLoadMore={handleLoadMoreConversations}
             />
