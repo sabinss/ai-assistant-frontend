@@ -3,12 +3,14 @@ import type {
   ActivityArchivePayload,
   ActivityCompany,
   ActivityCompanyListParams,
+  ActivityEmailDetail,
   ActivityFilterCounts,
   ActivityMessage,
   ActivitySendMessagePayload,
   ConversationFilter,
   Pagination,
 } from "../types"
+import { normalizeActivityEmailDetails } from "../mapActivityEmails"
 import { normalizeActivityMessages } from "../mapActivityMessages"
 
 export type ActivityCompaniesResult = {
@@ -178,17 +180,17 @@ export async function fetchActivityEmails(
 }
 
 /**
- * GET `/activity/email/:companyId` — email activity detail for a company.
+ * GET `/activity/email/:companyId` — email messages for a company.
  */
 export async function fetchActivityEmailById(
   companyId: string,
   accessToken: string
-): Promise<unknown> {
+): Promise<ActivityEmailDetail[]> {
   const { data } = await http.get(`/activity/email/${encodeURIComponent(companyId)}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
   console.log("[activity/email/:companyId] detail response", data)
-  return data
+  return normalizeActivityEmailDetails(data)
 }
 
 export async function archiveActivityCompany(

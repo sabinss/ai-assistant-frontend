@@ -82,6 +82,19 @@ export type ActivityMessage = {
   updated_at?: string
 }
 
+/** Normalized row from `GET /activity/email/:companyId` for the email thread UI. */
+export type ActivityEmailDetail = {
+  id: string
+  subject: string
+  to: string
+  from: string
+  body: string
+  companyName: string
+  createdAt: string
+  direction: string
+  agentSent: boolean
+}
+
 export type Conversation = {
   id: string
   name: string

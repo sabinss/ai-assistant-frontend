@@ -1,11 +1,11 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { Mail } from "lucide-react"
 import { toast } from "react-toastify"
 import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
 import ConversationList from "./components/ConversationList"
+import EmailThreadPanel from "./components/EmailThreadPanel"
 import ThreadPanel from "./components/ThreadPanel"
 import { ASSISTANT_ALERT, CHANNEL_TABS } from "./data/mockData"
 import {
@@ -24,6 +24,7 @@ import {
 } from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
+  ActivityEmailDetail,
   ActivityFilterCounts,
   ActivityPagination,
   ChannelTab,
@@ -56,26 +57,6 @@ function mergeConversations(
   return merged
 }
 
-function EmailComingSoonPanel({
-  title,
-  subtitle,
-}: {
-  title: string
-  subtitle: string
-}) {
-  return (
-    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 bg-white px-6 text-center">
-      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#E8EDF8] text-[#1B3A8C]">
-        <Mail size={22} strokeWidth={2} aria-hidden />
-      </div>
-      <p className="text-[15px] font-semibold text-[#1A2333]">{title}</p>
-      <p className="max-w-[280px] text-[13px] leading-relaxed text-[#8A93A6]">
-        {subtitle}
-      </p>
-    </div>
-  )
-}
-
 export default function ActivityView() {
   const { access_token, user_data, _hasHydrated } = useAuth()
   const [activeTab, setActiveTab] = useState<ChannelTab>("texts")
@@ -102,6 +83,9 @@ export default function ActivityView() {
   const [emailLoadingMore, setEmailLoadingMore] = useState(false)
   const [emailLoadError, setEmailLoadError] = useState<string | null>(null)
   const [emailSelectedId, setEmailSelectedId] = useState<string | null>(null)
+  const [emailFilter, setEmailFilter] = useState<ConversationFilter>("all")
+  const [emailDetails, setEmailDetails] = useState<ActivityEmailDetail[]>([])
+  const [emailDetailsLoading, setEmailDetailsLoading] = useState(false)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const loadingMoreLockRef = useRef(false)
@@ -285,12 +269,20 @@ export default function ActivityView() {
 
   const loadEmailDetail = useCallback(
     async (companyId: string | null) => {
-      if (!access_token || !companyId) return
+      if (!access_token || !companyId) {
+        setEmailDetails([])
+        return
+      }
       try {
+        setEmailDetailsLoading(true)
         const data = await fetchActivityEmailById(companyId, access_token)
         console.log("[ActivityView] email detail for", companyId, data)
+        setEmailDetails(data)
       } catch (err) {
         console.log("Error loading activity email detail", err)
+        setEmailDetails([])
+      } finally {
+        setEmailDetailsLoading(false)
       }
     },
     [access_token]
@@ -351,11 +343,24 @@ export default function ActivityView() {
   const selectedEmailConversation =
     emailConversations.find((c) => c.id === emailSelectedId) ?? null
 
+  const emailFilterCounts = useMemo(
+    () => ({
+      all: emailPagination?.totalRecords ?? emailConversations.length,
+      received: emailConversations.filter((c) => c.hasInboundMessage).length,
+      needs_reply: 0,
+      paused: 0,
+    }),
+    [emailConversations, emailPagination?.totalRecords]
+  )
+
   const filteredEmailConversations = useMemo(() => {
-    return emailConversations.filter((conversation) =>
-      matchesConversationSearch(conversation, search)
-    )
-  }, [emailConversations, search])
+    return emailConversations.filter((conversation) => {
+      const matchesFilter =
+        emailFilter === "all" ||
+        (emailFilter === "received" && conversation.hasInboundMessage)
+      return matchesFilter && matchesConversationSearch(conversation, search)
+    })
+  }, [emailConversations, emailFilter, search])
 
   useEffect(() => {
     if (!isEmailTab) return
@@ -547,12 +552,13 @@ export default function ActivityView() {
       setLoadError(null)
       setLoading(false)
       setEmailLoadError(null)
+      setEmailFilter("all")
     } else {
       setEmailSelectedId(null)
+      setEmailDetails([])
+      setEmailFilter("all")
     }
   }
-
-  const emptyEmailFilterCounts: ActivityFilterCounts = EMPTY_FILTER_COUNTS
 
   return (
     <div className="flex h-[min(100dvh,calc(100vh-80px))] min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden">
@@ -582,18 +588,24 @@ export default function ActivityView() {
                 conversations={filteredEmailConversations}
                 selectedId={emailSelectedId}
                 search={search}
-                activeFilter="all"
-                filterCounts={emptyEmailFilterCounts}
+                activeFilter={emailFilter}
+                filterCounts={emailFilterCounts}
+                visibleFilters={["all", "received"]}
                 hasNextPage={Boolean(emailPagination?.hasNextPage)}
                 loadingMore={emailLoadingMore}
                 onSearchChange={setSearch}
-                onFilterChange={() => undefined}
+                onFilterChange={(filter) => {
+                  if (filter === "all" || filter === "received") {
+                    setEmailFilter(filter)
+                  }
+                }}
                 onSelect={(id) => setEmailSelectedId(id)}
                 onLoadMore={handleEmailLoadMore}
               />
-              <EmailComingSoonPanel
-                title="Email content coming soon"
-                subtitle="Email conversation content will appear here. Detail API response is logged in the console."
+              <EmailThreadPanel
+                conversation={selectedEmailConversation}
+                emails={emailDetails}
+                loading={emailDetailsLoading}
               />
             </>
           )
