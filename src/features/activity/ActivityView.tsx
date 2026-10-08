@@ -5,6 +5,7 @@ import { toast } from "react-toastify"
 import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
 import ConversationList from "./components/ConversationList"
+import CustomerDetailView from "./components/CustomerDetailView"
 import EmailThreadPanel from "./components/EmailThreadPanel"
 import ThreadPanel from "./components/ThreadPanel"
 import { ASSISTANT_ALERT, CHANNEL_TABS } from "./data/mockData"
@@ -86,6 +87,7 @@ export default function ActivityView() {
   const [emailFilter, setEmailFilter] = useState<ConversationFilter>("all")
   const [emailDetails, setEmailDetails] = useState<ActivityEmailDetail[]>([])
   const [emailDetailsLoading, setEmailDetailsLoading] = useState(false)
+  const [showCustomerDetail, setShowCustomerDetail] = useState(false)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const loadingMoreLockRef = useRef(false)
@@ -546,6 +548,7 @@ export default function ActivityView() {
     setSearch("")
     setDraft("")
     setShowComposer(false)
+    setShowCustomerDetail(false)
     setSelectedId(null)
     setMessages([])
     if (tab === "emails") {
@@ -560,11 +563,38 @@ export default function ActivityView() {
     }
   }
 
+  const customerConversation = isEmailTab
+    ? selectedEmailConversation
+    : selectedConversation
+
+  const openCustomerDetail = useCallback(() => {
+    if (!customerConversation?.companyId) {
+      toast.error("Company id is missing", { icon: false })
+      return
+    }
+    setShowCustomerDetail(true)
+  }, [customerConversation])
+
+  const closeCustomerDetail = useCallback(() => {
+    setShowCustomerDetail(false)
+  }, [])
+
   return (
     <div className="flex h-[min(100dvh,calc(100vh-80px))] min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden">
-      <ActivityHeader />
-      <ChannelTabs tabs={CHANNEL_TABS} activeTab={activeTab} onChange={handleTabChange} />
+      {!showCustomerDetail && (
+        <>
+          <ActivityHeader />
+          <ChannelTabs tabs={CHANNEL_TABS} activeTab={activeTab} onChange={handleTabChange} />
+        </>
+      )}
 
+      {showCustomerDetail && customerConversation && access_token ? (
+        <CustomerDetailView
+          conversation={customerConversation}
+          accessToken={access_token}
+          onBack={closeCustomerDetail}
+        />
+      ) : (
       <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-[#E2E6EF] bg-white">
         {isEmailTab ? (
           emailLoading ? (
@@ -606,6 +636,7 @@ export default function ActivityView() {
                 conversation={selectedEmailConversation}
                 emails={emailDetails}
                 loading={emailDetailsLoading}
+                onViewCustomer={openCustomerDetail}
               />
             </>
           )
@@ -660,10 +691,12 @@ export default function ActivityView() {
               onSend={handleSendMessage}
               onTakeOver={() => handleArchiveToggle(true)}
               onRevoke={() => handleArchiveToggle(false)}
+              onViewCustomer={openCustomerDetail}
             />
           </>
         )}
       </div>
+      )}
     </div>
   )
 }

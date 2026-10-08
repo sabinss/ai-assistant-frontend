@@ -56,14 +56,14 @@ export default function EmailThreadPanel({
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E85D3B] text-white">
           <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2.5} aria-hidden />
         </div>
-        <div className="min-w-0 flex-1">
+        {/* <div className="min-w-0 flex-1">
           <p className="text-[13px] font-semibold text-[#8A3A12]">
             The Assistant needs you here
           </p>
           <p className="mt-1 text-[12.5px] leading-relaxed text-[#8A4A28]">
             Review this email thread and follow up with the customer when needed.
           </p>
-        </div>
+        </div> */}
       </div>
 
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4">

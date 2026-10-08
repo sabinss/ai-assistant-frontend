@@ -57,3 +57,4 @@ npm publish --access public
 ## Frontend Main Branch
 
 sabin/pagination-activity-v1
+NOte: need to merge feat/email-activity in sabin/pagination-activity-v1

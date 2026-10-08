@@ -95,6 +95,16 @@ export type ActivityEmailDetail = {
   agentSent: boolean
 }
 
+/** Normalized row from `GET /activity/company/customer/:id`. */
+export type ActivityCustomerDetail = {
+  name: string
+  companyEmail: string
+  phoneNumber: string
+  startedDate: string
+  industry: string
+  website: string
+}
+
 export type Conversation = {
   id: string
   name: string

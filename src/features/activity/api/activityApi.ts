@@ -3,6 +3,7 @@ import type {
   ActivityArchivePayload,
   ActivityCompany,
   ActivityCompanyListParams,
+  ActivityCustomerDetail,
   ActivityEmailDetail,
   ActivityFilterCounts,
   ActivityMessage,
@@ -191,6 +192,54 @@ export async function fetchActivityEmailById(
   })
   console.log("[activity/email/:companyId] detail response", data)
   return normalizeActivityEmailDetails(data)
+}
+
+function asTrimmedString(value: unknown): string {
+  if (typeof value === "string") return value.trim()
+  if (value == null) return ""
+  return String(value).trim()
+}
+
+/**
+ * GET `/activity/company/customer/:id` — company profile for customer detail view.
+ */
+export async function fetchActivityCompanyCustomer(
+  companyId: string,
+  accessToken: string
+): Promise<ActivityCustomerDetail | null> {
+  const { data } = await http.get(
+    `/activity/company/customer/${encodeURIComponent(companyId)}`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  )
+  console.log("[activity/company/customer/:id] response", data)
+
+  const row = Array.isArray(data?.data)
+    ? data.data[0]
+    : Array.isArray(data)
+      ? data[0]
+      : data?.data && typeof data.data === "object"
+        ? data.data
+        : data && typeof data === "object" && !Array.isArray(data)
+          ? data
+          : null
+
+  if (!row || typeof row !== "object") return null
+
+  const record = row as Record<string, unknown>
+  return {
+    name: asTrimmedString(record.name ?? record.company_name),
+    companyEmail: asTrimmedString(record.company_email ?? record.email),
+    phoneNumber: asTrimmedString(
+      record.phone_number ?? record.phone_numer ?? record.phone
+    ),
+    startedDate: asTrimmedString(
+      record.started_date ?? record.start_date ?? record.customer_since
+    ),
+    industry: asTrimmedString(record.industry),
+    website: asTrimmedString(record.website),
+  }
 }
 
 export async function archiveActivityCompany(
