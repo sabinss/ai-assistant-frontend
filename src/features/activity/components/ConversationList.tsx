@@ -12,6 +12,8 @@ type ConversationListProps = {
   search: string
   activeFilter: ConversationFilter
   filterCounts: { all: number; received: number; needs_reply: number; paused: number }
+  /** Which chips to show. Defaults to all four (Texts). Email uses All + Received only. */
+  visibleFilters?: ConversationFilter[]
   hasNextPage: boolean
   loadingMore: boolean
   onSearchChange: (value: string) => void
@@ -20,12 +22,20 @@ type ConversationListProps = {
   onLoadMore: () => void
 }
 
+const DEFAULT_VISIBLE_FILTERS: ConversationFilter[] = [
+  "all",
+  "received",
+  "needs_reply",
+  "paused",
+]
+
 export default function ConversationList({
   conversations,
   selectedId,
   search,
   activeFilter,
   filterCounts,
+  visibleFilters = DEFAULT_VISIBLE_FILTERS,
   hasNextPage,
   loadingMore,
   onSearchChange,
@@ -36,12 +46,13 @@ export default function ConversationList({
   const scrollRef = useRef<HTMLDivElement>(null)
   const sentinelRef = useRef<HTMLDivElement>(null)
 
-  const filters = [
+  const allFilters = [
     { id: "all" as const, label: "All", count: filterCounts.all },
     { id: "received" as const, label: "Received", count: filterCounts.received },
     { id: "needs_reply" as const, label: "Needs reply", count: filterCounts.needs_reply },
     { id: "paused" as const, label: "Paused", count: filterCounts.paused },
   ]
+  const filters = allFilters.filter((f) => visibleFilters.includes(f.id))
 
   useEffect(() => {
     const root = scrollRef.current

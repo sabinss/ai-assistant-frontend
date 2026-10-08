@@ -2,11 +2,15 @@ import http from "@/config/http"
 import type {
   ActivityArchivePayload,
   ActivityCompany,
+  ActivityCompanyListParams,
+  ActivityEmailDetail,
   ActivityFilterCounts,
   ActivityMessage,
   ActivitySendMessagePayload,
+  ConversationFilter,
   Pagination,
 } from "../types"
+import { normalizeActivityEmailDetails } from "../mapActivityEmails"
 import { normalizeActivityMessages } from "../mapActivityMessages"
 
 export type ActivityCompaniesResult = {
@@ -77,17 +81,60 @@ export async function fetchActivityCounts(accessToken: string): Promise<Activity
   }
 }
 
+/** Map UI chip → `/activity/company` query flags (All = no filter flags). */
+export function companyListParamsFromFilter(
+  filter: ConversationFilter
+): Pick<
+  ActivityCompanyListParams,
+  "has_inbound_message" | "need_reply" | "handed_off"
+> {
+  if (filter === "received") return { has_inbound_message: true }
+  if (filter === "needs_reply") return { need_reply: true }
+  if (filter === "paused") return { handed_off: true }
+  return {}
+}
+
 export async function fetchActivityCompanies(
-  { page = 1, limit = 10 }: { page?: number; limit?: number },
+  {
+    page = 1,
+    limit = 10,
+    has_inbound_message,
+    need_reply,
+    handed_off,
+  }: ActivityCompanyListParams = {},
   accessToken: string,
   signal?: AbortSignal
 ): Promise<ActivityCompaniesResult> {
+  const params: Record<string, string | number | boolean> = { page, limit }
+  if (has_inbound_message === true) params.has_inbound_message = true
+  if (need_reply === true) params.need_reply = true
+  if (handed_off === true) params.handed_off = true
+
   const { data } = await http.get("/activity/company", {
     headers: { Authorization: `Bearer ${accessToken}` },
-    params: { page, limit },
+    params,
     signal,
   })
 
+  return normalizeCompanyListPayload(data, page, limit)
+}
+
+export async function fetchActivityCompanyById(
+  companyId: string,
+  accessToken: string
+): Promise<ActivityMessage[]> {
+  const { data } = await http.get(`/activity/company/${encodeURIComponent(companyId)}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  console.log("activity company detail response", data)
+  return normalizeActivityMessages(data)
+}
+
+function normalizeCompanyListPayload(
+  data: unknown,
+  page: number,
+  limit: number
+): ActivityCompaniesResult {
   const pagination = normalizePagination(data) ?? {
     currentPage: page,
     totalPages: 1,
@@ -100,22 +147,50 @@ export async function fetchActivityCompanies(
   }
 
   if (Array.isArray(data)) return { data: data as ActivityCompany[], pagination }
-  if (Array.isArray(data?.data)) return { data: data.data as ActivityCompany[], pagination }
-  if (Array.isArray(data?.companies)) {
-    return { data: data.companies as ActivityCompany[], pagination }
+  if (data && typeof data === "object") {
+    const record = data as Record<string, unknown>
+    if (Array.isArray(record.data)) {
+      return { data: record.data as ActivityCompany[], pagination }
+    }
+    if (Array.isArray(record.companies)) {
+      return { data: record.companies as ActivityCompany[], pagination }
+    }
+    if (Array.isArray(record.emails)) {
+      return { data: record.emails as ActivityCompany[], pagination }
+    }
   }
   return { data: [], pagination }
 }
 
-export async function fetchActivityCompanyById(
+/**
+ * GET `/activity/email` — email activity company list.
+ */
+export async function fetchActivityEmails(
+  { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
+  accessToken: string,
+  signal?: AbortSignal
+): Promise<ActivityCompaniesResult> {
+  const { data } = await http.get("/activity/email", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    params: { page, limit },
+    signal,
+  })
+  console.log("[activity/email] list response", data)
+  return normalizeCompanyListPayload(data, page, limit)
+}
+
+/**
+ * GET `/activity/email/:companyId` — email messages for a company.
+ */
+export async function fetchActivityEmailById(
   companyId: string,
   accessToken: string
-): Promise<ActivityMessage[]> {
-  const { data } = await http.get(`/activity/company/${encodeURIComponent(companyId)}`, {
+): Promise<ActivityEmailDetail[]> {
+  const { data } = await http.get(`/activity/email/${encodeURIComponent(companyId)}`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   })
-  console.log("activity company detail response", data)
-  return normalizeActivityMessages(data)
+  console.log("[activity/email/:companyId] detail response", data)
+  return normalizeActivityEmailDetails(data)
 }
 
 export async function archiveActivityCompany(

@@ -5,13 +5,17 @@ import { toast } from "react-toastify"
 import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
 import ConversationList from "./components/ConversationList"
+import EmailThreadPanel from "./components/EmailThreadPanel"
 import ThreadPanel from "./components/ThreadPanel"
 import { ASSISTANT_ALERT, CHANNEL_TABS } from "./data/mockData"
 import {
   archiveActivityCompany,
+  companyListParamsFromFilter,
   fetchActivityCompanies,
   fetchActivityCompanyById,
   fetchActivityCounts,
+  fetchActivityEmailById,
+  fetchActivityEmails,
   sendActivityMessage,
 } from "./api/activityApi"
 import {
@@ -20,6 +24,7 @@ import {
 } from "./mapActivityCompanies"
 import { mapActivityMessagesToThread } from "./mapActivityMessages"
 import type {
+  ActivityEmailDetail,
   ActivityFilterCounts,
   ActivityPagination,
   ChannelTab,
@@ -72,12 +77,28 @@ export default function ActivityView() {
 
   const [pagination, setPagination] = useState<ActivityPagination | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [emailConversations, setEmailConversations] = useState<Conversation[]>([])
+  const [emailPagination, setEmailPagination] = useState<ActivityPagination | null>(null)
+  const [emailLoading, setEmailLoading] = useState(false)
+  const [emailLoadingMore, setEmailLoadingMore] = useState(false)
+  const [emailLoadError, setEmailLoadError] = useState<string | null>(null)
+  const [emailSelectedId, setEmailSelectedId] = useState<string | null>(null)
+  const [emailFilter, setEmailFilter] = useState<ConversationFilter>("all")
+  const [emailDetails, setEmailDetails] = useState<ActivityEmailDetail[]>([])
+  const [emailDetailsLoading, setEmailDetailsLoading] = useState(false)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const loadingMoreLockRef = useRef(false)
+  const emailRequestIdRef = useRef(0)
+  const emailAbortRef = useRef<AbortController | null>(null)
+  const emailLoadingMoreLockRef = useRef(false)
+  const activeFilterRef = useRef(activeFilter)
+  activeFilterRef.current = activeFilter
+
+  const isEmailTab = activeTab === "emails"
 
   const loadCompanies = useCallback(
-    async (page = 1) => {
+    async (page = 1, filter: ConversationFilter = activeFilterRef.current) => {
       if (!_hasHydrated) return
       if (!access_token) {
         setConversations([])
@@ -87,6 +108,7 @@ export default function ActivityView() {
         return
       }
 
+      const filterParams = companyListParamsFromFilter(filter)
       const isFirstPage = page === 1
 
       if (isFirstPage) {
@@ -94,14 +116,16 @@ export default function ActivityView() {
         const controller = new AbortController()
         abortRef.current = controller
         const requestId = ++requestIdRef.current
-        const isStale = () => requestId !== requestIdRef.current
+        const isStale = () =>
+          requestId !== requestIdRef.current ||
+          activeFilterRef.current !== filter
 
         try {
           setLoading(true)
           setLoadError(null)
           loadingMoreLockRef.current = false
           const result = await fetchActivityCompanies(
-            { page: 1, limit: PAGE_SIZE },
+            { page: 1, limit: PAGE_SIZE, ...filterParams },
             access_token,
             controller.signal
           )
@@ -113,6 +137,7 @@ export default function ActivityView() {
           setSelectedId((prev) =>
             prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
           )
+          setShowComposer(false)
         } catch (err: any) {
           if (isStale() || err?.code === "ERR_CANCELED") return
           console.log("Error loading activity companies", err)
@@ -133,9 +158,10 @@ export default function ActivityView() {
 
       try {
         const result = await fetchActivityCompanies(
-          { page, limit: PAGE_SIZE },
+          { page, limit: PAGE_SIZE, ...filterParams },
           access_token
         )
+        if (activeFilterRef.current !== filter) return
         const mapped = mapActivityCompaniesToConversations(result.data)
         setPagination(result.pagination)
         setConversations((prev) => mergeConversations(prev, mapped))
@@ -162,38 +188,191 @@ export default function ActivityView() {
     }
   }, [access_token, _hasHydrated])
 
+  const loadEmails = useCallback(
+    async (page = 1) => {
+      if (!_hasHydrated) return
+      if (!access_token) {
+        setEmailConversations([])
+        setEmailPagination(null)
+        setEmailLoadError("Sign-in is required to load email activity.")
+        setEmailLoading(false)
+        return
+      }
+
+      const isFirstPage = page === 1
+
+      if (isFirstPage) {
+        emailAbortRef.current?.abort()
+        const controller = new AbortController()
+        emailAbortRef.current = controller
+        const requestId = ++emailRequestIdRef.current
+        const isStale = () => requestId !== emailRequestIdRef.current
+
+        try {
+          setEmailLoading(true)
+          setEmailLoadError(null)
+          emailLoadingMoreLockRef.current = false
+          const result = await fetchActivityEmails(
+            { page: 1, limit: PAGE_SIZE },
+            access_token,
+            controller.signal
+          )
+          if (isStale()) return
+
+          console.log("[ActivityView] email companies list", result)
+          const mapped = mapActivityCompaniesToConversations(result.data).map(
+            (c) => ({ ...c, channel: "emails" as const })
+          )
+          setEmailPagination(result.pagination)
+          setEmailConversations(mapped)
+          setEmailSelectedId((prev) =>
+            prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
+          )
+        } catch (err: any) {
+          if (isStale() || err?.code === "ERR_CANCELED") return
+          console.log("Error loading activity emails", err)
+          setEmailConversations([])
+          setEmailPagination(null)
+          setEmailLoadError(
+            err?.response?.data?.message || "Failed to load email companies."
+          )
+        } finally {
+          if (!isStale()) setEmailLoading(false)
+        }
+        return
+      }
+
+      if (emailLoadingMoreLockRef.current) return
+      emailLoadingMoreLockRef.current = true
+      setEmailLoadingMore(true)
+
+      try {
+        const result = await fetchActivityEmails(
+          { page, limit: PAGE_SIZE },
+          access_token
+        )
+        console.log("[ActivityView] email companies page", page, result)
+        const mapped = mapActivityCompaniesToConversations(result.data).map(
+          (c) => ({ ...c, channel: "emails" as const })
+        )
+        setEmailPagination(result.pagination)
+        setEmailConversations((prev) => mergeConversations(prev, mapped))
+      } catch (err) {
+        console.log("Error loading more activity emails", err)
+      } finally {
+        emailLoadingMoreLockRef.current = false
+        setEmailLoadingMore(false)
+      }
+    },
+    [access_token, _hasHydrated]
+  )
+
+  const loadEmailDetail = useCallback(
+    async (companyId: string | null) => {
+      if (!access_token || !companyId) {
+        setEmailDetails([])
+        return
+      }
+      try {
+        setEmailDetailsLoading(true)
+        const data = await fetchActivityEmailById(companyId, access_token)
+        console.log("[ActivityView] email detail for", companyId, data)
+        setEmailDetails(data)
+      } catch (err) {
+        console.log("Error loading activity email detail", err)
+        setEmailDetails([])
+      } finally {
+        setEmailDetailsLoading(false)
+      }
+    },
+    [access_token]
+  )
+
   useEffect(() => {
-    void loadCompanies(1)
-  }, [loadCompanies])
+    if (isEmailTab) {
+      setLoading(false)
+      setLoadError(null)
+      void loadEmails(1)
+      return
+    }
+    void loadCompanies(1, activeFilter)
+  }, [loadCompanies, loadEmails, activeFilter, isEmailTab])
 
   useEffect(() => {
     void loadFilterCounts()
   }, [loadFilterCounts])
 
-  useEffect(() => () => abortRef.current?.abort(), [])
+  useEffect(() => () => {
+    abortRef.current?.abort()
+    emailAbortRef.current?.abort()
+  }, [])
 
   const handleLoadMore = useCallback(() => {
+    if (isEmailTab) return
     if (loading || loadingMore || loadingMoreLockRef.current) return
     if (!pagination?.hasNextPage) return
     const nextPage = pagination.nextPage ?? pagination.currentPage + 1
-    void loadCompanies(nextPage)
-  }, [loadCompanies, loading, loadingMore, pagination])
+    void loadCompanies(nextPage, activeFilter)
+  }, [
+    activeFilter,
+    isEmailTab,
+    loadCompanies,
+    loading,
+    loadingMore,
+    pagination,
+  ])
 
-  const channelConversations = useMemo(
-    () =>
-      activeTab === "texts"
-        ? conversations
-        : conversations.filter((c) => c.channel === activeTab),
-    [activeTab, conversations]
-  )
+  const handleEmailLoadMore = useCallback(() => {
+    if (!isEmailTab) return
+    if (emailLoading || emailLoadingMore || emailLoadingMoreLockRef.current) return
+    if (!emailPagination?.hasNextPage) return
+    const nextPage = emailPagination.nextPage ?? emailPagination.currentPage + 1
+    void loadEmails(nextPage)
+  }, [emailLoading, emailLoadingMore, emailPagination, isEmailTab, loadEmails])
+
+  const handleFilterChange = useCallback((filter: ConversationFilter) => {
+    setActiveFilter(filter)
+    setSearch("")
+    setDraft("")
+    setShowComposer(false)
+  }, [])
 
   const selectedConversation =
-    channelConversations.find((c) => c.id === selectedId) ??
-    conversations.find((c) => c.id === selectedId) ??
-    null
+    conversations.find((c) => c.id === selectedId) ?? null
+
+  const selectedEmailConversation =
+    emailConversations.find((c) => c.id === emailSelectedId) ?? null
+
+  const emailFilterCounts = useMemo(
+    () => ({
+      all: emailPagination?.totalRecords ?? emailConversations.length,
+      received: emailConversations.filter((c) => c.hasInboundMessage).length,
+      needs_reply: 0,
+      paused: 0,
+    }),
+    [emailConversations, emailPagination?.totalRecords]
+  )
+
+  const filteredEmailConversations = useMemo(() => {
+    return emailConversations.filter((conversation) => {
+      const matchesFilter =
+        emailFilter === "all" ||
+        (emailFilter === "received" && conversation.hasInboundMessage)
+      return matchesFilter && matchesConversationSearch(conversation, search)
+    })
+  }, [emailConversations, emailFilter, search])
+
+  useEffect(() => {
+    if (!isEmailTab) return
+    void loadEmailDetail(selectedEmailConversation?.companyId ?? null)
+  }, [isEmailTab, loadEmailDetail, selectedEmailConversation?.companyId])
 
   const loadMessages = useCallback(
     async (conversation: Conversation | null) => {
+      if (isEmailTab) {
+        setMessages([])
+        return
+      }
       if (!access_token || !conversation?.companyId) {
         setMessages([])
         return
@@ -215,7 +394,7 @@ export default function ActivityView() {
         setMessagesLoading(false)
       }
     },
-    [access_token]
+    [access_token, isEmailTab]
   )
 
   useEffect(() => {
@@ -223,16 +402,10 @@ export default function ActivityView() {
   }, [loadMessages, selectedConversation])
 
   const filteredConversations = useMemo(() => {
-    return channelConversations.filter((conversation) => {
-      const matchesFilter =
-        activeFilter === "all" ||
-        (activeFilter === "received" && conversation.hasInboundMessage) ||
-        (activeFilter === "needs_reply" && conversation.needReply > 0) ||
-        (activeFilter === "paused" && conversation.handedOff > 0)
-
-      return matchesFilter && matchesConversationSearch(conversation, search)
-    })
-  }, [channelConversations, activeFilter, search])
+    return conversations.filter((conversation) =>
+      matchesConversationSearch(conversation, search)
+    )
+  }, [conversations, search])
 
   const handleArchiveToggle = useCallback(
     async (archive: boolean) => {
@@ -287,6 +460,8 @@ export default function ActivityView() {
         )
 
         void loadFilterCounts()
+        // Re-fetch current chip filter so list matches server query params
+        void loadCompanies(1, activeFilterRef.current)
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
           icon: false,
         })
@@ -329,6 +504,7 @@ export default function ActivityView() {
     [
       access_token,
       isArchiving,
+      loadCompanies,
       loadFilterCounts,
       selectedConversation,
       user_data?.organization,
@@ -370,6 +546,18 @@ export default function ActivityView() {
     setSearch("")
     setDraft("")
     setShowComposer(false)
+    setSelectedId(null)
+    setMessages([])
+    if (tab === "emails") {
+      setLoadError(null)
+      setLoading(false)
+      setEmailLoadError(null)
+      setEmailFilter("all")
+    } else {
+      setEmailSelectedId(null)
+      setEmailDetails([])
+      setEmailFilter("all")
+    }
   }
 
   return (
@@ -378,7 +566,50 @@ export default function ActivityView() {
       <ChannelTabs tabs={CHANNEL_TABS} activeTab={activeTab} onChange={handleTabChange} />
 
       <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-[#E2E6EF] bg-white">
-        {loading ? (
+        {isEmailTab ? (
+          emailLoading ? (
+            <div className="flex flex-1 items-center justify-center text-[14px] text-[#8A93A6]">
+              Loading email activity...
+            </div>
+          ) : emailLoadError ? (
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+              <p className="text-[14px] text-[#C0392B]">{emailLoadError}</p>
+              <button
+                type="button"
+                onClick={() => void loadEmails(1)}
+                className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <>
+              <ConversationList
+                conversations={filteredEmailConversations}
+                selectedId={emailSelectedId}
+                search={search}
+                activeFilter={emailFilter}
+                filterCounts={emailFilterCounts}
+                visibleFilters={["all", "received"]}
+                hasNextPage={Boolean(emailPagination?.hasNextPage)}
+                loadingMore={emailLoadingMore}
+                onSearchChange={setSearch}
+                onFilterChange={(filter) => {
+                  if (filter === "all" || filter === "received") {
+                    setEmailFilter(filter)
+                  }
+                }}
+                onSelect={(id) => setEmailSelectedId(id)}
+                onLoadMore={handleEmailLoadMore}
+              />
+              <EmailThreadPanel
+                conversation={selectedEmailConversation}
+                emails={emailDetails}
+                loading={emailDetailsLoading}
+              />
+            </>
+          )
+        ) : loading ? (
           <div className="flex flex-1 items-center justify-center text-[14px] text-[#8A93A6]">
             Loading activity...
           </div>
@@ -388,7 +619,7 @@ export default function ActivityView() {
             <button
               type="button"
               onClick={() => {
-                void loadCompanies(1)
+                void loadCompanies(1, activeFilter)
                 void loadFilterCounts()
               }}
               className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
@@ -407,7 +638,7 @@ export default function ActivityView() {
               hasNextPage={Boolean(pagination?.hasNextPage)}
               loadingMore={loadingMore}
               onSearchChange={setSearch}
-              onFilterChange={setActiveFilter}
+              onFilterChange={handleFilterChange}
               onSelect={(id) => {
                 setSelectedId(id)
                 setDraft("")

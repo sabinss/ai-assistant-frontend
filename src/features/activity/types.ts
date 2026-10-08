@@ -32,6 +32,15 @@ export type Pagination = {
 
 export type ActivityPagination = Pagination
 
+/** Query filters for `GET /activity/company` chip selections. */
+export type ActivityCompanyListParams = {
+  page?: number
+  limit?: number
+  has_inbound_message?: boolean
+  need_reply?: boolean
+  handed_off?: boolean
+}
+
 export type ActivityArchivePayload = {
   deal_id: string
   dealname: string
@@ -71,6 +80,19 @@ export type ActivityMessage = {
   type: string | null
   agentsent?: boolean
   updated_at?: string
+}
+
+/** Normalized row from `GET /activity/email/:companyId` for the email thread UI. */
+export type ActivityEmailDetail = {
+  id: string
+  subject: string
+  to: string
+  from: string
+  body: string
+  companyName: string
+  createdAt: string
+  direction: string
+  agentSent: boolean
 }
 
 export type Conversation = {
