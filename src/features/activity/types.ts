@@ -32,6 +32,15 @@ export type Pagination = {
 
 export type ActivityPagination = Pagination
 
+/** Query filters for `GET /activity/company` chip selections. */
+export type ActivityCompanyListParams = {
+  page?: number
+  limit?: number
+  has_inbound_message?: boolean
+  need_reply?: boolean
+  handed_off?: boolean
+}
+
 export type ActivityArchivePayload = {
   deal_id: string
   dealname: string
