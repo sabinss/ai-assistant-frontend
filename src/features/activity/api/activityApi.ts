@@ -82,6 +82,27 @@ export async function fetchActivityCounts(accessToken: string): Promise<Activity
   }
 }
 
+/**
+ * GET `/activity/email/count` — totals for Email tab All / Received chips.
+ */
+export async function fetchActivityEmailCounts(
+  accessToken: string
+): Promise<Pick<ActivityFilterCounts, "all" | "received">> {
+  const { data } = await http.get("/activity/email/count", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  const row =
+    data && typeof data === "object" && !Array.isArray(data)
+      ? (data as Record<string, unknown>)
+      : {}
+
+  return {
+    all: toNonNegInt(row.total_cnt),
+    received: toNonNegInt(row.total_received_cnt),
+  }
+}
+
 /** Map UI chip → `/activity/company` query flags (All = no filter flags). */
 export function companyListParamsFromFilter(
   filter: ConversationFilter

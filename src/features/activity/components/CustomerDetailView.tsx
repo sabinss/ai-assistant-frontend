@@ -180,25 +180,25 @@ export default function CustomerDetailView({
     icon: typeof User
     badge?: { label: string; tone: "alert" | "count" }
   }[] = [
-    { id: "details", label: "Details", icon: User },
-    {
-      id: "texts",
-      label: "Texts",
-      icon: MessageSquare,
-      badge: needsTextReply ? { label: "Needs reply", tone: "alert" } : undefined,
-    },
-    {
-      id: "calls",
-      label: "Calls",
-      icon: Phone,
-      badge: { label: "0", tone: "count" },
-    },
-    {
-      id: "emails",
-      label: "Emails",
-      icon: Mail,
-    },
-  ]
+      { id: "details", label: "Details", icon: User },
+      {
+        id: "texts",
+        label: "Texts",
+        icon: MessageSquare,
+        badge: needsTextReply ? { label: "Needs reply", tone: "alert" } : undefined,
+      },
+      {
+        id: "calls",
+        label: "Calls",
+        icon: Phone,
+        badge: { label: "0", tone: "count" },
+      },
+      {
+        id: "emails",
+        label: "Emails",
+        icon: Mail,
+      },
+    ]
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-[#E2E6EF] bg-[#F4F6FA]">
@@ -268,9 +268,8 @@ export default function CustomerDetailView({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative inline-flex items-center gap-1.5 pb-2.5 text-[13px] font-medium transition-colors ${
-                  isActive ? "text-[#1B3A8C]" : "text-[#6B7280] hover:text-[#1B3A8C]"
-                }`}
+                className={`relative inline-flex items-center gap-1.5 pb-2.5 text-[13px] font-medium transition-colors ${isActive ? "text-[#1B3A8C]" : "text-[#6B7280] hover:text-[#1B3A8C]"
+                  }`}
               >
                 <Icon size={15} strokeWidth={2.25} />
                 {tab.label}

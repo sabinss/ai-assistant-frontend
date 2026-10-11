@@ -58,3 +58,9 @@ npm publish --access public
 
 sabin/pagination-activity-v1
 NOte: need to merge feat/email-activity in sabin/pagination-activity-v1
+
+for now prod branch is
+
+<!-- feat/activity-view-customer -->
+
+'feat/activity-view-customer-v1

@@ -16,6 +16,7 @@ import {
   fetchActivityCompanyById,
   fetchActivityCounts,
   fetchActivityEmailById,
+  fetchActivityEmailCounts,
   fetchActivityEmails,
   sendActivityMessage,
 } from "./api/activityApi"
@@ -85,6 +86,8 @@ export default function ActivityView() {
   const [emailLoadError, setEmailLoadError] = useState<string | null>(null)
   const [emailSelectedId, setEmailSelectedId] = useState<string | null>(null)
   const [emailFilter, setEmailFilter] = useState<ConversationFilter>("all")
+  const [emailFilterCounts, setEmailFilterCounts] =
+    useState<ActivityFilterCounts>(EMPTY_FILTER_COUNTS)
   const [emailDetails, setEmailDetails] = useState<ActivityEmailDetail[]>([])
   const [emailDetailsLoading, setEmailDetailsLoading] = useState(false)
   const [showCustomerDetail, setShowCustomerDetail] = useState(false)
@@ -187,6 +190,23 @@ export default function ActivityView() {
       setFilterCounts(counts)
     } catch (err) {
       console.log("Error loading activity filter counts", err)
+    }
+  }, [access_token, _hasHydrated])
+
+  const loadEmailFilterCounts = useCallback(async () => {
+    if (!_hasHydrated || !access_token) {
+      setEmailFilterCounts(EMPTY_FILTER_COUNTS)
+      return
+    }
+    try {
+      const counts = await fetchActivityEmailCounts(access_token)
+      setEmailFilterCounts({
+        ...EMPTY_FILTER_COUNTS,
+        all: counts.all,
+        received: counts.received,
+      })
+    } catch (err) {
+      console.log("Error loading email activity filter counts", err)
     }
   }, [access_token, _hasHydrated])
 
@@ -295,10 +315,11 @@ export default function ActivityView() {
       setLoading(false)
       setLoadError(null)
       void loadEmails(1)
+      void loadEmailFilterCounts()
       return
     }
     void loadCompanies(1, activeFilter)
-  }, [loadCompanies, loadEmails, activeFilter, isEmailTab])
+  }, [loadCompanies, loadEmails, loadEmailFilterCounts, activeFilter, isEmailTab])
 
   useEffect(() => {
     void loadFilterCounts()
@@ -344,16 +365,6 @@ export default function ActivityView() {
 
   const selectedEmailConversation =
     emailConversations.find((c) => c.id === emailSelectedId) ?? null
-
-  const emailFilterCounts = useMemo(
-    () => ({
-      all: emailPagination?.totalRecords ?? emailConversations.length,
-      received: emailConversations.filter((c) => c.hasInboundMessage).length,
-      needs_reply: 0,
-      paused: 0,
-    }),
-    [emailConversations, emailPagination?.totalRecords]
-  )
 
   const filteredEmailConversations = useMemo(() => {
     return emailConversations.filter((conversation) => {
@@ -606,7 +617,10 @@ export default function ActivityView() {
               <p className="text-[14px] text-[#C0392B]">{emailLoadError}</p>
               <button
                 type="button"
-                onClick={() => void loadEmails(1)}
+                onClick={() => {
+                  void loadEmails(1)
+                  void loadEmailFilterCounts()
+                }}
                 className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
               >
                 Retry
