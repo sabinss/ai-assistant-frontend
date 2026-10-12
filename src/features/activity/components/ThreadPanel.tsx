@@ -52,21 +52,23 @@ export default function ThreadPanel({
         <AssistantAlert
           title={alert.title}
           body={alert.body}
-          isTakenOver={showComposer}
+          isTakenOver={conversation.handedOff > 0}
           isLoading={isArchiving}
           onTakeOver={onTakeOver}
           onRevoke={onRevoke}
         />
       )}
       <MessageThread messages={messages} loading={messagesLoading} />
-      {showComposer && (
-        <MessageComposer
-          customerName={conversation.name}
-          value={draft}
-          onChange={onDraftChange}
-          onSend={onSend}
-          isSending={isSending}
-        />
+      {(conversation.handedOff > 0 || showComposer) && (
+        <div className="shrink-0">
+          <MessageComposer
+            customerName={conversation.name}
+            value={draft}
+            onChange={onDraftChange}
+            onSend={onSend}
+            isSending={isSending}
+          />
+        </div>
       )}
     </div>
   )

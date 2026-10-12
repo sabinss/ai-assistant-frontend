@@ -47,8 +47,15 @@ function formatFullDateTime(isoDate: string | null | undefined): string {
   })
 }
 
-function toCount(value: boolean | number | null | undefined): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value
+function toCount(value: boolean | number | string | null | undefined): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value > 0 ? 1 : 0
+  if (typeof value === "string") {
+    const s = value.trim().toLowerCase()
+    if (s === "true" || s === "1" || s === "yes") return 1
+    if (s === "false" || s === "0" || s === "no" || s === "") return 0
+    const n = Number(s)
+    return Number.isFinite(n) && n > 0 ? 1 : 0
+  }
   return value ? 1 : 0
 }
 
@@ -64,7 +71,9 @@ export function mapActivityCompaniesToConversations(companies: ActivityCompany[]
     const phone = company.to || ""
     const name = company.company_name?.trim() || "Unknown company"
     const needReply = toCount(company.need_reply ?? company.Need_Reply)
-    const handedOff = toCount(company.handed_off)
+    const handedOff = toCount(
+      company.handed_off ?? (company as { Handed_Off?: unknown }).Handed_Off
+    )
     return {
       id: company.company_id || phone || `company-${index}`,
       name,

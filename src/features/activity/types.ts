@@ -13,7 +13,7 @@ export type ActivityCompany = {
   latest_updated_at?: string | null
   has_inbound_message?: boolean
   need_reply?: boolean | number | null
-  handed_off?: boolean | number | null
+  handed_off?: boolean | number | string | null
   deal_id?: string | null
   dealname?: string | null
   dealstage?: string | null

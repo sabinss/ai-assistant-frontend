@@ -136,10 +136,13 @@ export default function ActivityView() {
           const mapped = mapActivityCompaniesToConversations(result.data)
           setPagination(result.pagination)
           setConversations(mapped)
-          setSelectedId((prev) =>
-            prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
-          )
-          setShowComposer(false)
+          setSelectedId((prev) => {
+            const nextId =
+              prev && mapped.some((c) => c.id === prev) ? prev : mapped[0]?.id ?? null
+            const selected = mapped.find((c) => c.id === nextId)
+            setShowComposer((selected?.handedOff ?? 0) > 0)
+            return nextId
+          })
         } catch (err: any) {
           if (isStale() || err?.code === "ERR_CANCELED") return
           console.log("Error loading activity companies", err)
@@ -345,6 +348,15 @@ export default function ActivityView() {
   const selectedEmailConversation =
     emailConversations.find((c) => c.id === emailSelectedId) ?? null
 
+  // Keep Pause/Revoke + composer in sync with API `handed_off` after load/refresh
+  useEffect(() => {
+    if (!selectedConversation) {
+      setShowComposer(false)
+      return
+    }
+    setShowComposer(selectedConversation.handedOff > 0)
+  }, [selectedConversation?.id, selectedConversation?.handedOff])
+
   const emailFilterCounts = useMemo(
     () => ({
       all: emailPagination?.totalRecords ?? emailConversations.length,
@@ -427,22 +439,23 @@ export default function ActivityView() {
       const companyId = selectedConversation.companyId
       const wasPaused = selectedConversation.handedOff > 0
 
+      // Optimistic: show Revoke + chat input immediately when pausing
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.companyId === companyId
+            ? {
+                ...c,
+                handedOff: archive ? 1 : 0,
+                status: archive ? "paused" : null,
+              }
+            : c
+        )
+      )
       if (archive !== wasPaused) {
         setFilterCounts((prev) => ({
           ...prev,
           paused: Math.max(0, prev.paused + (archive ? 1 : -1)),
         }))
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.companyId === companyId
-              ? {
-                  ...c,
-                  handedOff: archive ? 1 : 0,
-                  status: archive ? "paused" : null,
-                }
-              : c
-          )
-        )
       }
       setShowComposer(archive)
       if (!archive) setDraft("")
@@ -462,30 +475,29 @@ export default function ActivityView() {
         )
 
         void loadFilterCounts()
-        // Re-fetch current chip filter so list matches server query params
-        void loadCompanies(1, activeFilterRef.current)
+        // Keep local handed_off so chat input stays visible; avoid refetch wipe
         toast.success(archive ? "Conversation paused" : "Takeover revoked", {
           icon: false,
         })
       } catch (err: any) {
+        setConversations((prev) =>
+          prev.map((c) =>
+            c.companyId === companyId
+              ? {
+                  ...c,
+                  handedOff: wasPaused ? 1 : 0,
+                  status: wasPaused ? "paused" : null,
+                }
+              : c
+          )
+        )
         if (archive !== wasPaused) {
           setFilterCounts((prev) => ({
             ...prev,
             paused: Math.max(0, prev.paused + (archive ? -1 : 1)),
           }))
-          setConversations((prev) =>
-            prev.map((c) =>
-              c.companyId === companyId
-                ? {
-                    ...c,
-                    handedOff: wasPaused ? 1 : 0,
-                    status: wasPaused ? "paused" : null,
-                  }
-                : c
-            )
-          )
-          setShowComposer(wasPaused)
         }
+        setShowComposer(wasPaused)
 
         console.log("Error updating archive status", err)
         const status = err?.response?.status
@@ -506,7 +518,6 @@ export default function ActivityView() {
     [
       access_token,
       isArchiving,
-      loadCompanies,
       loadFilterCounts,
       selectedConversation,
       user_data?.organization,
