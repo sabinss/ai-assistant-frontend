@@ -16,6 +16,7 @@ import {
   fetchActivityCompanyById,
   fetchActivityCounts,
   fetchActivityEmailById,
+  fetchActivityEmailCounts,
   fetchActivityEmails,
   sendActivityMessage,
 } from "./api/activityApi"
@@ -85,6 +86,8 @@ export default function ActivityView() {
   const [emailLoadError, setEmailLoadError] = useState<string | null>(null)
   const [emailSelectedId, setEmailSelectedId] = useState<string | null>(null)
   const [emailFilter, setEmailFilter] = useState<ConversationFilter>("all")
+  const [emailFilterCounts, setEmailFilterCounts] =
+    useState<ActivityFilterCounts>(EMPTY_FILTER_COUNTS)
   const [emailDetails, setEmailDetails] = useState<ActivityEmailDetail[]>([])
   const [emailDetailsLoading, setEmailDetailsLoading] = useState(false)
   const [showCustomerDetail, setShowCustomerDetail] = useState(false)
@@ -193,6 +196,23 @@ export default function ActivityView() {
     }
   }, [access_token, _hasHydrated])
 
+  const loadEmailFilterCounts = useCallback(async () => {
+    if (!_hasHydrated || !access_token) {
+      setEmailFilterCounts(EMPTY_FILTER_COUNTS)
+      return
+    }
+    try {
+      const counts = await fetchActivityEmailCounts(access_token)
+      setEmailFilterCounts({
+        ...EMPTY_FILTER_COUNTS,
+        all: counts.all,
+        received: counts.received,
+      })
+    } catch (err) {
+      console.log("Error loading email activity filter counts", err)
+    }
+  }, [access_token, _hasHydrated])
+
   const loadEmails = useCallback(
     async (page = 1) => {
       if (!_hasHydrated) return
@@ -298,10 +318,11 @@ export default function ActivityView() {
       setLoading(false)
       setLoadError(null)
       void loadEmails(1)
+      void loadEmailFilterCounts()
       return
     }
     void loadCompanies(1, activeFilter)
-  }, [loadCompanies, loadEmails, activeFilter, isEmailTab])
+  }, [loadCompanies, loadEmails, loadEmailFilterCounts, activeFilter, isEmailTab])
 
   useEffect(() => {
     void loadFilterCounts()
@@ -356,16 +377,6 @@ export default function ActivityView() {
     }
     setShowComposer(selectedConversation.handedOff > 0)
   }, [selectedConversation?.id, selectedConversation?.handedOff])
-
-  const emailFilterCounts = useMemo(
-    () => ({
-      all: emailPagination?.totalRecords ?? emailConversations.length,
-      received: emailConversations.filter((c) => c.hasInboundMessage).length,
-      needs_reply: 0,
-      paused: 0,
-    }),
-    [emailConversations, emailPagination?.totalRecords]
-  )
 
   const filteredEmailConversations = useMemo(() => {
     return emailConversations.filter((conversation) => {
@@ -444,10 +455,10 @@ export default function ActivityView() {
         prev.map((c) =>
           c.companyId === companyId
             ? {
-                ...c,
-                handedOff: archive ? 1 : 0,
-                status: archive ? "paused" : null,
-              }
+              ...c,
+              handedOff: archive ? 1 : 0,
+              status: archive ? "paused" : null,
+            }
             : c
         )
       )
@@ -484,10 +495,10 @@ export default function ActivityView() {
           prev.map((c) =>
             c.companyId === companyId
               ? {
-                  ...c,
-                  handedOff: wasPaused ? 1 : 0,
-                  status: wasPaused ? "paused" : null,
-                }
+                ...c,
+                handedOff: wasPaused ? 1 : 0,
+                status: wasPaused ? "paused" : null,
+              }
               : c
           )
         )
@@ -606,18 +617,68 @@ export default function ActivityView() {
           onBack={closeCustomerDetail}
         />
       ) : (
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-[#E2E6EF] bg-white">
-        {isEmailTab ? (
-          emailLoading ? (
+        <div className="flex min-h-0 flex-1 overflow-hidden rounded-lg border border-[#E2E6EF] bg-white">
+          {isEmailTab ? (
+            emailLoading ? (
+              <div className="flex flex-1 items-center justify-center text-[14px] text-[#8A93A6]">
+                Loading email activity...
+              </div>
+            ) : emailLoadError ? (
+              <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
+                <p className="text-[14px] text-[#C0392B]">{emailLoadError}</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void loadEmails(1)
+                    void loadEmailFilterCounts()
+                  }}
+                  className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <>
+                <ConversationList
+                  conversations={filteredEmailConversations}
+                  selectedId={emailSelectedId}
+                  search={search}
+                  activeFilter={emailFilter}
+                  filterCounts={emailFilterCounts}
+                  visibleFilters={["all", "received"]}
+                  hasNextPage={Boolean(emailPagination?.hasNextPage)}
+                  loadingMore={emailLoadingMore}
+                  onSearchChange={setSearch}
+                  onFilterChange={(filter) => {
+                    if (filter === "all" || filter === "received") {
+                      setEmailFilter(filter)
+                      void loadEmailFilterCounts()
+                    }
+                  }}
+                  onSelect={(id) => setEmailSelectedId(id)}
+                  onLoadMore={handleEmailLoadMore}
+                />
+                <EmailThreadPanel
+                  conversation={selectedEmailConversation}
+                  emails={emailDetails}
+                  loading={emailDetailsLoading}
+                  onViewCustomer={openCustomerDetail}
+                />
+              </>
+            )
+          ) : loading ? (
             <div className="flex flex-1 items-center justify-center text-[14px] text-[#8A93A6]">
-              Loading email activity...
+              Loading activity...
             </div>
-          ) : emailLoadError ? (
+          ) : loadError ? (
             <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
-              <p className="text-[14px] text-[#C0392B]">{emailLoadError}</p>
+              <p className="text-[14px] text-[#C0392B]">{loadError}</p>
               <button
                 type="button"
-                onClick={() => void loadEmails(1)}
+                onClick={() => {
+                  void loadCompanies(1, activeFilter)
+                  void loadFilterCounts()
+                }}
                 className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
               >
                 Retry
@@ -626,87 +687,41 @@ export default function ActivityView() {
           ) : (
             <>
               <ConversationList
-                conversations={filteredEmailConversations}
-                selectedId={emailSelectedId}
+                conversations={filteredConversations}
+                selectedId={selectedId}
                 search={search}
-                activeFilter={emailFilter}
-                filterCounts={emailFilterCounts}
-                visibleFilters={["all", "received"]}
-                hasNextPage={Boolean(emailPagination?.hasNextPage)}
-                loadingMore={emailLoadingMore}
+                activeFilter={activeFilter}
+                filterCounts={filterCounts}
+                hasNextPage={Boolean(pagination?.hasNextPage)}
+                loadingMore={loadingMore}
                 onSearchChange={setSearch}
-                onFilterChange={(filter) => {
-                  if (filter === "all" || filter === "received") {
-                    setEmailFilter(filter)
-                  }
+                onFilterChange={handleFilterChange}
+                onSelect={(id) => {
+                  setSelectedId(id)
+                  setDraft("")
+                  const next = conversations.find((c) => c.id === id)
+                  setShowComposer((next?.handedOff ?? 0) > 0)
                 }}
-                onSelect={(id) => setEmailSelectedId(id)}
-                onLoadMore={handleEmailLoadMore}
+                onLoadMore={handleLoadMore}
               />
-              <EmailThreadPanel
-                conversation={selectedEmailConversation}
-                emails={emailDetails}
-                loading={emailDetailsLoading}
+              <ThreadPanel
+                conversation={selectedConversation}
+                messages={messages}
+                messagesLoading={messagesLoading}
+                alert={selectedConversation ? ASSISTANT_ALERT : null}
+                showComposer={showComposer}
+                isArchiving={isArchiving}
+                isSending={isSending}
+                draft={draft}
+                onDraftChange={setDraft}
+                onSend={handleSendMessage}
+                onTakeOver={() => handleArchiveToggle(true)}
+                onRevoke={() => handleArchiveToggle(false)}
                 onViewCustomer={openCustomerDetail}
               />
             </>
-          )
-        ) : loading ? (
-          <div className="flex flex-1 items-center justify-center text-[14px] text-[#8A93A6]">
-            Loading activity...
-          </div>
-        ) : loadError ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
-            <p className="text-[14px] text-[#C0392B]">{loadError}</p>
-            <button
-              type="button"
-              onClick={() => {
-                void loadCompanies(1, activeFilter)
-                void loadFilterCounts()
-              }}
-              className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
-            >
-              Retry
-            </button>
-          </div>
-        ) : (
-          <>
-            <ConversationList
-              conversations={filteredConversations}
-              selectedId={selectedId}
-              search={search}
-              activeFilter={activeFilter}
-              filterCounts={filterCounts}
-              hasNextPage={Boolean(pagination?.hasNextPage)}
-              loadingMore={loadingMore}
-              onSearchChange={setSearch}
-              onFilterChange={handleFilterChange}
-              onSelect={(id) => {
-                setSelectedId(id)
-                setDraft("")
-                const next = conversations.find((c) => c.id === id)
-                setShowComposer((next?.handedOff ?? 0) > 0)
-              }}
-              onLoadMore={handleLoadMore}
-            />
-            <ThreadPanel
-              conversation={selectedConversation}
-              messages={messages}
-              messagesLoading={messagesLoading}
-              alert={selectedConversation ? ASSISTANT_ALERT : null}
-              showComposer={showComposer}
-              isArchiving={isArchiving}
-              isSending={isSending}
-              draft={draft}
-              onDraftChange={setDraft}
-              onSend={handleSendMessage}
-              onTakeOver={() => handleArchiveToggle(true)}
-              onRevoke={() => handleArchiveToggle(false)}
-              onViewCustomer={openCustomerDetail}
-            />
-          </>
-        )}
-      </div>
+          )}
+        </div>
       )}
     </div>
   )
