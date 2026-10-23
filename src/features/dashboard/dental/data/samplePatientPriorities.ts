@@ -41,6 +41,13 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       description: "likely to book more care",
       tone: "treatment",
     },
+    {
+      id: "total_patients",
+      label: "Total patients",
+      count: 0,
+      description: "patients in your practice",
+      tone: "total",
+    },
   ],
   filters: [
     { id: "very_high", label: "Very High", count: 6 },

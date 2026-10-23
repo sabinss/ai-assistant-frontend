@@ -24,6 +24,11 @@ const TONE_STYLES: Record<
     count: "text-teal-800",
     activeBorder: "border-teal-500 ring-1 ring-teal-500/30",
   },
+  total: {
+    label: "text-slate-700",
+    count: "text-slate-900",
+    activeBorder: "border-slate-400 ring-1 ring-slate-400/30",
+  },
 }
 
 type SummaryStatCardProps = {

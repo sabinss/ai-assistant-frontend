@@ -16,23 +16,32 @@ export default function PatientPriorityRow({
         <h3 className="text-base font-semibold text-blue-700">
           {patient.patientName}
         </h3>
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          {patient.tags.map((tag) => (
-            <PatientTag key={`${patient.id}-${tag.id}`} tag={tag} />
-          ))}
-        </div>
+        {patient.tags.length > 0 ? (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {patient.tags.map((tag) => (
+              <PatientTag key={`${patient.id}-${tag.id}`} tag={tag} />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       <div className="min-w-0">
-        <p className="text-sm leading-relaxed text-slate-700">{patient.reason}</p>
-        <p className="mt-2 text-xs text-slate-500">{patient.meta}</p>
+        {patient.reason ? (
+          <p className="text-sm leading-relaxed text-slate-700">
+            {patient.reason}
+          </p>
+        ) : null}
+        {patient.meta ? (
+          <p className="mt-2 text-xs text-slate-500">{patient.meta}</p>
+        ) : null}
       </div>
 
       <div className="min-w-0">
-        <p className="text-sm text-slate-800">
-          <span className="font-semibold text-slate-900">Next step</span>{" "}
-          {patient.nextStep}
-        </p>
+        {patient.nextStep ? (
+          <p className="text-sm leading-relaxed text-slate-800">
+            {patient.nextStep}
+          </p>
+        ) : null}
       </div>
 
       <div className="lg:pt-0.5">
