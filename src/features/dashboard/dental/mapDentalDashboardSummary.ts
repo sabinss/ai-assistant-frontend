@@ -45,7 +45,7 @@ export function mapDentalDashboardSummaryStats(
     {
       id: "treatment",
       label: "May want treatment",
-      count: toCount(d.oopp_score_count),
+      count: toCount(d.opp_score_count),
       description: "likely to book more care",
       tone: "treatment",
     },

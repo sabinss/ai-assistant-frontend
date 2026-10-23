@@ -35,7 +35,7 @@ export type DentalDashboardApiCounts = {
   veryhigh_urgency_count?: number | null
   health_issue_count?: number | null
   churn_risk_count?: number | null
-  oopp_score_count?: number | null
+  opp_score_count?: number | null
   total_patient_count?: number | null
 }
 

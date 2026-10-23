@@ -28,18 +28,16 @@ function companyId(item: ScoredCompanyApiItem, index: number): string {
 }
 
 /**
- * Build the meta line under context: `waiting_days : last_visit`
+ * Build the meta line under context:
+ * `Waiting for {waiting_days} : Last visit {last_visit}`
  */
 export function formatWaitingAndLastVisit(
   waitingDays: unknown,
   lastVisit: unknown
 ): string {
-  const waiting = asText(waitingDays)
-  const visit = asText(lastVisit)
-  if (waiting && visit) return `${waiting} : ${visit}`
-  if (waiting) return waiting
-  if (visit) return visit
-  return ""
+  const waiting = asText(waitingDays) || "—"
+  const visit = asText(lastVisit) || "—"
+  return `Waiting for ${waiting} : Last visit ${visit}`
 }
 
 /**
