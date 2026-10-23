@@ -1,4 +1,8 @@
-import type { PatientPriorityItem, PatientPriorityTag } from "./types"
+import type {
+  PatientPriorityFilterId,
+  PatientPriorityItem,
+  PatientPriorityTag,
+} from "./types"
 
 /** One entry from GET `/organization/dashboard/data` → `scoredCompanies`. */
 export type ScoredCompanyApiItem = {
@@ -79,7 +83,8 @@ export function mapScoreTags(item: ScoredCompanyApiItem): PatientPriorityTag[] {
  * - score === 100 fields → detail tags
  */
 export function mapScoredCompaniesToPatients(
-  scoredCompanies: ScoredCompanyApiItem[] | null | undefined
+  scoredCompanies: ScoredCompanyApiItem[] | null | undefined,
+  priority: PatientPriorityFilterId = "very_high"
 ): PatientPriorityItem[] {
   if (!Array.isArray(scoredCompanies)) return []
 
@@ -90,8 +95,7 @@ export function mapScoredCompaniesToPatients(
     reason: asText(item.context),
     meta: formatWaitingAndLastVisit(item.waiting_days, item.last_visit),
     nextStep: asText(item.description),
-    // List filter: show under Very High until API exposes priority buckets.
-    priority: "very_high" as const,
+    priority,
   }))
 }
 

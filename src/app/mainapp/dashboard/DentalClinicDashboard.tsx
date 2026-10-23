@@ -1,20 +1,25 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   PatientPrioritiesDashboard,
   samplePatientPrioritiesData,
 } from "@/features/dashboard/dental"
-import type { PatientPrioritiesDashboardData } from "@/features/dashboard/dental"
+import type {
+  PatientPrioritiesDashboardData,
+  PatientPriorityFilterId,
+} from "@/features/dashboard/dental"
 import {
   extractDentalDashboard,
+  mapDentalDashboardFilterCounts,
   mapDentalDashboardSummaryStats,
 } from "@/features/dashboard/dental/mapDentalDashboardSummary"
 import {
   extractScoredCompanies,
   mapScoredCompaniesToPatients,
 } from "@/features/dashboard/dental/mapScoredCompanies"
+import { urgencyQueryFromFilter } from "@/features/dashboard/dental/urgency"
 import { fetchOrganizationDashboardData } from "@/features/dashboard/api/dashboardData"
 import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
 import { activityCustomerDetailHref } from "@/features/activity/customerDetailNavigation"
@@ -22,8 +27,8 @@ import useAuth from "@/store/user"
 
 /**
  * Dental Clinic industry dashboard.
- * Fetches `/organization/dashboard/data?industry=Dental Clinic` and maps
- * `dentalDashboard` → summary cards, `scoredCompanies` → patient list.
+ * Fetches `/organization/dashboard/data?industry=Dental Clinic&urgency=...`
+ * — urgency follows the Very High / High tabs.
  */
 export default function DentalClinicDashboard() {
   const { access_token } = useAuth()
@@ -31,7 +36,11 @@ export default function DentalClinicDashboard() {
   const [data, setData] = useState<PatientPrioritiesDashboardData>(
     samplePatientPrioritiesData
   )
+  const [activeFilterId, setActiveFilterId] =
+    useState<PatientPriorityFilterId>("very_high")
   const [loading, setLoading] = useState(true)
+  const [listLoading, setListLoading] = useState(false)
+  const hasLoadedOnceRef = useRef(false)
 
   useEffect(() => {
     if (!access_token) {
@@ -42,42 +51,38 @@ export default function DentalClinicDashboard() {
     let cancelled = false
 
     const load = async () => {
-      setLoading(true)
+      const isFirstLoad = !hasLoadedOnceRef.current
+      if (isFirstLoad) setLoading(true)
+      else setListLoading(true)
+
       try {
-        const response = await fetchOrganizationDashboardData(
-          access_token,
-          DENTAL_CLINIC_INDUSTRY
-        )
+        const urgency = urgencyQueryFromFilter(activeFilterId)
+        const response = await fetchOrganizationDashboardData(access_token, {
+          industry: DENTAL_CLINIC_INDUSTRY,
+          urgency,
+        })
         if (cancelled) return
 
         console.log(
           "[DentalClinicDashboard] /organization/dashboard/data",
-          response
+          { urgency, response }
         )
 
         const dentalDashboard = extractDentalDashboard(response)
         const summaryStats = mapDentalDashboardSummaryStats(dentalDashboard)
+        const filters = mapDentalDashboardFilterCounts(dentalDashboard)
         const patients = mapScoredCompaniesToPatients(
-          extractScoredCompanies(response)
+          extractScoredCompanies(response),
+          activeFilterId
         )
 
         setData((prev) => ({
           ...prev,
           summaryStats,
           patients,
-          filters: [
-            {
-              id: "very_high",
-              label: "Very High",
-              count: patients.length,
-            },
-            {
-              id: "high",
-              label: "High",
-              count: 0,
-            },
-          ],
+          filters,
         }))
+        hasLoadedOnceRef.current = true
       } catch (err) {
         if (!cancelled) {
           console.error(
@@ -86,7 +91,10 @@ export default function DentalClinicDashboard() {
           )
         }
       } finally {
-        if (!cancelled) setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+          setListLoading(false)
+        }
       }
     }
 
@@ -94,7 +102,7 @@ export default function DentalClinicDashboard() {
     return () => {
       cancelled = true
     }
-  }, [access_token])
+  }, [access_token, activeFilterId])
 
   const handlePatientDetail = (patientId: string) => {
     const patient = data.patients.find((p) => p.id === patientId)
@@ -112,7 +120,10 @@ export default function DentalClinicDashboard() {
       ) : (
         <PatientPrioritiesDashboard
           data={data}
+          activeFilterId={activeFilterId}
+          onFilterChange={setActiveFilterId}
           onMarkDone={handlePatientDetail}
+          listLoading={listLoading}
         />
       )}
     </div>

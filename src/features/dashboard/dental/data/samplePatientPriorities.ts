@@ -6,8 +6,8 @@ import type { PatientPrioritiesDashboardData } from "../types"
  * Names and details are fake demo data only (not real patients).
  */
 export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
-  clinicName: "Asta Dental",
-  updatedLabel: "Updated today at 6:00 AM",
+  clinicName: "",
+  updatedLabel: "",
   title: "Patient Priorities",
   subtitle: "Who your team should pay attention to first, and why.",
   listNote: "Only your team can help with these",
@@ -91,8 +91,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t2", label: "Reply waiting", kind: "reply_waiting" },
         { id: "t3", label: "Treatment", kind: "treatment" },
       ],
-      reason:
-        "Texted to schedule a filling next week. Only free in the mornings.",
+      reason: "Texted to schedule a filling next week. Only free in the mornings.",
       meta: "Waiting 4 hours · Last visit 2 months ago",
       nextStep: "Offer two morning times this week.",
     },
@@ -104,8 +103,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t1", label: "Very High", kind: "very_high" },
         { id: "t2", label: "Might leave", kind: "might_leave" },
       ],
-      reason:
-        "Insurance just changed. Looking at other dentists who take the new plan.",
+      reason: "Insurance just changed. Looking at other dentists who take the new plan.",
       meta: "Waiting 2 days · Last visit 4 months ago",
       nextStep: "Call and talk through new coverage options.",
     },
@@ -117,8 +115,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t1", label: "Very High", kind: "very_high" },
         { id: "t2", label: "Might leave", kind: "might_leave" },
       ],
-      reason:
-        "No visit in 14 months. Did not reply to 3 texts and 2 emails about a checkup.",
+      reason: "No visit in 14 months. Did not reply to 3 texts and 2 emails about a checkup.",
       meta: "Automated outreach finished with no reply · No future appointment",
       nextStep: "Make a personal call to try to win her back.",
     },
@@ -131,8 +128,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t2", label: "Reply waiting", kind: "reply_waiting" },
         { id: "t3", label: "Treatment", kind: "treatment" },
       ],
-      reason:
-        "Asked what a root canal would cost with his plan. Wants a call with an estimate.",
+      reason: "Asked what a root canal would cost with his plan. Wants a call with an estimate.",
       meta: "Waiting 1 day · Last visit 3 months ago",
       nextStep: "Call with a benefits estimate and next available slots.",
     },
@@ -144,8 +140,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t1", label: "High", kind: "high" },
         { id: "t2", label: "Treatment", kind: "treatment" },
       ],
-      reason:
-        "Interested in whitening after a cleaning. Asked for pricing but has not booked.",
+      reason: "Interested in whitening after a cleaning. Asked for pricing but has not booked.",
       meta: "Waiting 3 days · Last visit 3 weeks ago",
       nextStep: "Send two appointment options and a simple price range.",
     },
@@ -157,8 +152,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t1", label: "High", kind: "high" },
         { id: "t2", label: "Reply waiting", kind: "reply_waiting" },
       ],
-      reason:
-        "Requested a records transfer form. Form was sent; no confirmation yet.",
+      reason: "Requested a records transfer form. Form was sent; no confirmation yet.",
       meta: "Waiting 5 days · Last visit 11 months ago",
       nextStep: "Follow up once to confirm they received the form.",
     },
@@ -170,8 +164,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
         { id: "t1", label: "High", kind: "high" },
         { id: "t2", label: "Health", kind: "health" },
       ],
-      reason:
-        "Mentioned mild gum sensitivity after a cleaning. Not urgent but should be checked.",
+      reason: "Mentioned mild gum sensitivity after a cleaning. Not urgent but should be checked.",
       meta: "Waiting 2 days · Last visit 1 week ago",
       nextStep: "Check in and offer a short hygiene follow-up if needed.",
     },

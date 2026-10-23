@@ -1,6 +1,5 @@
 "use client"
 
-import { useMemo, useState } from "react"
 import type {
   PatientPrioritiesDashboardData,
   PatientPriorityFilterId,
@@ -12,30 +11,23 @@ import SummaryStatsRow from "./SummaryStatsRow"
 
 type PatientPrioritiesDashboardProps = {
   data: PatientPrioritiesDashboardData
-  /** Optional — wire to API when mark-done is available. */
+  activeFilterId: PatientPriorityFilterId
+  onFilterChange: (filterId: PatientPriorityFilterId) => void
+  /** Optional — Patient Detail click. */
   onMarkDone?: (patientId: string) => void
   /** Optional — wire summary card clicks (e.g. filter by category). */
   onSummaryStatClick?: (statId: string) => void
+  listLoading?: boolean
 }
 
 export default function PatientPrioritiesDashboard({
   data,
+  activeFilterId,
+  onFilterChange,
   onMarkDone,
   onSummaryStatClick,
+  listLoading = false,
 }: PatientPrioritiesDashboardProps) {
-  const defaultFilter =
-    data.filters.find((f) => f.id === "very_high")?.id ??
-    data.filters[0]?.id ??
-    "very_high"
-
-  const [activeFilterId, setActiveFilterId] =
-    useState<PatientPriorityFilterId>(defaultFilter)
-
-  const visiblePatients = useMemo(
-    () => data.patients.filter((p) => p.priority === activeFilterId),
-    [data.patients, activeFilterId]
-  )
-
   return (
     <div className="w-full py-4 pl-1 pr-4 sm:pr-6">
       <PatientPrioritiesHeader
@@ -58,13 +50,19 @@ export default function PatientPrioritiesDashboard({
             filters={data.filters}
             activeFilterId={activeFilterId}
             note={data.listNote}
-            onChange={setActiveFilterId}
+            onChange={onFilterChange}
           />
         </div>
-        <PatientPriorityList
-          patients={visiblePatients}
-          onMarkDone={onMarkDone}
-        />
+        {listLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="h-7 w-7 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
+          </div>
+        ) : (
+          <PatientPriorityList
+            patients={data.patients}
+            onMarkDone={onMarkDone}
+          />
+        )}
       </section>
     </div>
   )

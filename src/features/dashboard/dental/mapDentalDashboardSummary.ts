@@ -1,5 +1,6 @@
 import type {
   DentalDashboardApiCounts,
+  PatientPriorityFilter,
   PatientPrioritySummaryStat,
 } from "./types"
 
@@ -8,6 +9,29 @@ function toCount(value: number | null | undefined): number {
   const n = Number(value)
   if (!Number.isFinite(n) || n < 0) return 0
   return Math.floor(n)
+}
+
+/**
+ * Very High / High tab badges from `dentalDashboard[0]`.
+ * - Very High → `veryhigh_urgency_count`
+ * - High → `high_urgency_count`
+ */
+export function mapDentalDashboardFilterCounts(
+  dentalDashboard: DentalDashboardApiCounts | null | undefined
+): PatientPriorityFilter[] {
+  const d = dentalDashboard ?? {}
+  return [
+    {
+      id: "very_high",
+      label: "Very High",
+      count: toCount(d.veryhigh_urgency_count),
+    },
+    {
+      id: "high",
+      label: "High",
+      count: toCount(d.high_urgency_count),
+    },
+  ]
 }
 
 /**

@@ -9,8 +9,10 @@ export type {
   PatientPriorityTagKind,
 } from "./types"
 export { samplePatientPrioritiesData } from "./data/samplePatientPriorities"
+export { urgencyQueryFromFilter, URGENCY_QUERY } from "./urgency"
 export {
   extractDentalDashboard,
+  mapDentalDashboardFilterCounts,
   mapDentalDashboardSummaryStats,
 } from "./mapDentalDashboardSummary"
 export {
