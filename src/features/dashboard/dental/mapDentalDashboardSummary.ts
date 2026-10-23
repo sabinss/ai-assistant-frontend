@@ -48,7 +48,7 @@ export function mapDentalDashboardSummaryStats(
       id: "very_high",
       label: "Very High",
       count: toCount(d.veryhigh_urgency_count),
-      description: "patients need a person today",
+      description: "patients need the team's attention today",
       tone: "very_high",
       active: true,
     },
@@ -87,14 +87,11 @@ export function mapDentalDashboardSummaryStats(
  * Pull `dentalDashboard` from the raw dashboard API response.
  * API returns an array — use the 0th item for summary card counts.
  */
-export function extractDentalDashboard(
-  response: unknown
-): DentalDashboardApiCounts | null {
+export function extractDentalDashboard(response: unknown): DentalDashboardApiCounts | null {
   if (!response || typeof response !== "object") return null
   const root = response as Record<string, unknown>
   const nested =
-    root.dentalDashboard ??
-    (root.data as Record<string, unknown> | undefined)?.dentalDashboard
+    root.dentalDashboard ?? (root.data as Record<string, unknown> | undefined)?.dentalDashboard
 
   if (Array.isArray(nested)) {
     const first = nested[0]
