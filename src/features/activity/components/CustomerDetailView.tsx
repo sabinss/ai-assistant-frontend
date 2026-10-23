@@ -85,9 +85,11 @@ export default function CustomerDetailView({
   accessToken,
   onBack,
 }: CustomerDetailViewProps) {
-  const { industry } = useOrganizationIndustry()
+  const { industry: orgIndustry } = useOrganizationIndustry()
   const detailsTitle =
-    industry === DENTAL_CLINIC_INDUSTRY ? "Patient Detail" : "Customer details"
+    orgIndustry === DENTAL_CLINIC_INDUSTRY
+      ? "Patient Detail"
+      : "Customer details"
 
   const companyId = conversation.companyId
   const [activeTab, setActiveTab] = useState<CustomerDetailTab>("details")
