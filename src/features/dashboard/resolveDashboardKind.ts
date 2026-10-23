@@ -1,15 +1,18 @@
 import type { DashboardKind, OrganizationIndustry } from "./types"
 
+/** Exact industry value used in Organization settings / signup. */
+export const DENTAL_CLINIC_INDUSTRY = "Dental Clinic"
+
 /**
  * Map organization industry → dashboard variant.
  * Extend this table when adding industry-specific dashboards.
  */
 const INDUSTRY_DASHBOARD_MAP: Record<string, DashboardKind> = {
-  "dental clinic": "dental_clinic",
+  [DENTAL_CLINIC_INDUSTRY]: "dental_clinic",
 }
 
 export function normalizeIndustry(industry: string | null | undefined): string {
-  return (industry ?? "").trim().toLowerCase()
+  return (industry ?? "").trim()
 }
 
 export function resolveDashboardKind(
@@ -22,5 +25,5 @@ export function resolveDashboardKind(
 export function isDentalClinicIndustry(
   industry: OrganizationIndustry | null | undefined
 ): boolean {
-  return resolveDashboardKind(industry) === "dental_clinic"
+  return normalizeIndustry(industry) === DENTAL_CLINIC_INDUSTRY
 }

@@ -6,6 +6,7 @@ import {
   samplePatientPrioritiesData,
 } from "@/features/dashboard/dental"
 import { fetchOrganizationDashboardData } from "@/features/dashboard/api/dashboardData"
+import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
 import useAuth from "@/store/user"
 
 /**
@@ -26,7 +27,7 @@ export default function DentalClinicDashboard() {
       try {
         const response = await fetchOrganizationDashboardData(
           access_token,
-          "Dental Clinic"
+          DENTAL_CLINIC_INDUSTRY
         )
         if (!cancelled) {
           console.log("[DentalClinicDashboard] /organization/dashboard/data", response)

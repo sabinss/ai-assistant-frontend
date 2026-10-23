@@ -10,8 +10,8 @@ import DentalClinicDashboard from "./DentalClinicDashboard"
  * Add new industry dashboards in the switch below (and in resolveDashboardKind).
  */
 export default function DashboardPage() {
-  const { dashboardKind, loading } = useOrganizationIndustry()
-  console.log("dashboardKind", dashboardKind)
+  const { dashboardKind, industry, loading } = useOrganizationIndustry()
+  console.log("[DashboardPage]", { industry, dashboardKind, loading })
 
   if (loading) {
     return (

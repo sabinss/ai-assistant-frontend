@@ -1,5 +1,6 @@
 export type { DashboardKind, OrganizationIndustry } from "./types"
 export {
+  DENTAL_CLINIC_INDUSTRY,
   isDentalClinicIndustry,
   normalizeIndustry,
   resolveDashboardKind,
