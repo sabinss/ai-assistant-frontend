@@ -25,6 +25,8 @@ import type {
   Conversation,
   ThreadMessage,
 } from "../types"
+import { useOrganizationIndustry } from "@/features/dashboard/hooks/useOrganizationIndustry"
+import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
 
 type CustomerDetailTab = "details" | "texts" | "calls" | "emails"
 
@@ -83,6 +85,10 @@ export default function CustomerDetailView({
   accessToken,
   onBack,
 }: CustomerDetailViewProps) {
+  const { industry } = useOrganizationIndustry()
+  const detailsTitle =
+    industry === DENTAL_CLINIC_INDUSTRY ? "Patient Detail" : "Customer details"
+
   const companyId = conversation.companyId
   const [activeTab, setActiveTab] = useState<CustomerDetailTab>("details")
   const [customer, setCustomer] = useState<ActivityCustomerDetail | null>(null)
@@ -319,7 +325,7 @@ export default function CustomerDetailView({
             <div className="rounded-xl border border-[#E2E6EF] bg-white p-5 shadow-sm">
               <div className="mb-5 flex items-center justify-between gap-3">
                 <h3 className="text-[16px] font-semibold text-[#1A2333]">
-                  Customer details
+                  {detailsTitle}
                 </h3>
                 <button
                   type="button"

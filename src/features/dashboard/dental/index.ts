@@ -16,6 +16,7 @@ export {
 export {
   extractScoredCompanies,
   formatWaitingAndLastVisit,
+  mapScoreTags,
   mapScoredCompaniesToPatients,
 } from "./mapScoredCompanies"
 export type { ScoredCompanyApiItem } from "./mapScoredCompanies"

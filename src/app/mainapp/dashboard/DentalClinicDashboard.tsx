@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   PatientPrioritiesDashboard,
   samplePatientPrioritiesData,
@@ -16,6 +17,7 @@ import {
 } from "@/features/dashboard/dental/mapScoredCompanies"
 import { fetchOrganizationDashboardData } from "@/features/dashboard/api/dashboardData"
 import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
+import { activityCustomerDetailHref } from "@/features/activity/customerDetailNavigation"
 import useAuth from "@/store/user"
 
 /**
@@ -25,6 +27,7 @@ import useAuth from "@/store/user"
  */
 export default function DentalClinicDashboard() {
   const { access_token } = useAuth()
+  const router = useRouter()
   const [data, setData] = useState<PatientPrioritiesDashboardData>(
     samplePatientPrioritiesData
   )
@@ -93,8 +96,11 @@ export default function DentalClinicDashboard() {
     }
   }, [access_token])
 
-  const handleMarkDone = (patientId: string) => {
-    console.log("Patient detail", patientId)
+  const handlePatientDetail = (patientId: string) => {
+    const patient = data.patients.find((p) => p.id === patientId)
+    router.push(
+      activityCustomerDetailHref(patientId, patient?.patientName ?? "")
+    )
   }
 
   return (
@@ -104,7 +110,10 @@ export default function DentalClinicDashboard() {
           <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-700" />
         </div>
       ) : (
-        <PatientPrioritiesDashboard data={data} onMarkDone={handleMarkDone} />
+        <PatientPrioritiesDashboard
+          data={data}
+          onMarkDone={handlePatientDetail}
+        />
       )}
     </div>
   )

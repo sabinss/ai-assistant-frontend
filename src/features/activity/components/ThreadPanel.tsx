@@ -20,6 +20,7 @@ type ThreadPanelProps = {
   onTakeOver?: () => void
   onRevoke?: () => void
   onViewCustomer?: () => void
+  viewCustomerLabel?: string
 }
 
 export default function ThreadPanel({
@@ -36,6 +37,7 @@ export default function ThreadPanel({
   onTakeOver,
   onRevoke,
   onViewCustomer,
+  viewCustomerLabel,
 }: ThreadPanelProps) {
   if (!conversation) {
     return (
@@ -47,7 +49,11 @@ export default function ThreadPanel({
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
-      <ThreadHeader conversation={conversation} onViewCustomer={onViewCustomer} />
+      <ThreadHeader
+        conversation={conversation}
+        onViewCustomer={onViewCustomer}
+        viewCustomerLabel={viewCustomerLabel}
+      />
       {alert && (
         <AssistantAlert
           title={alert.title}

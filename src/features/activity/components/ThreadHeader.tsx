@@ -6,9 +6,15 @@ import type { Conversation } from "../types"
 type ThreadHeaderProps = {
   conversation: Conversation
   onViewCustomer?: () => void
+  /** Dental Clinic orgs show "Patient detail"; others keep "View customer". */
+  viewCustomerLabel?: string
 }
 
-export default function ThreadHeader({ conversation, onViewCustomer }: ThreadHeaderProps) {
+export default function ThreadHeader({
+  conversation,
+  onViewCustomer,
+  viewCustomerLabel = "View customer",
+}: ThreadHeaderProps) {
   return (
     <div className="flex items-center justify-between gap-3 border-b border-[#EEF0F5] px-4 py-3">
       <div className="flex min-w-0 items-center gap-3">
@@ -34,7 +40,7 @@ export default function ThreadHeader({ conversation, onViewCustomer }: ThreadHea
         onClick={onViewCustomer}
         className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-[#D8DEE9] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1A2333] hover:bg-[#F7F9FC]"
       >
-        View customer
+        {viewCustomerLabel}
         <ChevronRight size={14} />
       </button>
     </div>

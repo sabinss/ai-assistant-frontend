@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "react-toastify"
 import ActivityHeader from "./components/ActivityHeader"
 import ChannelTabs from "./components/ChannelTabs"
@@ -21,6 +22,10 @@ import {
   sendActivityMessage,
 } from "./api/activityApi"
 import {
+  activityCustomerDetailHref,
+  stubConversationForDetail,
+} from "./customerDetailNavigation"
+import {
   mapActivityCompaniesToConversations,
   matchesConversationSearch,
 } from "./mapActivityCompanies"
@@ -34,6 +39,8 @@ import type {
   ConversationFilter,
   ThreadMessage,
 } from "./types"
+import { useOrganizationIndustry } from "@/features/dashboard/hooks/useOrganizationIndustry"
+import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
 import useAuth from "@/store/user"
 
 const EMPTY_FILTER_COUNTS: ActivityFilterCounts = {
@@ -61,6 +68,12 @@ function mergeConversations(
 
 export default function ActivityView() {
   const { access_token, user_data, _hasHydrated } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { industry } = useOrganizationIndustry()
+  const isDentalClinic = industry === DENTAL_CLINIC_INDUSTRY
+  const viewCustomerLabel = isDentalClinic ? "Patient detail" : "View customer"
+
   const [activeTab, setActiveTab] = useState<ChannelTab>("texts")
   const [activeFilter, setActiveFilter] = useState<ConversationFilter>("all")
   const [search, setSearch] = useState("")
@@ -91,6 +104,8 @@ export default function ActivityView() {
   const [emailDetails, setEmailDetails] = useState<ActivityEmailDetail[]>([])
   const [emailDetailsLoading, setEmailDetailsLoading] = useState(false)
   const [showCustomerDetail, setShowCustomerDetail] = useState(false)
+  const [detailConversation, setDetailConversation] =
+    useState<Conversation | null>(null)
   const requestIdRef = useRef(0)
   const abortRef = useRef<AbortController | null>(null)
   const loadingMoreLockRef = useRef(false)
@@ -571,6 +586,7 @@ export default function ActivityView() {
     setDraft("")
     setShowComposer(false)
     setShowCustomerDetail(false)
+    setDetailConversation(null)
     setSelectedId(null)
     setMessages([])
     if (tab === "emails") {
@@ -594,12 +610,39 @@ export default function ActivityView() {
       toast.error("Company id is missing", { icon: false })
       return
     }
+    setDetailConversation(customerConversation)
     setShowCustomerDetail(true)
-  }, [customerConversation])
+    router.replace(
+      activityCustomerDetailHref(
+        customerConversation.companyId,
+        customerConversation.name
+      ),
+      { scroll: false }
+    )
+  }, [customerConversation, router])
 
   const closeCustomerDetail = useCallback(() => {
     setShowCustomerDetail(false)
-  }, [])
+    setDetailConversation(null)
+    router.replace("/mainapp/activity", { scroll: false })
+  }, [router])
+
+  // Deep-link: /mainapp/activity?companyId=...&detail=1 (from dental dashboard Patient Detail)
+  useEffect(() => {
+    const companyId = searchParams.get("companyId")?.trim()
+    const detail = searchParams.get("detail")
+    if (!companyId || detail !== "1") return
+
+    const fromList =
+      conversations.find((c) => c.companyId === companyId) ||
+      emailConversations.find((c) => c.companyId === companyId)
+
+    const name = searchParams.get("name") || fromList?.name || ""
+    setDetailConversation(
+      fromList ?? stubConversationForDetail(companyId, name)
+    )
+    setShowCustomerDetail(true)
+  }, [searchParams, conversations, emailConversations])
 
   return (
     <div className="flex h-[min(100dvh,calc(100vh-80px))] min-h-0 w-full min-w-0 flex-col gap-4 overflow-hidden">
@@ -610,9 +653,9 @@ export default function ActivityView() {
         </>
       )}
 
-      {showCustomerDetail && customerConversation && access_token ? (
+      {showCustomerDetail && detailConversation && access_token ? (
         <CustomerDetailView
-          conversation={customerConversation}
+          conversation={detailConversation}
           accessToken={access_token}
           onBack={closeCustomerDetail}
         />
@@ -663,6 +706,7 @@ export default function ActivityView() {
                   emails={emailDetails}
                   loading={emailDetailsLoading}
                   onViewCustomer={openCustomerDetail}
+                  viewCustomerLabel={viewCustomerLabel}
                 />
               </>
             )
@@ -718,6 +762,7 @@ export default function ActivityView() {
                 onTakeOver={() => handleArchiveToggle(true)}
                 onRevoke={() => handleArchiveToggle(false)}
                 onViewCustomer={openCustomerDetail}
+                viewCustomerLabel={viewCustomerLabel}
               />
             </>
           )}

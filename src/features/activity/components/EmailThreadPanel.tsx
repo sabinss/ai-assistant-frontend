@@ -13,6 +13,7 @@ type EmailThreadPanelProps = {
   emails: ActivityEmailDetail[]
   loading?: boolean
   onViewCustomer?: () => void
+  viewCustomerLabel?: string
 }
 
 export default function EmailThreadPanel({
@@ -20,6 +21,7 @@ export default function EmailThreadPanel({
   emails,
   loading = false,
   onViewCustomer,
+  viewCustomerLabel = "View customer",
 }: EmailThreadPanelProps) {
   if (!conversation) {
     return (
@@ -47,7 +49,7 @@ export default function EmailThreadPanel({
           onClick={onViewCustomer}
           className="inline-flex shrink-0 items-center gap-0.5 rounded-md border border-[#D8DEE9] bg-white px-3 py-1.5 text-[12px] font-medium text-[#1A2333] hover:bg-[#F7F9FC]"
         >
-          View customer
+          {viewCustomerLabel}
           <ChevronRight size={14} />
         </button>
       </div>
