@@ -25,9 +25,23 @@ function asText(value: unknown): string {
   return String(value).trim()
 }
 
-function isScore100(value: unknown): boolean {
+/**
+ * Bubble exact scores by urgency tab:
+ * - Very High → score must be exactly 100
+ * - High → score must be exactly 75
+ */
+function exactScoreForPriority(priority: PatientPriorityFilterId): number {
+  return priority === "high" ? 75 : 100
+}
+
+function meetsScoreThreshold(
+  value: unknown,
+  priority: PatientPriorityFilterId
+): boolean {
   if (value == null || value === "") return false
-  return Number(value) === 100
+  const n = Number(value)
+  if (!Number.isFinite(n)) return false
+  return n === exactScoreForPriority(priority)
 }
 
 function companyId(item: ScoredCompanyApiItem, index: number): string {
@@ -53,21 +67,24 @@ export function formatWaitingAndLastVisit(
 }
 
 /**
- * Patient detail tags when a score is exactly 100:
+ * Patient detail bubbles by exact score (Very High: 100, High: 75):
  * - expansion_opp_score → Treatment Opp
  * - churn_risk_score → Drifting Away
  * - value_realisation_score → Health Issue
  */
-export function mapScoreTags(item: ScoredCompanyApiItem): PatientPriorityTag[] {
+export function mapScoreTags(
+  item: ScoredCompanyApiItem,
+  priority: PatientPriorityFilterId = "very_high"
+): PatientPriorityTag[] {
   const tags: PatientPriorityTag[] = []
 
-  if (isScore100(item.expansion_opp_score)) {
+  if (meetsScoreThreshold(item.expansion_opp_score, priority)) {
     tags.push({ id: "treatment_opp", label: "Treatment Opp", kind: "treatment" })
   }
-  if (isScore100(item.churn_risk_score)) {
+  if (meetsScoreThreshold(item.churn_risk_score, priority)) {
     tags.push({ id: "drifting_away", label: "Drifting Away", kind: "might_leave" })
   }
-  if (isScore100(item.value_realisation_score)) {
+  if (meetsScoreThreshold(item.value_realisation_score, priority)) {
     tags.push({ id: "health_issue", label: "Health Issue", kind: "health" })
   }
 
@@ -80,7 +97,7 @@ export function mapScoreTags(item: ScoredCompanyApiItem): PatientPriorityTag[] {
  * - context → second column
  * - waiting_days : last_visit → below context
  * - description → third column
- * - score === 100 fields → detail tags
+ * - score bubbles use exact urgency scores (100 / 75)
  */
 export function mapScoredCompaniesToPatients(
   scoredCompanies: ScoredCompanyApiItem[] | null | undefined,
@@ -91,7 +108,7 @@ export function mapScoredCompaniesToPatients(
   return scoredCompanies.map((item, index) => ({
     id: companyId(item, index),
     patientName: asText(item.name) || "—",
-    tags: mapScoreTags(item),
+    tags: mapScoreTags(item, priority),
     reason: asText(item.context),
     meta: formatWaitingAndLastVisit(item.waiting_days, item.last_visit),
     nextStep: asText(item.description),
