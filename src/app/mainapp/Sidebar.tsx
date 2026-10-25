@@ -22,6 +22,8 @@ import NavItem from "@/components/ui/navitem"
 import { usePathname } from "next/navigation"
 import QuickLinks from "@/components/ui/quick-links"
 import { useEffect, useRef } from "react"
+import { useOrganizationIndustry } from "@/features/dashboard/hooks/useOrganizationIndustry"
+import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
 
 function getNavLinks(rolePermission: any, hideList: string[] = []) {
   const mainLinks = [
@@ -136,6 +138,10 @@ function getNavLinks(rolePermission: any, hideList: string[] = []) {
 function Navbar() {
   const { setCollapse, setOpen, isCollapsed, showSideBar } = useNavBarStore()
   const { rolePermission, role } = useAuth()
+  const { industry } = useOrganizationIndustry()
+  const hideList =
+    industry === DENTAL_CLINIC_INDUSTRY ? ["Intel Brief"] : []
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth <= 640) {
@@ -155,13 +161,16 @@ function Navbar() {
 
   const divRef = useRef<HTMLDivElement>(null)
   const path = usePathname()
-  const navLinks = getNavLinks([
-    ...rolePermission,
-    // "customers",
-    ...(role != "individual"
-      ? ["notification", "dashboard", "activity", "action-center"]
-      : []),
-  ])
+  const navLinks = getNavLinks(
+    [
+      ...rolePermission,
+      // "customers",
+      ...(role != "individual"
+        ? ["notification", "dashboard", "activity", "action-center"]
+        : []),
+    ],
+    hideList
+  )
 
   if (isCollapsed && divRef.current) {
     divRef.current.classList.add("translate-x-[-100%]")
