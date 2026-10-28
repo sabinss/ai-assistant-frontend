@@ -94,6 +94,11 @@ export const AVAILABLE_TOOLS: Tool[] = [
       "Send an SMS via Telnyx using from/to phone numbers in E.164 format and a message body.",
   },
   {
+    name: "send_telnyx_mms",
+    description:
+      "Send an MMS via Telnyx using from/to phone numbers in E.164 format, an optional message body, and 1 to 10 public image or video URLs.",
+  },
+  {
     name: "add_company_engagement_summary_score",
     description:
       "Add or update company engagement summary scores (health score, churn risk score, expansion opportunity score) in Redshift or RDS for a specific company.",
