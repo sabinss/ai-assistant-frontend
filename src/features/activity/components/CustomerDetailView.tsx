@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import {
-  AlertCircle,
   ArrowLeft,
   ExternalLink,
   Mail,
@@ -11,13 +10,19 @@ import {
   Phone,
   User,
 } from "lucide-react"
+import { toast } from "react-toastify"
 import {
+  archiveActivityCompany,
   fetchActivityCompanyById,
   fetchActivityCompanyCustomer,
   fetchActivityEmailById,
+  sendActivityMessage,
 } from "../api/activityApi"
+import AssistantAlert from "./AssistantAlert"
 import EmailMessageCard from "./EmailMessageCard"
+import MessageComposer from "./MessageComposer"
 import MessageThread from "./MessageThread"
+import { ASSISTANT_ALERT } from "../data/mockData"
 import { mapActivityMessagesToThread } from "../mapActivityMessages"
 import type {
   ActivityCustomerDetail,
@@ -27,6 +32,7 @@ import type {
 } from "../types"
 import { useOrganizationIndustry } from "@/features/dashboard/hooks/useOrganizationIndustry"
 import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
+import useAuth from "@/store/user"
 
 type CustomerDetailTab = "details" | "texts" | "calls" | "emails"
 
@@ -85,6 +91,7 @@ export default function CustomerDetailView({
   accessToken,
   onBack,
 }: CustomerDetailViewProps) {
+  const { user_data } = useAuth()
   const { industry: orgIndustry } = useOrganizationIndustry()
   const detailsTitle =
     orgIndustry === DENTAL_CLINIC_INDUSTRY
@@ -99,9 +106,17 @@ export default function CustomerDetailView({
 
   const [textMessages, setTextMessages] = useState<ThreadMessage[]>([])
   const [textsLoading, setTextsLoading] = useState(false)
+  const [handedOff, setHandedOff] = useState(conversation.handedOff > 0)
+  const [isArchiving, setIsArchiving] = useState(false)
+  const [draft, setDraft] = useState("")
+  const [isSending, setIsSending] = useState(false)
 
   const [emails, setEmails] = useState<ActivityEmailDetail[]>([])
   const [emailsLoading, setEmailsLoading] = useState(false)
+
+  useEffect(() => {
+    setHandedOff(conversation.handedOff > 0)
+  }, [conversation.companyId, conversation.handedOff])
 
   const loadCustomer = useCallback(async () => {
     if (!companyId) {
@@ -181,6 +196,91 @@ export default function CustomerDetailView({
   const startedDate = formatStartedDate(customer?.startedDate || "")
   const initials = getInitials(displayName)
   const needsTextReply = conversation.needReply > 0 || conversation.hasInboundMessage
+
+  const handleArchiveToggle = useCallback(
+    async (archive: boolean) => {
+      if (isArchiving) return
+      if (!accessToken || !companyId) {
+        toast.error("Company details are missing", { icon: false })
+        return
+      }
+      const tenantId = user_data?.organization
+      if (!tenantId) {
+        toast.error("Organization not found", { icon: false })
+        return
+      }
+
+      const wasPaused = handedOff
+      setHandedOff(archive)
+      if (!archive) setDraft("")
+
+      try {
+        setIsArchiving(true)
+        await archiveActivityCompany(
+          {
+            deal_id: conversation.dealId || "",
+            dealname: conversation.dealName || "",
+            dealstage: conversation.dealStage || "",
+            company_id: companyId,
+            tenant_id: tenantId,
+            archive,
+          },
+          accessToken
+        )
+        toast.success(archive ? "Conversation paused" : "Takeover revoked", {
+          icon: false,
+        })
+      } catch (err: any) {
+        setHandedOff(wasPaused)
+        console.log("Error updating archive status", err)
+        const status = err?.response?.status
+        if (status !== 401 && status !== 403) {
+          toast.error(
+            archive
+              ? "Failed to pause conversation"
+              : "Failed to revoke takeover",
+            { icon: false }
+          )
+        } else {
+          toast.error("Session expired. Please sign in again.", { icon: false })
+        }
+      } finally {
+        setIsArchiving(false)
+      }
+    },
+    [
+      accessToken,
+      companyId,
+      conversation.dealId,
+      conversation.dealName,
+      conversation.dealStage,
+      handedOff,
+      isArchiving,
+      user_data?.organization,
+    ]
+  )
+
+  const handleSendMessage = useCallback(async () => {
+    const message = draft.trim()
+    if (!message || isSending) return
+    if (!accessToken || !phone) {
+      toast.error("Phone number is missing", { icon: false })
+      return
+    }
+
+    try {
+      setIsSending(true)
+      await sendActivityMessage({ message, to: phone }, accessToken)
+      setDraft("")
+      toast.success("Message sent", { icon: false })
+      await loadTexts()
+    } catch (err) {
+      console.log("Error sending customer detail message", err)
+      toast.error("Failed to send message", { icon: false })
+    } finally {
+      setIsSending(false)
+    }
+  }, [accessToken, draft, isSending, loadTexts, phone])
 
   const tabs: {
     id: CustomerDetailTab
@@ -411,7 +511,26 @@ export default function CustomerDetailView({
                 Conversation for {displayName}
               </p>
             </div>
+            <AssistantAlert
+              title={ASSISTANT_ALERT.title}
+              body={ASSISTANT_ALERT.body}
+              isTakenOver={handedOff}
+              isLoading={isArchiving}
+              onTakeOver={() => handleArchiveToggle(true)}
+              onRevoke={() => handleArchiveToggle(false)}
+            />
             <MessageThread messages={textMessages} loading={textsLoading} />
+            {handedOff ? (
+              <div className="shrink-0">
+                <MessageComposer
+                  customerName={displayName}
+                  value={draft}
+                  onChange={setDraft}
+                  onSend={handleSendMessage}
+                  isSending={isSending}
+                />
+              </div>
+            ) : null}
           </div>
         )}
 

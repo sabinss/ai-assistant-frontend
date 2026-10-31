@@ -185,17 +185,33 @@ function normalizeCompanyListPayload(
   return { data: [], pagination }
 }
 
+/** Query filters for `GET /activity/email` chip selections. */
+export type ActivityEmailListParams = {
+  page?: number
+  limit?: number
+  /** Received chip → `has_inbound_message=true` */
+  has_inbound_message?: boolean
+}
+
 /**
  * GET `/activity/email` — email activity company list.
+ * Received chip passes `has_inbound_message=true`.
  */
 export async function fetchActivityEmails(
-  { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
+  {
+    page = 1,
+    limit = 10,
+    has_inbound_message,
+  }: ActivityEmailListParams = {},
   accessToken: string,
   signal?: AbortSignal
 ): Promise<ActivityCompaniesResult> {
+  const params: Record<string, string | number | boolean> = { page, limit }
+  if (has_inbound_message === true) params.has_inbound_message = true
+
   const { data } = await http.get("/activity/email", {
     headers: { Authorization: `Bearer ${accessToken}` },
-    params: { page, limit },
+    params,
     signal,
   })
   console.log("[activity/email] list response", data)

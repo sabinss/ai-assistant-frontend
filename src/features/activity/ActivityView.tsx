@@ -229,7 +229,7 @@ export default function ActivityView() {
   }, [access_token, _hasHydrated])
 
   const loadEmails = useCallback(
-    async (page = 1) => {
+    async (page = 1, filter: ConversationFilter = "all") => {
       if (!_hasHydrated) return
       if (!access_token) {
         setEmailConversations([])
@@ -239,6 +239,11 @@ export default function ActivityView() {
         return
       }
 
+      const listParams = {
+        page,
+        limit: PAGE_SIZE,
+        ...companyListParamsFromFilter(filter),
+      }
       const isFirstPage = page === 1
 
       if (isFirstPage) {
@@ -253,7 +258,7 @@ export default function ActivityView() {
           setEmailLoadError(null)
           emailLoadingMoreLockRef.current = false
           const result = await fetchActivityEmails(
-            { page: 1, limit: PAGE_SIZE },
+            { ...listParams, page: 1 },
             access_token,
             controller.signal
           )
@@ -287,10 +292,7 @@ export default function ActivityView() {
       setEmailLoadingMore(true)
 
       try {
-        const result = await fetchActivityEmails(
-          { page, limit: PAGE_SIZE },
-          access_token
-        )
+        const result = await fetchActivityEmails(listParams, access_token)
         console.log("[ActivityView] email companies page", page, result)
         const mapped = mapActivityCompaniesToConversations(result.data).map(
           (c) => ({ ...c, channel: "emails" as const })
@@ -332,12 +334,19 @@ export default function ActivityView() {
     if (isEmailTab) {
       setLoading(false)
       setLoadError(null)
-      void loadEmails(1)
+      void loadEmails(1, emailFilter)
       void loadEmailFilterCounts()
       return
     }
     void loadCompanies(1, activeFilter)
-  }, [loadCompanies, loadEmails, loadEmailFilterCounts, activeFilter, isEmailTab])
+  }, [
+    loadCompanies,
+    loadEmails,
+    loadEmailFilterCounts,
+    activeFilter,
+    emailFilter,
+    isEmailTab,
+  ])
 
   useEffect(() => {
     void loadFilterCounts()
@@ -368,8 +377,15 @@ export default function ActivityView() {
     if (emailLoading || emailLoadingMore || emailLoadingMoreLockRef.current) return
     if (!emailPagination?.hasNextPage) return
     const nextPage = emailPagination.nextPage ?? emailPagination.currentPage + 1
-    void loadEmails(nextPage)
-  }, [emailLoading, emailLoadingMore, emailPagination, isEmailTab, loadEmails])
+    void loadEmails(nextPage, emailFilter)
+  }, [
+    emailFilter,
+    emailLoading,
+    emailLoadingMore,
+    emailPagination,
+    isEmailTab,
+    loadEmails,
+  ])
 
   const handleFilterChange = useCallback((filter: ConversationFilter) => {
     setActiveFilter(filter)
@@ -393,14 +409,12 @@ export default function ActivityView() {
     setShowComposer(selectedConversation.handedOff > 0)
   }, [selectedConversation?.id, selectedConversation?.handedOff])
 
+  // Received is filtered server-side via `has_inbound_message=true`; only search locally.
   const filteredEmailConversations = useMemo(() => {
-    return emailConversations.filter((conversation) => {
-      const matchesFilter =
-        emailFilter === "all" ||
-        (emailFilter === "received" && conversation.hasInboundMessage)
-      return matchesFilter && matchesConversationSearch(conversation, search)
-    })
-  }, [emailConversations, emailFilter, search])
+    return emailConversations.filter((conversation) =>
+      matchesConversationSearch(conversation, search)
+    )
+  }, [emailConversations, search])
 
   useEffect(() => {
     if (!isEmailTab) return
@@ -672,7 +686,7 @@ export default function ActivityView() {
                 <button
                   type="button"
                   onClick={() => {
-                    void loadEmails(1)
+                    void loadEmails(1, emailFilter)
                     void loadEmailFilterCounts()
                   }}
                   className="rounded-md bg-[#1B3A8C] px-3 py-1.5 text-[13px] font-medium text-white"
