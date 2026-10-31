@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import {
+  AlertCircle,
   ArrowLeft,
   ExternalLink,
   Mail,
