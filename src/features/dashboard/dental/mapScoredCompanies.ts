@@ -11,6 +11,7 @@ export type ScoredCompanyApiItem = {
   company_id?: string
   name?: string | null
   context?: string | null
+  notes?: string | null
   waiting_days?: string | number | null
   last_visit?: string | number | null
   description?: string | null
@@ -94,8 +95,8 @@ export function mapScoreTags(
 /**
  * Map `scoredCompanies` → patient list rows.
  * - name → patient name
- * - context → second column
- * - waiting_days : last_visit → below context
+ * - notes → second column
+ * - waiting_days : last_visit → below notes
  * - description → third column
  * - score bubbles use exact urgency scores (100 / 75)
  */
@@ -109,7 +110,7 @@ export function mapScoredCompaniesToPatients(
     id: companyId(item, index),
     patientName: asText(item.name) || "—",
     tags: mapScoreTags(item, priority),
-    reason: asText(item.context),
+    reason: asText(item.notes),
     meta: formatWaitingAndLastVisit(item.waiting_days, item.last_visit),
     nextStep: asText(item.description),
     priority,
