@@ -14,11 +14,13 @@ import {
 import { toast } from "react-toastify"
 import {
   archiveActivityCompany,
+  fetchActivityCompanies,
   fetchActivityCompanyById,
   fetchActivityCompanyCustomer,
   fetchActivityEmailById,
   sendActivityMessage,
 } from "../api/activityApi"
+import { mapActivityCompaniesToConversations } from "../mapActivityCompanies"
 import AssistantAlert from "./AssistantAlert"
 import EmailMessageCard from "./EmailMessageCard"
 import MessageComposer from "./MessageComposer"
@@ -111,13 +113,61 @@ export default function CustomerDetailView({
   const [isArchiving, setIsArchiving] = useState(false)
   const [draft, setDraft] = useState("")
   const [isSending, setIsSending] = useState(false)
+  /** Filled from Activity company list when opened from dashboard stub. */
+  const [dealId, setDealId] = useState(conversation.dealId || "")
+  const [dealName, setDealName] = useState(conversation.dealName || "")
+  const [dealStage, setDealStage] = useState(conversation.dealStage || "")
+  const [activityPhone, setActivityPhone] = useState(conversation.phone || "")
 
   const [emails, setEmails] = useState<ActivityEmailDetail[]>([])
   const [emailsLoading, setEmailsLoading] = useState(false)
 
   useEffect(() => {
     setHandedOff(conversation.handedOff > 0)
-  }, [conversation.companyId, conversation.handedOff])
+    setDealId(conversation.dealId || "")
+    setDealName(conversation.dealName || "")
+    setDealStage(conversation.dealStage || "")
+    setActivityPhone(conversation.phone || "")
+  }, [
+    conversation.companyId,
+    conversation.dealId,
+    conversation.dealName,
+    conversation.dealStage,
+    conversation.handedOff,
+    conversation.phone,
+  ])
+
+  // Enrich deal/phone/handed_off from Activity company list (needed for Pause from dashboard).
+  useEffect(() => {
+    if (!companyId || !accessToken) return
+    let cancelled = false
+
+    const enrich = async () => {
+      try {
+        const result = await fetchActivityCompanies(
+          { page: 1, limit: 100 },
+          accessToken
+        )
+        if (cancelled) return
+        const mapped = mapActivityCompaniesToConversations(result.data)
+        const match = mapped.find((c) => c.companyId === companyId)
+        if (!match) return
+
+        if (match.dealId) setDealId(match.dealId)
+        if (match.dealName) setDealName(match.dealName)
+        if (match.dealStage) setDealStage(match.dealStage)
+        if (match.phone) setActivityPhone(match.phone)
+        setHandedOff(match.handedOff > 0)
+      } catch (err) {
+        console.log("Error enriching patient activity meta", err)
+      }
+    }
+
+    void enrich()
+    return () => {
+      cancelled = true
+    }
+  }, [accessToken, companyId])
 
   const loadCustomer = useCallback(async () => {
     if (!companyId) {
@@ -192,7 +242,8 @@ export default function CustomerDetailView({
   const displayName = customer?.name || conversation.name
   const industry = customer?.industry || conversation.industry || "—"
   const email = customer?.companyEmail || ""
-  const phone = customer?.phoneNumber || conversation.phone || ""
+  const phone =
+    customer?.phoneNumber || activityPhone || conversation.phone || ""
   const website = customer?.website || ""
   const startedDate = formatStartedDate(customer?.startedDate || "")
   const initials = getInitials(displayName)
@@ -210,6 +261,13 @@ export default function CustomerDetailView({
         toast.error("Organization not found", { icon: false })
         return
       }
+      if (!dealId) {
+        toast.error(
+          "Deal details are missing for this patient. Open them from Activity Texts first, or try again.",
+          { icon: false }
+        )
+        return
+      }
 
       const wasPaused = handedOff
       setHandedOff(archive)
@@ -219,9 +277,9 @@ export default function CustomerDetailView({
         setIsArchiving(true)
         await archiveActivityCompany(
           {
-            deal_id: conversation.dealId || "",
-            dealname: conversation.dealName || "",
-            dealstage: conversation.dealStage || "",
+            deal_id: dealId,
+            dealname: dealName || "",
+            dealstage: dealStage || "",
             company_id: companyId,
             tenant_id: tenantId,
             archive,
@@ -235,11 +293,13 @@ export default function CustomerDetailView({
         setHandedOff(wasPaused)
         console.log("Error updating archive status", err)
         const status = err?.response?.status
+        const apiMessage = err?.response?.data?.message
         if (status !== 401 && status !== 403) {
           toast.error(
-            archive
-              ? "Failed to pause conversation"
-              : "Failed to revoke takeover",
+            apiMessage ||
+              (archive
+                ? "Failed to pause conversation"
+                : "Failed to revoke takeover"),
             { icon: false }
           )
         } else {
@@ -252,9 +312,9 @@ export default function CustomerDetailView({
     [
       accessToken,
       companyId,
-      conversation.dealId,
-      conversation.dealName,
-      conversation.dealStage,
+      dealId,
+      dealName,
+      dealStage,
       handedOff,
       isArchiving,
       user_data?.organization,

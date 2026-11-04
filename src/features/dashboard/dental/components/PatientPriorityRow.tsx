@@ -11,7 +11,7 @@ export default function PatientPriorityRow({
   onMarkDone,
 }: PatientPriorityRowProps) {
   return (
-    <article className="grid grid-cols-1 gap-4 border-b border-slate-100 px-4 py-5 last:border-b-0 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.2fr)_auto] lg:items-start lg:gap-6 lg:px-5">
+    <article className="grid grid-cols-1 gap-4 border-b border-slate-100 px-4 py-5 last:border-b-0 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1.1fr)_minmax(0,0.9fr)_auto] lg:items-start lg:gap-6 lg:px-5">
       <div className="min-w-0">
         <h3 className="text-base font-semibold text-blue-700">
           {patient.patientName}
@@ -42,6 +42,15 @@ export default function PatientPriorityRow({
             {patient.nextStep}
           </p>
         ) : null}
+      </div>
+
+      <div className="min-w-0">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+          Assigned to
+        </p>
+        <p className="mt-1 text-sm text-slate-800">
+          {patient.assignedTo || "—"}
+        </p>
       </div>
 
       <div className="lg:pt-0.5">
