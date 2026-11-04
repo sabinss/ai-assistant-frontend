@@ -15,6 +15,14 @@ export type ScoredCompanyApiItem = {
   waiting_days?: string | number | null
   last_visit?: string | number | null
   description?: string | null
+  assigned_to?: string | null
+  deal_id?: string | null
+  dealname?: string | null
+  dealstage?: string | null
+  to?: string | null
+  phone?: string | null
+  phone_number?: string | null
+  handed_off?: string | number | boolean | null
   expansion_opp_score?: string | number | null
   churn_risk_score?: string | number | null
   value_realisation_score?: string | number | null
@@ -43,6 +51,19 @@ function meetsScoreThreshold(
   const n = Number(value)
   if (!Number.isFinite(n)) return false
   return n === exactScoreForPriority(priority)
+}
+
+function toHandedOff(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value > 0 ? 1 : 0
+  if (typeof value === "boolean") return value ? 1 : 0
+  if (typeof value === "string") {
+    const s = value.trim().toLowerCase()
+    if (s === "true" || s === "1" || s === "yes") return 1
+    if (s === "false" || s === "0" || s === "no" || s === "") return 0
+    const n = Number(s)
+    return Number.isFinite(n) && n > 0 ? 1 : 0
+  }
+  return value ? 1 : 0
 }
 
 function companyId(item: ScoredCompanyApiItem, index: number): string {
@@ -98,6 +119,7 @@ export function mapScoreTags(
  * - notes → second column
  * - waiting_days : last_visit → below notes
  * - description → third column
+ * - assigned_to → Assigned to column
  * - score bubbles use exact urgency scores (100 / 75)
  */
 export function mapScoredCompaniesToPatients(
@@ -113,6 +135,12 @@ export function mapScoredCompaniesToPatients(
     reason: asText(item.notes),
     meta: formatWaitingAndLastVisit(item.waiting_days, item.last_visit),
     nextStep: asText(item.description),
+    assignedTo: asText(item.assigned_to),
+    dealId: asText(item.deal_id),
+    dealName: asText(item.dealname),
+    dealStage: asText(item.dealstage),
+    phone: asText(item.to) || asText(item.phone) || asText(item.phone_number),
+    handedOff: toHandedOff(item.handed_off),
     priority,
   }))
 }

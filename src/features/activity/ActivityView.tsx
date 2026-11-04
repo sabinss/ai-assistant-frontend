@@ -23,6 +23,7 @@ import {
 } from "./api/activityApi"
 import {
   activityCustomerDetailHref,
+  parseCustomerDetailSearchParams,
   stubConversationForDetail,
 } from "./customerDetailNavigation"
 import {
@@ -627,10 +628,15 @@ export default function ActivityView() {
     setDetailConversation(customerConversation)
     setShowCustomerDetail(true)
     router.replace(
-      activityCustomerDetailHref(
-        customerConversation.companyId,
-        customerConversation.name
-      ),
+      activityCustomerDetailHref(customerConversation.companyId, {
+        name: customerConversation.name,
+        from: "activity",
+        dealId: customerConversation.dealId,
+        dealName: customerConversation.dealName,
+        dealStage: customerConversation.dealStage,
+        phone: customerConversation.phone,
+        handedOff: customerConversation.handedOff,
+      }),
       { scroll: false }
     )
   }, [customerConversation, router])
@@ -638,22 +644,29 @@ export default function ActivityView() {
   const closeCustomerDetail = useCallback(() => {
     setShowCustomerDetail(false)
     setDetailConversation(null)
-    router.replace("/mainapp/activity", { scroll: false })
-  }, [router])
+    const { from } = parseCustomerDetailSearchParams(searchParams)
+    router.replace(
+      from === "dashboard" ? "/mainapp/dashboard" : "/mainapp/activity",
+      { scroll: false }
+    )
+  }, [router, searchParams])
 
-  // Deep-link: /mainapp/activity?companyId=...&detail=1 (from dental dashboard Patient Detail)
+  // Deep-link: /mainapp/activity?companyId=...&detail=1 (Patient Detail)
   useEffect(() => {
-    const companyId = searchParams.get("companyId")?.trim()
-    const detail = searchParams.get("detail")
-    if (!companyId || detail !== "1") return
+    const { companyId, isDetail, options } =
+      parseCustomerDetailSearchParams(searchParams)
+    if (!companyId || !isDetail) return
 
     const fromList =
       conversations.find((c) => c.companyId === companyId) ||
       emailConversations.find((c) => c.companyId === companyId)
 
-    const name = searchParams.get("name") || fromList?.name || ""
     setDetailConversation(
-      fromList ?? stubConversationForDetail(companyId, name)
+      fromList ??
+        stubConversationForDetail(companyId, {
+          ...options,
+          name: options.name || fromList?.name || "",
+        })
     )
     setShowCustomerDetail(true)
   }, [searchParams, conversations, emailConversations])
