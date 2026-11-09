@@ -77,6 +77,7 @@ export default function ConversationListItem({
           <FaReply
             className="mt-1 h-3.5 w-3.5 shrink-0 text-[#1B3A8C]"
             size={14}
+            title="Needs reply"
             aria-hidden
           />
         )}
