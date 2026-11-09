@@ -354,7 +354,6 @@ export default function CustomerDetailView({
         id: "texts",
         label: "Texts",
         icon: MessageSquare,
-        badge: needsTextReply ? { label: "", tone: "alert" } : undefined,
       },
       {
         id: "calls",
