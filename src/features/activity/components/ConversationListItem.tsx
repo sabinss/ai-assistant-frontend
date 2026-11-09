@@ -40,9 +40,8 @@ export default function ConversationListItem({
     <button
       type="button"
       onClick={() => onSelect(conversation.id)}
-      className={`w-full border-b border-[#EEF0F5] px-3 py-3 text-left transition-colors ${
-        isSelected ? "bg-[#EAF1FC]" : "bg-white hover:bg-[#F7F9FC]"
-      }`}
+      className={`w-full border-b border-[#EEF0F5] px-3 py-3 text-left transition-colors ${isSelected ? "bg-[#EAF1FC]" : "bg-white hover:bg-[#F7F9FC]"
+        }`}
     >
       <div className="flex gap-2.5">
         <div
@@ -78,7 +77,6 @@ export default function ConversationListItem({
           <FaReply
             className="mt-1 h-3.5 w-3.5 shrink-0 text-[#1B3A8C]"
             size={14}
-            title="Needs reply"
             aria-hidden
           />
         )}
