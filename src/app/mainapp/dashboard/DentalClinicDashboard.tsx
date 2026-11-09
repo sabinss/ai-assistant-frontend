@@ -130,7 +130,15 @@ export default function DentalClinicDashboard() {
   const handlePatientDetail = (patientId: string) => {
     const patient = data.patients.find((p) => p.id === patientId)
     router.push(
-      activityCustomerDetailHref(patientId, patient?.patientName ?? "")
+      activityCustomerDetailHref(patientId, {
+        name: patient?.patientName ?? "",
+        from: "dashboard",
+        dealId: patient?.dealId,
+        dealName: patient?.dealName,
+        dealStage: patient?.dealStage,
+        phone: patient?.phone,
+        handedOff: patient?.handedOff,
+      })
     )
   }
 

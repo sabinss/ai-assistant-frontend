@@ -58,6 +58,14 @@ export type PatientPriorityItem = {
   reason: string
   meta: string
   nextStep: string
+  /** From API `assigned_to`. */
+  assignedTo: string
+  /** Optional activity archive fields when present on scoredCompanies. */
+  dealId: string
+  dealName: string
+  dealStage: string
+  phone: string
+  handedOff: number
   /** Which filter bucket this row belongs to. */
   priority: PatientPriorityFilterId
 }
