@@ -16,7 +16,10 @@ import {
   extractScoredCompanies,
   mapScoredCompaniesToPatients,
 } from "@/features/dashboard/dental/mapScoredCompanies"
-import { filterPatientsBySummaryScore } from "@/features/dashboard/dental/scoreFilter"
+import {
+  countPatientsBySummaryScore,
+  filterPatientsBySummaryScore,
+} from "@/features/dashboard/dental/scoreFilter"
 import {
   isSelectableSummaryCardId,
   resolveDashboardUrgency,
@@ -97,12 +100,16 @@ export default function DentalClinicDashboard() {
           dentalDashboard,
           activeSummaryId
         )
-        const filters = mapDentalDashboardFilterCounts(dentalDashboard)
         const mappedPatients = mapScoredCompaniesToPatients(
           extractScoredCompanies(response),
           activeFilterId,
           activeSummaryId
         )
+        // Health / Might leave / Treatment: tab counts from score 100 / 75.
+        // Very High card: tab counts from dentalDashboard API fields.
+        const filters =
+          countPatientsBySummaryScore(mappedPatients, activeSummaryId) ??
+          mapDentalDashboardFilterCounts(dentalDashboard)
         const patients = filterPatientsBySummaryScore(
           mappedPatients,
           activeSummaryId,
