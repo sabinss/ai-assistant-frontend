@@ -10,7 +10,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
   updatedLabel: "",
   title: "Patient Priorities",
   subtitle: "Who your team should pay attention to first, and why.",
-  listNote: "Only your team can help with these",
+  listNote: "",
   summaryStats: [
     {
       id: "very_high",
@@ -73,6 +73,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-002",
@@ -93,6 +96,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-003",
@@ -112,6 +118,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-004",
@@ -130,6 +139,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-005",
@@ -148,6 +160,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-006",
@@ -167,6 +182,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-007",
@@ -185,6 +203,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-008",
@@ -203,6 +224,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
     {
       id: "pat-009",
@@ -221,6 +245,9 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
       dealStage: "",
       phone: "",
       handedOff: 0,
+      expansionOppScore: null,
+      churnRiskScore: null,
+      valueRealisationScore: null,
     },
   ],
 }

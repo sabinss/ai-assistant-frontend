@@ -66,6 +66,10 @@ export type PatientPriorityItem = {
   dealStage: string
   phone: string
   handedOff: number
+  /** Raw scores from scoredCompanies — used for High / Very High filtering. */
+  expansionOppScore: number | null
+  churnRiskScore: number | null
+  valueRealisationScore: number | null
   /** Which filter bucket this row belongs to. */
   priority: PatientPriorityFilterId
 }

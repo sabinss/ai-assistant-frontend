@@ -1,8 +1,10 @@
+import type { DentalSummaryCardId } from "./urgency"
 import type {
   PatientPriorityFilterId,
   PatientPriorityItem,
   PatientPriorityTag,
 } from "./types"
+import { scoreThresholdForFilter } from "./scoreFilter"
 
 /** One entry from GET `/organization/dashboard/data` → `scoredCompanies`. */
 export type ScoredCompanyApiItem = {
@@ -34,23 +36,20 @@ function asText(value: unknown): string {
   return String(value).trim()
 }
 
-/**
- * Bubble exact scores by urgency tab:
- * - Very High → score must be exactly 100
- * - High → score must be exactly 75
- */
-function exactScoreForPriority(priority: PatientPriorityFilterId): number {
-  return priority === "high" ? 75 : 100
+function toScore(value: unknown): number | null {
+  if (value == null || value === "") return null
+  const n = Number(value)
+  if (!Number.isFinite(n)) return null
+  return n
 }
 
 function meetsScoreThreshold(
   value: unknown,
   priority: PatientPriorityFilterId
 ): boolean {
-  if (value == null || value === "") return false
-  const n = Number(value)
-  if (!Number.isFinite(n)) return false
-  return n === exactScoreForPriority(priority)
+  const n = toScore(value)
+  if (n == null) return false
+  return n === scoreThresholdForFilter(priority)
 }
 
 function toHandedOff(value: unknown): number {
@@ -89,25 +88,63 @@ export function formatWaitingAndLastVisit(
 }
 
 /**
- * Patient detail bubbles by exact score (Very High: 100, High: 75):
- * - expansion_opp_score → Treatment Opp
- * - churn_risk_score → Drifting Away
- * - value_realisation_score → Health Issue
+ * Bubbles by selected card + Very High (100) / High (75) tab:
+ * - Health card → value_realisation_score → Health Issue
+ * - Might be leaving → churn_risk_score → Drifting Away
+ * - May want treatment → expansion_opp_score → Treatment Opp
+ * - Very High card → any matching score tag
  */
 export function mapScoreTags(
   item: ScoredCompanyApiItem,
-  priority: PatientPriorityFilterId = "very_high"
+  priority: PatientPriorityFilterId = "very_high",
+  summaryCardId: DentalSummaryCardId = "very_high"
 ): PatientPriorityTag[] {
   const tags: PatientPriorityTag[] = []
 
-  if (meetsScoreThreshold(item.expansion_opp_score, priority)) {
-    tags.push({ id: "treatment_opp", label: "Treatment Opp", kind: "treatment" })
+  const addTreatment = () => {
+    if (meetsScoreThreshold(item.expansion_opp_score, priority)) {
+      tags.push({
+        id: "treatment_opp",
+        label: "Treatment Opp",
+        kind: "treatment",
+      })
+    }
   }
-  if (meetsScoreThreshold(item.churn_risk_score, priority)) {
-    tags.push({ id: "drifting_away", label: "Drifting Away", kind: "might_leave" })
+  const addDrifting = () => {
+    if (meetsScoreThreshold(item.churn_risk_score, priority)) {
+      tags.push({
+        id: "drifting_away",
+        label: "Drifting Away",
+        kind: "might_leave",
+      })
+    }
   }
-  if (meetsScoreThreshold(item.value_realisation_score, priority)) {
-    tags.push({ id: "health_issue", label: "Health Issue", kind: "health" })
+  const addHealth = () => {
+    if (meetsScoreThreshold(item.value_realisation_score, priority)) {
+      tags.push({
+        id: "health_issue",
+        label: "Health Issue",
+        kind: "health",
+      })
+    }
+  }
+
+  switch (summaryCardId) {
+    case "health":
+      addHealth()
+      break
+    case "might_leave":
+      addDrifting()
+      break
+    case "treatment":
+      addTreatment()
+      break
+    case "very_high":
+    default:
+      addTreatment()
+      addDrifting()
+      addHealth()
+      break
   }
 
   return tags
@@ -115,23 +152,18 @@ export function mapScoreTags(
 
 /**
  * Map `scoredCompanies` → patient list rows.
- * - name → patient name
- * - notes → second column
- * - waiting_days : last_visit → below notes
- * - description → third column
- * - assigned_to → Assigned to column
- * - score bubbles use exact urgency scores (100 / 75)
  */
 export function mapScoredCompaniesToPatients(
   scoredCompanies: ScoredCompanyApiItem[] | null | undefined,
-  priority: PatientPriorityFilterId = "very_high"
+  priority: PatientPriorityFilterId = "very_high",
+  summaryCardId: DentalSummaryCardId = "very_high"
 ): PatientPriorityItem[] {
   if (!Array.isArray(scoredCompanies)) return []
 
   return scoredCompanies.map((item, index) => ({
     id: companyId(item, index),
     patientName: asText(item.name) || "—",
-    tags: mapScoreTags(item, priority),
+    tags: mapScoreTags(item, priority, summaryCardId),
     reason: asText(item.notes),
     meta: formatWaitingAndLastVisit(item.waiting_days, item.last_visit),
     nextStep: asText(item.description),
@@ -141,6 +173,9 @@ export function mapScoredCompaniesToPatients(
     dealStage: asText(item.dealstage),
     phone: asText(item.to) || asText(item.phone) || asText(item.phone_number),
     handedOff: toHandedOff(item.handed_off),
+    expansionOppScore: toScore(item.expansion_opp_score),
+    churnRiskScore: toScore(item.churn_risk_score),
+    valueRealisationScore: toScore(item.value_realisation_score),
     priority,
   }))
 }

@@ -1,4 +1,5 @@
 import type { PatientPrioritySummaryStat } from "../types"
+import { isSelectableSummaryCardId } from "../urgency"
 import SummaryStatCard from "./SummaryStatCard"
 
 type SummaryStatsRowProps = {
@@ -13,7 +14,13 @@ export default function SummaryStatsRow({
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {stats.map((stat) => (
-        <SummaryStatCard key={stat.id} stat={stat} onClick={onStatClick} />
+        <SummaryStatCard
+          key={stat.id}
+          stat={stat}
+          onClick={
+            isSelectableSummaryCardId(stat.id) ? onStatClick : undefined
+          }
+        />
       ))}
     </div>
   )
