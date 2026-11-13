@@ -18,6 +18,11 @@ export {
 } from "./urgency"
 export type { DentalSummaryCardId } from "./urgency"
 export {
+  filterPatientsBySummaryScore,
+  scoreFieldForSummaryCard,
+  scoreThresholdForFilter,
+} from "./scoreFilter"
+export {
   extractDentalDashboard,
   mapDentalDashboardFilterCounts,
   mapDentalDashboardSummaryStats,
