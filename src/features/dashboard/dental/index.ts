@@ -18,6 +18,7 @@ export {
 } from "./urgency"
 export type { DentalSummaryCardId } from "./urgency"
 export {
+  countPatientsBySummaryScore,
   filterPatientsBySummaryScore,
   scoreFieldForSummaryCard,
   scoreThresholdForFilter,

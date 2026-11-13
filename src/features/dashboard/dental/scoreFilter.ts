@@ -1,5 +1,9 @@
 import type { DentalSummaryCardId } from "./urgency"
-import type { PatientPriorityFilterId, PatientPriorityItem } from "./types"
+import type {
+  PatientPriorityFilter,
+  PatientPriorityFilterId,
+  PatientPriorityItem,
+} from "./types"
 
 /** Exact score required by Very High (100) / High (75) tabs. */
 export function scoreThresholdForFilter(
@@ -45,4 +49,25 @@ export function filterPatientsBySummaryScore(
 
   const threshold = scoreThresholdForFilter(filterId)
   return patients.filter((p) => p[field] === threshold)
+}
+
+/**
+ * Tab badge counts for Health / Might be leaving / May want treatment:
+ * - Very High → rows with that card's score === 100
+ * - High → rows with that card's score === 75
+ */
+export function countPatientsBySummaryScore(
+  patients: PatientPriorityItem[],
+  summaryCardId: DentalSummaryCardId
+): PatientPriorityFilter[] | null {
+  const field = scoreFieldForSummaryCard(summaryCardId)
+  if (!field) return null
+
+  const veryHigh = patients.filter((p) => p[field] === 100).length
+  const high = patients.filter((p) => p[field] === 75).length
+
+  return [
+    { id: "very_high", label: "Very High", count: veryHigh },
+    { id: "high", label: "High", count: high },
+  ]
 }
