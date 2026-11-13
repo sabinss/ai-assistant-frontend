@@ -9,7 +9,14 @@ export type {
   PatientPriorityTagKind,
 } from "./types"
 export { samplePatientPrioritiesData } from "./data/samplePatientPriorities"
-export { urgencyQueryFromFilter, URGENCY_QUERY } from "./urgency"
+export {
+  isSelectableSummaryCardId,
+  resolveDashboardUrgency,
+  urgencyQueryFromFilter,
+  URGENCY_BY_SUMMARY_CARD,
+  URGENCY_QUERY,
+} from "./urgency"
+export type { DentalSummaryCardId } from "./urgency"
 export {
   extractDentalDashboard,
   mapDentalDashboardFilterCounts,

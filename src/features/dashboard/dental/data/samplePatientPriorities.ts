@@ -10,7 +10,7 @@ export const samplePatientPrioritiesData: PatientPrioritiesDashboardData = {
   updatedLabel: "",
   title: "Patient Priorities",
   subtitle: "Who your team should pay attention to first, and why.",
-  listNote: "Only your team can help with these",
+  listNote: "",
   summaryStats: [
     {
       id: "very_high",
