@@ -6,15 +6,18 @@ import type {
 type PriorityFilterTabsProps = {
   filters: PatientPriorityFilter[]
   activeFilterId: PatientPriorityFilterId
-  note?: string
   onChange: (filterId: PatientPriorityFilterId) => void
+  /** Show only rows with an assignee. Default unchecked. */
+  teamAssignedOnly?: boolean
+  onTeamAssignedOnlyChange?: (checked: boolean) => void
 }
 
 export default function PriorityFilterTabs({
   filters,
   activeFilterId,
-  note,
   onChange,
+  teamAssignedOnly = false,
+  onTeamAssignedOnlyChange,
 }: PriorityFilterTabsProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -42,7 +45,15 @@ export default function PriorityFilterTabs({
           )
         })}
       </div>
-      {note ? <p className="text-sm text-slate-500">{note}</p> : null}
+      <label className="inline-flex cursor-pointer select-none items-center gap-2 text-sm text-slate-600">
+        <input
+          type="checkbox"
+          checked={teamAssignedOnly}
+          onChange={(e) => onTeamAssignedOnlyChange?.(e.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-blue-700 focus:ring-blue-500"
+        />
+        Show Team-Assigned Only
+      </label>
     </div>
   )
 }
