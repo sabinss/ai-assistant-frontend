@@ -16,6 +16,7 @@ import {
   extractScoredCompanies,
   mapScoredCompaniesToPatients,
 } from "@/features/dashboard/dental/mapScoredCompanies"
+import { filterPatientsBySummaryScore } from "@/features/dashboard/dental/scoreFilter"
 import {
   isSelectableSummaryCardId,
   resolveDashboardUrgency,
@@ -97,8 +98,14 @@ export default function DentalClinicDashboard() {
           activeSummaryId
         )
         const filters = mapDentalDashboardFilterCounts(dentalDashboard)
-        const patients = mapScoredCompaniesToPatients(
+        const mappedPatients = mapScoredCompaniesToPatients(
           extractScoredCompanies(response),
+          activeFilterId,
+          activeSummaryId
+        )
+        const patients = filterPatientsBySummaryScore(
+          mappedPatients,
+          activeSummaryId,
           activeFilterId
         )
 
@@ -140,16 +147,13 @@ export default function DentalClinicDashboard() {
   const handleSummaryStatClick = (statId: string) => {
     if (!isSelectableSummaryCardId(statId)) return
     setActiveSummaryId(statId)
-    // Very High card resets list tabs to Very High; other cards own urgency alone.
-    if (statId === "very_high") {
-      setActiveFilterId("very_high")
-    }
+    // New card selection starts on the Very High tab (score === 100).
+    setActiveFilterId("very_high")
   }
 
   const handleFilterChange = (filterId: PatientPriorityFilterId) => {
+    // Tabs always apply for the current card (Very High = 100, High = 75).
     setActiveFilterId(filterId)
-    // High / Very High tabs belong to the Very High card family.
-    setActiveSummaryId("very_high")
   }
 
   const handlePatientDetail = (patientId: string) => {
