@@ -16,7 +16,15 @@ import {
   extractScoredCompanies,
   mapScoredCompaniesToPatients,
 } from "@/features/dashboard/dental/mapScoredCompanies"
-import { urgencyQueryFromFilter } from "@/features/dashboard/dental/urgency"
+import {
+  countPatientsBySummaryScore,
+  filterPatientsBySummaryScore,
+} from "@/features/dashboard/dental/scoreFilter"
+import {
+  isSelectableSummaryCardId,
+  resolveDashboardUrgency,
+  type DentalSummaryCardId,
+} from "@/features/dashboard/dental/urgency"
 import { fetchOrganizationDashboardData } from "@/features/dashboard/api/dashboardData"
 import { DENTAL_CLINIC_INDUSTRY } from "@/features/dashboard/resolveDashboardKind"
 import { activityCustomerDetailHref } from "@/features/activity/customerDetailNavigation"
@@ -28,7 +36,7 @@ const EMPTY_DASHBOARD_DATA: PatientPrioritiesDashboardData = {
   updatedLabel: "",
   title: "Patient Priorities",
   subtitle: "Who your team should pay attention to first, and why.",
-  listNote: "Only your team can help with these",
+  listNote: "",
   summaryStats: [],
   filters: [
     { id: "very_high", label: "Very High", count: 0 },
@@ -39,8 +47,8 @@ const EMPTY_DASHBOARD_DATA: PatientPrioritiesDashboardData = {
 
 /**
  * Dental Clinic industry dashboard.
- * Only API response data is shown. On failure, an error message is shown
- * (sample/test data is never used as a fallback).
+ * Summary cards + Very High/High tabs drive
+ * `/organization/dashboard/data?industry=Dental Clinic&urgency=...`
  */
 export default function DentalClinicDashboard() {
   const { access_token } = useAuth()
@@ -49,6 +57,8 @@ export default function DentalClinicDashboard() {
     useState<PatientPrioritiesDashboardData>(EMPTY_DASHBOARD_DATA)
   const [activeFilterId, setActiveFilterId] =
     useState<PatientPriorityFilterId>("very_high")
+  const [activeSummaryId, setActiveSummaryId] =
+    useState<DentalSummaryCardId>("very_high")
   const [loading, setLoading] = useState(true)
   const [listLoading, setListLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -71,7 +81,7 @@ export default function DentalClinicDashboard() {
       setError(null)
 
       try {
-        const urgency = urgencyQueryFromFilter(activeFilterId)
+        const urgency = resolveDashboardUrgency(activeSummaryId, activeFilterId)
         const response = await fetchOrganizationDashboardData(access_token, {
           industry: DENTAL_CLINIC_INDUSTRY,
           urgency,
@@ -80,14 +90,29 @@ export default function DentalClinicDashboard() {
 
         console.log("[DentalClinicDashboard] /organization/dashboard/data", {
           urgency,
+          activeSummaryId,
+          activeFilterId,
           response,
         })
 
         const dentalDashboard = extractDentalDashboard(response)
-        const summaryStats = mapDentalDashboardSummaryStats(dentalDashboard)
-        const filters = mapDentalDashboardFilterCounts(dentalDashboard)
-        const patients = mapScoredCompaniesToPatients(
+        const summaryStats = mapDentalDashboardSummaryStats(
+          dentalDashboard,
+          activeSummaryId
+        )
+        const mappedPatients = mapScoredCompaniesToPatients(
           extractScoredCompanies(response),
+          activeFilterId,
+          activeSummaryId
+        )
+        // Health / Might leave / Treatment: tab counts from score 100 / 75.
+        // Very High card: tab counts from dentalDashboard API fields.
+        const filters =
+          countPatientsBySummaryScore(mappedPatients, activeSummaryId) ??
+          mapDentalDashboardFilterCounts(dentalDashboard)
+        const patients = filterPatientsBySummaryScore(
+          mappedPatients,
+          activeSummaryId,
           activeFilterId
         )
 
@@ -105,7 +130,6 @@ export default function DentalClinicDashboard() {
           "[DentalClinicDashboard] Failed to load dashboard data",
           err
         )
-        // Never fall back to sample/test data.
         if (!hasLoadedOnceRef.current) {
           setData(EMPTY_DASHBOARD_DATA)
         }
@@ -125,7 +149,19 @@ export default function DentalClinicDashboard() {
     return () => {
       cancelled = true
     }
-  }, [access_token, activeFilterId, retryKey])
+  }, [access_token, activeFilterId, activeSummaryId, retryKey])
+
+  const handleSummaryStatClick = (statId: string) => {
+    if (!isSelectableSummaryCardId(statId)) return
+    setActiveSummaryId(statId)
+    // New card selection starts on the Very High tab (score === 100).
+    setActiveFilterId("very_high")
+  }
+
+  const handleFilterChange = (filterId: PatientPriorityFilterId) => {
+    // Tabs always apply for the current card (Very High = 100, High = 75).
+    setActiveFilterId(filterId)
+  }
 
   const handlePatientDetail = (patientId: string) => {
     const patient = data.patients.find((p) => p.id === patientId)
@@ -157,7 +193,6 @@ export default function DentalClinicDashboard() {
     )
   }
 
-  // Initial load failed — show error only (no sample data).
   if (error && !hasLoadedOnceRef.current) {
     return (
       <div className="flex min-h-[40vh] w-full flex-col items-center justify-center gap-3 bg-slate-50 px-4 text-center">
@@ -190,8 +225,9 @@ export default function DentalClinicDashboard() {
       <PatientPrioritiesDashboard
         data={data}
         activeFilterId={activeFilterId}
-        onFilterChange={setActiveFilterId}
+        onFilterChange={handleFilterChange}
         onMarkDone={handlePatientDetail}
+        onSummaryStatClick={handleSummaryStatClick}
         listLoading={listLoading}
       />
     </div>

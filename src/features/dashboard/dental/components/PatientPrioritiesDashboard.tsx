@@ -1,5 +1,6 @@
 "use client"
 
+import { useMemo, useState } from "react"
 import type {
   PatientPrioritiesDashboardData,
   PatientPriorityFilterId,
@@ -28,6 +29,16 @@ export default function PatientPrioritiesDashboard({
   onSummaryStatClick,
   listLoading = false,
 }: PatientPrioritiesDashboardProps) {
+  const [teamAssignedOnly, setTeamAssignedOnly] = useState(false)
+
+  const visiblePatients = useMemo(() => {
+    if (!teamAssignedOnly) return data.patients
+    // Only rows assigned specifically to "Team"
+    return data.patients.filter(
+      (p) => p.assignedTo.trim().toLowerCase() === "team"
+    )
+  }, [data.patients, teamAssignedOnly])
+
   return (
     <div className="w-full py-4 pl-1 pr-4 sm:pr-6">
       <PatientPrioritiesHeader
@@ -49,8 +60,9 @@ export default function PatientPrioritiesDashboard({
           <PriorityFilterTabs
             filters={data.filters}
             activeFilterId={activeFilterId}
-            note={data.listNote}
             onChange={onFilterChange}
+            teamAssignedOnly={teamAssignedOnly}
+            onTeamAssignedOnlyChange={setTeamAssignedOnly}
           />
         </div>
         {listLoading ? (
@@ -59,7 +71,7 @@ export default function PatientPrioritiesDashboard({
           </div>
         ) : (
           <PatientPriorityList
-            patients={data.patients}
+            patients={visiblePatients}
             onMarkDone={onMarkDone}
           />
         )}

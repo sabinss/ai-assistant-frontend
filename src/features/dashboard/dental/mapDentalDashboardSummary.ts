@@ -37,9 +37,11 @@ export function mapDentalDashboardFilterCounts(
 /**
  * Map `dentalDashboard` API counts → summary KPI cards.
  * Card order matches the Patient Priorities layout (+ Total Patients last).
+ * `activeSummaryId` marks which selectable card is selected.
  */
 export function mapDentalDashboardSummaryStats(
-  dentalDashboard: DentalDashboardApiCounts | null | undefined
+  dentalDashboard: DentalDashboardApiCounts | null | undefined,
+  activeSummaryId: string = "very_high"
 ): PatientPrioritySummaryStat[] {
   const d = dentalDashboard ?? {}
 
@@ -50,7 +52,7 @@ export function mapDentalDashboardSummaryStats(
       count: toCount(d.veryhigh_urgency_count),
       description: "patients need the team's attention today",
       tone: "very_high",
-      active: true,
+      active: activeSummaryId === "very_high",
     },
     {
       id: "health",
@@ -58,6 +60,7 @@ export function mapDentalDashboardSummaryStats(
       count: toCount(d.health_issue_count),
       description: "reported pain or symptoms",
       tone: "health",
+      active: activeSummaryId === "health",
     },
     {
       id: "might_leave",
@@ -65,6 +68,7 @@ export function mapDentalDashboardSummaryStats(
       count: toCount(d.churn_risk_count),
       description: "patients drifting away",
       tone: "might_leave",
+      active: activeSummaryId === "might_leave",
     },
     {
       id: "treatment",
@@ -72,6 +76,7 @@ export function mapDentalDashboardSummaryStats(
       count: toCount(d.opp_score_count),
       description: "likely to book more care",
       tone: "treatment",
+      active: activeSummaryId === "treatment",
     },
     {
       id: "total_patients",
@@ -79,6 +84,7 @@ export function mapDentalDashboardSummaryStats(
       count: toCount(d.total_patient_count),
       description: "patients in your practice",
       tone: "total",
+      active: false,
     },
   ]
 }
