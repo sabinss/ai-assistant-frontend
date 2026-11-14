@@ -33,7 +33,10 @@ export default function PatientPrioritiesDashboard({
 
   const visiblePatients = useMemo(() => {
     if (!teamAssignedOnly) return data.patients
-    return data.patients.filter((p) => p.assignedTo.trim() !== "")
+    // Only rows assigned specifically to "Team"
+    return data.patients.filter(
+      (p) => p.assignedTo.trim().toLowerCase() === "team"
+    )
   }, [data.patients, teamAssignedOnly])
 
   return (
